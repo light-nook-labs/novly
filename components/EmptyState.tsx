@@ -1,0 +1,31 @@
+import { View, Text, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Colors, FontSize, Spacing } from "../constants/theme";
+
+interface EmptyStateProps {
+  icon?: keyof typeof Ionicons.glyphMap;
+  message?: string;
+}
+
+export function EmptyState({ icon = "folder-open-outline", message = "暂无数据" }: EmptyStateProps) {
+  return (
+    <View style={styles.container}>
+      <Ionicons name={icon} size={48} color={Colors.textMuted} />
+      <Text style={styles.text}>{message}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 64,
+    gap: Spacing.md,
+  },
+  text: {
+    fontSize: FontSize.md,
+    color: Colors.textTertiary,
+  },
+});
