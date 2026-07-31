@@ -2,6 +2,8 @@
 
 > 离线优先的小说元数据浏览器 — React Native / Expo 实现
 
+> **🌐 语言切换**:简体中文 | [English](./README_EN.md)
+
 Novly 是一个离线优先的轻小说元数据浏览应用：数据打包内置（SQLite），无网络也能浏览全部小说元数据（分类、状态、赛事、标签、排行、作者等），并支持一键跳转 SFACG 阅读原文。
 
 **数据来源**：[light-nook-labs/novel_hub](https://github.com/light-nook-labs/novel_hub)（上游数据仓库，`assets/seed.sql.gz` 由其上流数据生成）

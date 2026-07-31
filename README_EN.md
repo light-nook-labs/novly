@@ -2,6 +2,8 @@
 
 > Offline-first novel metadata browser — React Native / Expo implementation
 
+> **🌐 Language**: English | [简体中文](./README.md)
+
 Novly is an offline-first light-novel metadata browsing app: all data is bundled locally (SQLite), so the full novel metadata library (genres, statuses, contests, tags, rankings, authors, etc.) is browsable without any network, with one-tap deep links to SFACG for reading the originals.
 
 **Data source**: [light-nook-labs/novel_hub](https://github.com/light-nook-labs/novel_hub) (upstream data repository; `assets/seed.sql.gz` is generated from it)
