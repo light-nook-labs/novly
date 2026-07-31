@@ -20,6 +20,19 @@ Novly 是一个离线优先的轻小说元数据浏览应用：数据打包内�
 - 🖼️ **背投图库**：小说背投（banner）图片浏览与全屏预览
 - 🌐 **跨平台**：Web / Android / iOS
 
+## 界面预览
+
+> 以下截图展示了 Novly 的核心功能:首页轮播与导航、背投图库、多维排行、小说详情、主题切换(深/浅色)与关于页。
+
+| 页面 | 深色模式 | 浅色模式 |
+|---|---|---|
+| 首页 | <img src="screenshots/home.png" width="220" /> | <img src="screenshots/home-light.png" width="220" /> |
+| 背投 | <img src="screenshots/banners.png" width="220" /> | <img src="screenshots/banners-light.png" width="220" /> |
+| 排行 | <img src="screenshots/rank.png" width="220" /> | <img src="screenshots/rank-light.png" width="220" /> |
+| 小说详情 | <img src="screenshots/detail.png" width="220" /> | <img src="screenshots/detail-light.png" width="220" /> |
+| 设置 | <img src="screenshots/settings.png" width="220" /> | <img src="screenshots/settings-light.png" width="220" /> |
+| 关于 | <img src="screenshots/about.png" width="220" /> | <img src="screenshots/about-light.png" width="220" /> |
+
 ## 技术栈
 
 | 类别 | 技术 |
