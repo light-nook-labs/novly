@@ -62,3 +62,7 @@ assets\seed.sql.gz
 # local dev logs
 web_start.log
 web_start_err.log
+
+# patches build artifacts
+patches/android/.gradle/
+patches/android/build/
