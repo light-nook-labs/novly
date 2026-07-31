@@ -3,7 +3,7 @@ import { Asset } from "expo-asset";
 import { Platform } from "react-native";
 import pako from "pako";
 
-let db: SQLite.SQLiteDatabase | null = null;
+let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 const DB_NAME = "novel_hub.sqlite";
 const MERGED_MARKER = ".db_merged_v2";
 
@@ -105,15 +105,15 @@ async function mergeNativeChunks(docDir: string): Promise<void> {
 
   // Decompress all 3 chunks
   await decompressAndWriteChunk(
-    require("../../assets/chunks/cold_chunk.sqlite.gz"),
+    require("../assets/chunks/cold_chunk.sqlite.gz"),
     coldPath
   );
   await decompressAndWriteChunk(
-    require("../../assets/chunks/warm_chunk.sqlite.gz"),
+    require("../assets/chunks/warm_chunk.sqlite.gz"),
     warmPath
   );
   await decompressAndWriteChunk(
-    require("../../assets/chunks/hot_chunk.sqlite.gz"),
+    require("../assets/chunks/hot_chunk.sqlite.gz"),
     hotPath
   );
 
@@ -270,7 +270,7 @@ async function mergeNativeChunks(docDir: string): Promise<void> {
 
 async function loadWebSeed(database: SQLite.SQLiteDatabase): Promise<void> {
   console.log("Loading seed data for web...");
-  const decompressed = await decompressAsset(require("../../assets/seed.sql.gz"));
+  const decompressed = await decompressAsset(require("../assets/seed.sql.gz"));
   const sql = new TextDecoder().decode(decompressed);
 
   const lines = sql.split("\n");
@@ -289,21 +289,26 @@ async function loadWebSeed(database: SQLite.SQLiteDatabase): Promise<void> {
   }
 }
 
-export async function initDatabase(): Promise<SQLite.SQLiteDatabase> {
-  if (db) return db;
+export function initDatabase(): Promise<SQLite.SQLiteDatabase> {
+  if (!dbPromise) {
+    dbPromise = initDatabaseInternal();
+  }
+  return dbPromise;
+}
 
+async function initDatabaseInternal(): Promise<SQLite.SQLiteDatabase> {
   if (Platform.OS === "web") {
-    db = await SQLite.openDatabaseAsync(DB_NAME);
+    const database = await SQLite.openDatabaseAsync(DB_NAME);
 
     try {
-      const count = await db.getFirstAsync<{ c: number }>("SELECT COUNT(*) as c FROM novels");
-      if (count && count.c > 0) return db;
+      const count = await database.getFirstAsync<{ c: number }>("SELECT COUNT(*) as c FROM novels");
+      if (count && count.c > 0) return database;
     } catch {
       // Table doesn't exist yet, need to seed
     }
 
-    await loadWebSeed(db);
-    return db;
+    await loadWebSeed(database);
+    return database;
   }
 
   const FS = await getFS();
@@ -315,8 +320,7 @@ export async function initDatabase(): Promise<SQLite.SQLiteDatabase> {
   const markerInfo = await FS.getInfoAsync(markerPath);
 
   if (dbInfo.exists && markerInfo.exists) {
-    db = await SQLite.openDatabaseAsync(DB_NAME);
-    return db;
+    return await SQLite.openDatabaseAsync(DB_NAME);
   }
 
   console.log("First launch: decompressing and merging 3 chunks...");
@@ -324,11 +328,9 @@ export async function initDatabase(): Promise<SQLite.SQLiteDatabase> {
 
   await FS.writeAsStringAsync(markerPath, "1");
 
-  db = await SQLite.openDatabaseAsync(DB_NAME);
-  return db;
+  return await SQLite.openDatabaseAsync(DB_NAME);
 }
 
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
-  if (db) return db;
   return initDatabase();
 }

@@ -1,20 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Text,
   Image,
   TouchableOpacity,
   StyleSheet,
   View,
+  Platform,
+  Animated,
   Modal,
   Pressable,
-  Platform,
-  ActivityIndicator,
   useWindowDimensions,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ID } from "./ID";
-import { Colors, FontSize, Spacing, BorderRadius } from "../constants/theme";
+import { FontSize, Spacing, BorderRadius } from "../constants/theme";
+import { useTheme } from "./ThemeProvider";
 
 const BANNER_PREFIX = "https://rs.sfacg.com/web/novel/images/images/beitouNew/";
 
@@ -39,19 +40,35 @@ function getBannerHeight(w: number): number {
 }
 
 export function BannerListItem({ id, title, author, width, height }: BannerItemProps) {
+  const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
+  const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [showLightbox, setShowLightbox] = useState(false);
+  const pulseAnim = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 0.3, duration: 800, useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
 
   const uri = BANNER_PREFIX + id + ".jpg";
   const containerWidth = width;
   const fixedHeight = height ?? getBannerHeight(winWidth);
 
   useEffect(() => {
+    setLoaded(false);
     setLoadError(false);
     Image.getSize(
       uri,
-      () => {},
-      () => setLoadError(true)
+      () => setLoaded(true),
+      () => { setLoadError(true); setLoaded(true); }
     );
   }, [uri]);
 
@@ -69,13 +86,21 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
     <View style={styles.container}>
       <TouchableOpacity
         activeOpacity={0.9}
-        style={[styles.imageCard, { width: containerWidth, height: fixedHeight }]}
+        style={[styles.imageCard, { width: containerWidth, height: fixedHeight, backgroundColor: colors.surfaceBorder }]}
+        onPress={() => setShowLightbox(true)}
         onLongPress={handleLongPress}
       >
         {loadError ? (
-          <View style={[styles.fallback, { width: containerWidth, height: fixedHeight }]}>
-            <Text style={styles.fallbackText}>{title}</Text>
+          <View style={[styles.fallback, { width: containerWidth, height: fixedHeight, backgroundColor: colors.surface }]}>
+            <Text style={[styles.fallbackText, { color: colors.primary }]}>{title}</Text>
           </View>
+        ) : !loaded ? (
+          <Animated.View
+            style={[
+              styles.placeholder,
+              { width: containerWidth, height: fixedHeight, opacity: pulseAnim, backgroundColor: colors.surfaceBorder },
+            ]}
+          />
         ) : (
           <View style={{ width: containerWidth, height: fixedHeight, overflow: "hidden", backgroundColor: "#1a1a1a" }}>
             <Image
@@ -92,16 +117,26 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
         )}
       </TouchableOpacity>
 
+      {/* Lightbox */}
+      <Modal visible={showLightbox} transparent animationType="fade" onRequestClose={() => setShowLightbox(false)}>
+        <Pressable style={styles.lightbox} onPress={() => setShowLightbox(false)}>
+          <Image source={{ uri }} style={styles.lightboxImage} resizeMode="contain" />
+          <TouchableOpacity style={styles.lightboxClose} onPress={() => setShowLightbox(false)}>
+            <Ionicons name="close" size={28} color="#fff" />
+          </TouchableOpacity>
+        </Pressable>
+      </Modal>
+
       <TouchableOpacity
         activeOpacity={0.7}
         style={styles.textRow}
         onPress={handleTitlePress}
       >
         <View style={styles.titleContainer}>
-          <Text style={styles.title} numberOfLines={2}>{title}</Text>
+          <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>{title}</Text>
           <ID id={id} />
         </View>
-        {author && <Text style={styles.author} numberOfLines={1}>{author}</Text>}
+        {author && <Text style={[styles.author, { color: colors.textSecondary }]} numberOfLines={1}>{author}</Text>}
       </TouchableOpacity>
     </View>
   );
@@ -114,17 +149,14 @@ const styles = StyleSheet.create({
   imageCard: {
     borderRadius: BorderRadius.xl,
     overflow: "hidden",
-    backgroundColor: Colors.surfaceBorder,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
     elevation: 2,
   },
   image: {
     width: "100%",
     height: "100%",
   },
+  placeholder: {},
   textRow: {
     paddingHorizontal: Spacing.xs,
   },
@@ -136,36 +168,35 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FontSize.xl,
     fontWeight: "700",
-    color: Colors.text,
     flex: 1,
   },
   author: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
     marginTop: 2,
   },
   fallback: {
     justifyContent: "center",
     alignItems: "center",
     padding: Spacing.lg,
-    backgroundColor: Colors.surface,
   },
   fallbackText: {
     fontSize: FontSize.xl,
     fontWeight: "700",
-    color: Colors.primary,
     textAlign: "center",
   },
   loading: {
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Colors.surface,
   },
   lightbox: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.98)",
     justifyContent: "center",
     alignItems: "center",
+  },
+  lightboxImage: {
+    width: "100%",
+    height: "100%",
   },
   lightboxClose: {
     position: "absolute",

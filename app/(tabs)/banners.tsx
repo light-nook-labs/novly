@@ -10,16 +10,18 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { getDatabase } from "../../lib/data/database";
+import { getDatabase } from "../../utils/database";
 import { BannerListItem, type BannerNovel } from "../../components/BannerListItem";
 import { EmptyState } from "../../components/EmptyState";
 import { TabHeader } from "../../components/TabHeader";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
 import { Colors, FontSize, Spacing } from "../../constants/theme";
+import { useTheme } from "../../components/ThemeProvider";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export default function BannersScreen() {
+  const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
   const [allBanners, setAllBanners] = useState<BannerNovel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +51,7 @@ export default function BannersScreen() {
   }, [allBanners, reversed]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TabHeader
         onSearchPress={() => router.push("/search/banners")}
         right={
@@ -138,10 +140,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
     elevation: 4,
   },
 });

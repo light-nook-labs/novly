@@ -1,7 +1,12 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { Link } from "expo-router";
-import { useState, useEffect } from "react";
-import { getDatabase } from "../lib/data/database";
+import { useState, useEffect, useMemo } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
+import { getDatabase } from "../utils/database";
+import { FontSize, Spacing, BorderRadius } from "../constants/theme";
+import { useTheme } from "../components/ThemeProvider";
+import { PageHeader } from "../components/Header";
 
 interface Tag {
   id: number;
@@ -9,123 +14,163 @@ interface Tag {
   novel_count: number;
 }
 
+const CACHE_KEY = "tags_cache_v1";
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24h
+
+interface CacheEntry {
+  timestamp: number;
+  tags: Tag[];
+}
+
 export default function TagsScreen() {
+  const { colors } = useTheme();
   const [tags, setTags] = useState<Tag[]>([]);
   const [query, setQuery] = useState("");
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const PAGE_SIZE = 30;
+  const [loading, setLoading] = useState(true);
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        list: {
+          padding: Spacing.md,
+        },
+        row: {
+          gap: Spacing.sm,
+          marginBottom: Spacing.sm,
+        },
+        tagItem: {
+          flex: 1,
+          paddingVertical: Spacing.md,
+          paddingHorizontal: Spacing.sm,
+          backgroundColor: colors.surface,
+          borderRadius: BorderRadius.md,
+          alignItems: "center",
+          gap: 2,
+        },
+        tagName: {
+          fontSize: FontSize.sm,
+          fontWeight: "600",
+          color: colors.text,
+          textAlign: "center",
+        },
+        tagCount: {
+          fontSize: FontSize.xs,
+          color: colors.textTertiary,
+        },
+        loading: {
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          gap: Spacing.md,
+        },
+        loadingText: {
+          fontSize: FontSize.md,
+          color: colors.textTertiary,
+        },
+        empty: {
+          alignItems: "center",
+          paddingVertical: Spacing.xl * 2,
+          gap: Spacing.md,
+        },
+        emptyText: {
+          fontSize: FontSize.md,
+          color: colors.textTertiary,
+        },
+      }),
+    [colors]
+  );
 
   useEffect(() => {
-    loadTags(true);
+    loadTags();
   }, []);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      loadTags(true);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [query]);
-
-  async function loadTags(reset = false) {
+  async function loadTags() {
     try {
+      // 1. Try cache first for instant first screen
+      const cached = await AsyncStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const entry: CacheEntry = JSON.parse(cached);
+        if (Date.now() - entry.timestamp < CACHE_TTL) {
+          setTags(entry.tags);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 2. Load all tags from DB (data is small)
       const db = await getDatabase();
-      const offset = reset ? 0 : page * PAGE_SIZE;
+      const results = await db.getAllAsync<Tag>(
+        `SELECT t.id, t.name, COUNT(nt.novel_id) as novel_count
+         FROM tags t
+         LEFT JOIN novel_tags nt ON t.id = nt.tag_id
+         GROUP BY t.id
+         ORDER BY novel_count DESC, t.name ASC`
+      );
+      setTags(results);
 
-      let sql = `
-        SELECT t.id, t.name, COUNT(nt.novel_id) as novel_count
-        FROM tags t
-        LEFT JOIN novel_tags nt ON t.id = nt.tag_id
-      `;
-      const params: any[] = [];
-
-      if (query) {
-        sql += " WHERE t.name LIKE ?";
-        params.push(`%${query}%`);
-      }
-
-      sql += " GROUP BY t.id ORDER BY novel_count DESC LIMIT ? OFFSET ?";
-      params.push(PAGE_SIZE, offset);
-
-      const results = await db.getAllAsync<Tag>(sql, params);
-
-      if (reset) {
-        setTags(results);
-        setPage(1);
-      } else {
-        setTags((prev) => [...prev, ...results]);
-        setPage((prev) => prev + 1);
-      }
-
-      setHasMore(results.length === PAGE_SIZE);
+      // 3. Write cache
+      const entry: CacheEntry = { timestamp: Date.now(), tags: results };
+      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(entry));
     } catch (error) {
       console.error("Failed to load tags:", error);
+    } finally {
+      setLoading(false);
     }
   }
 
+  // In-memory filtering for instant search
+  const filtered = useMemo(() => {
+    const kw = query.trim().toLowerCase();
+    if (!kw) return tags;
+    return tags.filter(
+      (t) => t.name.toLowerCase().includes(kw)
+    );
+  }, [tags, query]);
+
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search tags..."
-        value={query}
-        onChangeText={setQuery}
+      <PageHeader
+        title="Tags"
+        titleAppend={tags.length > 0 ? String(tags.length) : undefined}
+        search={query}
+        setSearch={setQuery}
       />
 
-      <FlatList
-        data={tags}
-        keyExtractor={(item) => item.id.toString()}
-        numColumns={3}
-        renderItem={({ item }) => (
-          <Link href={`/tag/${item.id}`} asChild>
-            <TouchableOpacity style={styles.tagItem}>
-              <Text style={styles.tagName} numberOfLines={1}>
-                {item.name}
-              </Text>
-              <Text style={styles.tagCount}>{item.novel_count}</Text>
-            </TouchableOpacity>
-          </Link>
-        )}
-        onEndReached={() => {
-          if (hasMore) loadTags(false);
-        }}
-        onEndReachedThreshold={0.5}
-      />
+      {loading && tags.length === 0 ? (
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>加载标签中...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id.toString()}
+          numColumns={3}
+          contentContainerStyle={styles.list}
+          columnWrapperStyle={styles.row}
+          keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Ionicons name="pricetag-outline" size={36} color={colors.textMuted} />
+              <Text style={styles.emptyText}>未找到匹配的标签</Text>
+            </View>
+          }
+          renderItem={({ item }) => (
+            <Link href={`/tag/${item.id}`} asChild>
+              <TouchableOpacity style={styles.tagItem} activeOpacity={0.7}>
+                <Text style={styles.tagName} numberOfLines={1}>
+                  {item.name}
+                </Text>
+                <Text style={styles.tagCount}>{item.novel_count}</Text>
+              </TouchableOpacity>
+            </Link>
+          )}
+        />
+      )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  searchInput: {
-    height: 44,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    margin: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    fontSize: 14,
-  },
-  tagItem: {
-    flex: 1,
-    margin: 4,
-    padding: 12,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-    alignItems: "center",
-    maxWidth: "33%",
-  },
-  tagName: {
-    fontSize: 12,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  tagCount: {
-    fontSize: 10,
-    color: "#999",
-    marginTop: 4,
-  },
-});

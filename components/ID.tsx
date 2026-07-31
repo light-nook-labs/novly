@@ -1,7 +1,8 @@
 import { Text, TouchableOpacity, StyleSheet } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import Toast from "react-native-toast-message";
-import { Colors, FontSize } from "../constants/theme";
+import { FontSize } from "../constants/theme";
+import { useTheme } from "./ThemeProvider";
 
 interface IDProps {
   id: number;
@@ -9,6 +10,8 @@ interface IDProps {
 }
 
 export function ID({ id, onPress }: IDProps) {
+  const { colors } = useTheme();
+
   const handlePress = () => {
     Clipboard.setStringAsync(String(id));
     Toast.show({
@@ -24,7 +27,7 @@ export function ID({ id, onPress }: IDProps) {
 
   return (
     <TouchableOpacity onPress={handlePress}>
-      <Text style={styles.id}>#{id}</Text>
+      <Text style={[styles.id, { color: colors.textTertiary }]}>#{id}</Text>
     </TouchableOpacity>
   );
 }
@@ -33,6 +36,5 @@ const styles = StyleSheet.create({
   id: {
     fontSize: FontSize.md,
     fontWeight: "400",
-    color: Colors.textTertiary,
   },
 });

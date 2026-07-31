@@ -1,8 +1,12 @@
 import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet } from "react-native";
-import { Link, router } from "expo-router";
+import { Link } from "expo-router";
 import { useState, useEffect, useCallback } from "react";
-import { getDatabase } from "../lib/data/database";
+import { Ionicons } from "@expo/vector-icons";
+import { getDatabase } from "../utils/database";
 import { formatNumber } from "../utils/mappings";
+import { PageHeader } from "../components/Header";
+import { useTheme } from "../components/ThemeProvider";
+import { Colors, FontSize, Spacing, BorderRadius } from "../constants/theme";
 
 interface Novel {
   id: number;
@@ -12,11 +16,13 @@ interface Novel {
 }
 
 export default function SearchScreen() {
+  const { colors } = useTheme();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Novel[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const PAGE_SIZE = 10;
+  const [listHeight, setListHeight] = useState(0);
 
   const search = useCallback(async (searchQuery: string, reset = false) => {
     const trimmed = searchQuery.trim();
@@ -68,7 +74,8 @@ export default function SearchScreen() {
   }, [query]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <PageHeader title="Search" />
       <View style={styles.searchBar}>
         <TextInput
           style={styles.input}
@@ -77,14 +84,17 @@ export default function SearchScreen() {
           onChangeText={setQuery}
           autoFocus
         />
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.cancel}>取消</Text>
-        </TouchableOpacity>
       </View>
 
       <FlatList
         data={results}
         keyExtractor={(item) => item.id.toString()}
+        onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}
+        onContentSizeChange={(_, h) => {
+          if (h <= listHeight && hasMore) {
+            search(query, false);
+          }
+        }}
         renderItem={({ item }) => (
           <Link href={`/novel/${item.id}`} asChild>
             <TouchableOpacity style={styles.resultItem}>
@@ -105,9 +115,15 @@ export default function SearchScreen() {
         ListEmptyComponent={
           query ? (
             <View style={styles.empty}>
+              <Ionicons name="search-outline" size={48} color={colors.textMuted} />
               <Text style={styles.emptyText}>未找到匹配结果</Text>
             </View>
-          ) : null
+          ) : (
+            <View style={styles.empty}>
+              <Ionicons name="search-outline" size={48} color={colors.textMuted} />
+              <Text style={styles.emptyText}>输入关键词搜索小说</Text>
+            </View>
+          )
         }
       />
     </View>
@@ -135,11 +151,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 14,
   },
-  cancel: {
-    marginLeft: 12,
-    fontSize: 14,
-    color: "#2196F3",
-  },
   resultItem: {
     flexDirection: "row",
     padding: 12,
@@ -165,10 +176,9 @@ const styles = StyleSheet.create({
     color: "#999",
   },
   empty: {
-    flex: 1,
-    justifyContent: "center",
     alignItems: "center",
-    paddingTop: 100,
+    paddingTop: 80,
+    gap: Spacing.md,
   },
   emptyText: {
     fontSize: 14,

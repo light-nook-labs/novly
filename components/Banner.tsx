@@ -1,7 +1,7 @@
 import { View, StyleSheet, TouchableOpacity, Animated, ScrollView, NativeScrollEvent, NativeSyntheticEvent, useWindowDimensions, Dimensions } from "react-native";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { BannerItem, type BannerNovel } from "./IndexBannerItem";
-import { Colors } from "../constants/theme";
+import { useTheme } from "./ThemeProvider";
 
 const AUTOPLAY_INTERVAL = 3500;
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -23,6 +23,7 @@ interface BannerProps {
 }
 
 export function Banner({ data, itemWidth, itemHeight }: BannerProps) {
+  const { colors } = useTheme();
   const { width: winWidth, height: winHeight } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -115,7 +116,7 @@ export function Banner({ data, itemWidth, itemHeight }: BannerProps) {
   if (data.length === 1) {
     return (
       <View style={styles.container}>
-        <View style={styles.bannerWrapper}>
+        <View style={[styles.bannerWrapper, { backgroundColor: colors.surface }]}>
           <TouchableOpacity
             style={[styles.bannerItem, { width: itemW, height: finalHeight }]}
             activeOpacity={0.9}
@@ -130,7 +131,7 @@ export function Banner({ data, itemWidth, itemHeight }: BannerProps) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.bannerWrapper}>
+      <View style={[styles.bannerWrapper, { backgroundColor: colors.surface }]}>
         <Animated.ScrollView
           key={renderKey}
           ref={scrollRef}
@@ -183,7 +184,7 @@ export function Banner({ data, itemWidth, itemHeight }: BannerProps) {
               return (
                 <Animated.View
                   key={i}
-                  style={[styles.indicator, { width: dotWidth, opacity }]}
+                  style={[styles.indicator, { width: dotWidth, opacity, backgroundColor: colors.primary }]}
                 />
               );
             })}
@@ -206,11 +207,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     borderRadius: 16,
     overflow: "hidden",
-    backgroundColor: Colors.surface,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    boxShadow: "0 4px 8px rgba(0,0,0,0.08)",
     elevation: 3,
   },
   scrollView: {
@@ -233,6 +230,5 @@ const styles = StyleSheet.create({
   indicator: {
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: Colors.primary,
   },
 });

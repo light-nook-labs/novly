@@ -1,10 +1,11 @@
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
-import { Link, router } from "expo-router";
-import { useState, useEffect } from "react";
-import { getDatabase } from "../lib/data/database";
+import { router } from "expo-router";
+import { useState, useEffect, useMemo } from "react";
+import { getDatabase } from "../utils/database";
 import { formatNumber } from "../utils/mappings";
 import { useScrollToTop } from "../hooks/useScrollToTop";
-import { Colors, FontSize, Spacing, BorderRadius } from "../constants/theme";
+import { FontSize, Spacing } from "../constants/theme";
+import { useTheme } from "../components/ThemeProvider";
 import { PageHeader } from "../components/Header";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -16,16 +17,100 @@ interface Author {
 }
 
 export default function AuthorsScreen() {
+  const { colors } = useTheme();
   const [authors, setAuthors] = useState<Author[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const PAGE_SIZE = 20;
+  const PAGE_SIZE = 10;
   const { scrollRef, showButton, onScroll, scrollToTop } = useScrollToTop();
+  const [listHeight, setListHeight] = useState(0);
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        list: {
+          padding: Spacing.lg,
+        },
+        authorItem: {
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: Spacing.lg,
+          paddingVertical: Spacing.md,
+          backgroundColor: colors.surface,
+          marginHorizontal: Spacing.lg,
+          marginBottom: 1,
+          gap: Spacing.md,
+        },
+        authorInfo: {
+          flex: 1,
+        },
+        authorName: {
+          fontSize: FontSize.md,
+          fontWeight: "600",
+          color: colors.text,
+        },
+        topNovel: {
+          fontSize: FontSize.sm,
+          color: colors.textSecondary,
+          marginTop: 2,
+        },
+        clicks: {
+          fontSize: FontSize.sm,
+          color: colors.textTertiary,
+        },
+        emptyState: {
+          alignItems: "center",
+          paddingVertical: Spacing.xl,
+        },
+        emptyText: {
+          fontSize: FontSize.md,
+          color: colors.textTertiary,
+        },
+        footer: {
+          paddingVertical: Spacing.xl,
+          alignItems: "center",
+        },
+        footerText: {
+          fontSize: FontSize.sm,
+          color: colors.textTertiary,
+        },
+        backToTop: {
+          position: "absolute",
+          bottom: 20,
+          right: 20,
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: colors.surface,
+          justifyContent: "center",
+          alignItems: "center",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          elevation: 4,
+        },
+      }),
+    [colors]
+  );
 
   useEffect(() => {
+    loadCount();
     loadAuthors(true);
   }, []);
+
+  async function loadCount() {
+    try {
+      const db = await getDatabase();
+      const result = await db.getFirstAsync<{ v: number }>("SELECT COUNT(*) as v FROM authors");
+      setTotalCount(result?.v ?? 0);
+    } catch (error) {
+      console.error("Failed to load author count:", error);
+    }
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -72,8 +157,9 @@ export default function AuthorsScreen() {
 
   return (
     <View style={styles.container}>
-      <PageHeader 
+      <PageHeader
         title="Authors"
+        titleAppend={totalCount > 0 ? formatNumber(totalCount) : undefined}
         search={query}
         setSearch={setQuery}
       />
@@ -83,6 +169,12 @@ export default function AuthorsScreen() {
         data={authors}
         keyExtractor={(item) => item.id.toString()}
         onScroll={onScroll}
+        onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}
+        onContentSizeChange={(_, h) => {
+          if (h <= listHeight && hasMore && authors.length >= PAGE_SIZE) {
+            loadAuthors(false);
+          }
+        }}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
           <TouchableOpacity 
@@ -122,78 +214,9 @@ export default function AuthorsScreen() {
 
       {showButton && (
         <TouchableOpacity style={styles.backToTop} onPress={scrollToTop}>
-          <Ionicons name="arrow-up" size={20} color={Colors.primary} />
+          <Ionicons name="arrow-up" size={20} color={colors.primary} />
         </TouchableOpacity>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  list: {
-    padding: Spacing.lg,
-  },
-  authorItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    backgroundColor: Colors.surface,
-    marginHorizontal: Spacing.lg,
-    marginBottom: 1,
-    gap: Spacing.md,
-  },
-  authorInfo: {
-    flex: 1,
-  },
-  authorName: {
-    fontSize: FontSize.md,
-    fontWeight: "600",
-    color: Colors.text,
-  },
-  topNovel: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
-  clicks: {
-    fontSize: FontSize.sm,
-    color: Colors.textTertiary,
-  },
-  emptyState: {
-    alignItems: "center",
-    paddingVertical: Spacing.xl,
-  },
-  emptyText: {
-    fontSize: FontSize.md,
-    color: Colors.textTertiary,
-  },
-  footer: {
-    paddingVertical: Spacing.xl,
-    alignItems: "center",
-  },
-  footerText: {
-    fontSize: FontSize.sm,
-    color: Colors.textTertiary,
-  },
-  backToTop: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.surface,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-});

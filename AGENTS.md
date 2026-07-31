@@ -1,3 +1,108 @@
 # Expo HAS CHANGED
 
 Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before writing any code.
+
+---
+
+## Project Overview
+
+**Novly** — an offline-first novel metadata browser built with React Native / Expo (SDK 57) + TypeScript. Repo: `light-nook-labs/novly`.
+
+- Data is bundled locally (`assets/seed.sql.gz` → SQLite via `utils/database.ts`); no network needed.
+- Upstream data source: `light-nook-labs/novel_hub`. Sibling Flutter app: `light-nook-labs/NovelHubMobile`.
+- Routes: expo-router (`app/**`). Package manager: **pnpm** (workspace root: `pnpm-workspace.yaml`).
+
+## Quick Commands
+
+```bash
+pnpm install       # install deps
+pnpm start         # dev server (interactive platform picker)
+pnpm run web       # web (fastest iteration)
+npx tsc --noEmit   # ALWAYS run type check before finishing / committing — must pass
+```
+
+## Architecture & Conventions
+
+### Data layer
+
+- **Global DB** (`utils/database.ts`): `initDatabase()` / `getDatabase()` — promise-cached singleton, loads `assets/seed.sql.gz` on first run (Web uses OPFS via expo-sqlite). Read-only app data.
+- **Bookshelf local DB** (`utils/bookshelfDb.ts`): separate `bookshelf.sqlite` for user-private data — NEVER read the bookshelf from the global DB. API: `getBookshelf()`, `addToBookshelf(novel)` (takes `Omit<BookshelfNovel, "added_at">`), `removeFromBookshelf(id)`, `clearBookshelf()`, `isInBookshelf(id)`.
+- **Pagination**: lists page at 10 items per page (`PAGE_SIZE = 10`); infinite scroll via `onEndReached` + `onContentSizeChange` auto-fill on tall screens.
+- **Status normalization** (`normalizeStatus` in `utils/mappings.ts`): A-variants are merged — status `5` (断更A/Abandoned-A) → `4`, status `6` (完结A/Completed-A) → `2`. The `statuses` list page groups by the normalized value; `NovelRow` renders the raw value (both display fine via `statusMapping`).
+
+### Theming (COMPLETE — all pages & components support light/dark)
+
+- `components/ThemeProvider.tsx`: `ThemeMode = "system" | "light" | "dark"`, persisted in AsyncStorage (`theme_mode`). `useTheme()` returns `{ mode, colors, setMode }`.
+- `constants/theme.ts`: `lightColors`, `darkColors` (same shape — typed via `typeof lightColors`), plus `Colors` alias pointing at `lightColors` (static default, used only where dynamic is impractical), `FontSize`, `Spacing`, `BorderRadius`.
+- `app/_layout.tsx` wraps everything in `<ThemeProvider>`; `app/(tabs)/_layout.tsx` drives the tab bar colors from `useTheme`.
+- Settings → APPEARANCE section switches the theme (System / Light / Dark).
+
+**Pattern to follow when touching colors:**
+
+```tsx
+// 1) import (path depends on directory depth)
+import { useTheme } from "../components/ThemeProvider";   // pages under app/
+// import { useTheme } from "./ThemeProvider";            // components/
+
+// 2) first line inside the component
+const { colors } = useTheme();
+
+// 3) dynamic colors in JSX: colors.primary / colors.text / colors.textMuted ...
+// 4) styles that depend on theme MUST be created in-component:
+const styles = useMemo(() => StyleSheet.create({
+  container: { backgroundColor: colors.background },
+  // ...
+}), [colors]);
+// or, when a file has several components sharing styles (e.g. detail pages with a
+// StatItem helper), use a module-level factory + ThemeColors:
+//   function createStyles(colors: ThemeColors) { return StyleSheet.create({ ... }); }
+//   const styles = useMemo(() => createStyles(colors), [colors]); // in EVERY component using it
+```
+
+Rules:
+- **Never** reference module-level `StyleSheet.create` with `Colors.xxx` for new code — put styles in the component via `useMemo([colors])` (or `createStyles(colors)`).
+- Any helper/sub-component that uses `colors` must call `useTheme()` itself (e.g. `StatItem` in `app/novel/[id].tsx` and `app/author/[id].tsx`).
+- Root container background must follow `colors.background` so the whole page flips with the theme.
+- Keep `import { Colors } from ".../constants/theme"` only where a module-level constant genuinely needs a static color (e.g. `NAV_ITEMS` icons in `app/(tabs)/index.tsx`).
+
+### Custom headers
+
+- All routes use custom headers (`headerShown: false` in `app/_layout.tsx` Stack screens). Use `PageHeader` (`components/Header.tsx`) or `TabHeader` (`components/TabHeader.tsx`).
+- `PageHeader` props: `title`, `titleAppend`, `search`/`setSearch` (input mode), `onSearchPress`, `right`. Back button: short-press → `router.back()`, long-press → `router.replace("/(tabs)")`.
+- Registered Stack screens must stay in sync with actual routes (search, search/banners, novel/[id], author/[id], tag/[id], contest/[id], genre/[id], status/[id], settings — all `headerShown: false`).
+
+## Known Pitfalls & Fixed Bugs (don't regress)
+
+1. **RN Web `Alert.alert` does not support multi-button confirmations** (onPress never fires). Never use `Alert.alert` with buttons for Web flows — use the app-level `ConfirmDialog` (`components/ConfirmDialog.tsx`, RN Modal) or `window.confirm/prompt` only when unavoidable.
+2. **Dangerous actions must use `ConfirmDialog`** (settings Clear Bookshelf / Reset Data) — system dialogs previously corrupted the navigation stack on Web.
+3. **Nested TouchableOpacity inside `<Link asChild>` steals taps**: clicking an inner button also triggers navigation (bookshelf X button bug). Keep inner buttons OUTSIDE the Link's pressable child, or manage state directly (e.g. `BannerListItem` keeps its own lightbox `Modal` instead of wrapping the image in `ImageLightbox`'s touchable).
+4. **expo-router warns about style arrays passed to a `<Slot>` child** (`<Link asChild>`): flatten with `StyleSheet.flatten([...])` if the child takes an array style.
+5. **Tab pages are persistent** — `useEffect([])` won't reload data when returning to the tab. Use `useFocusEffect(useCallback(...))` (expo-router) for bookshelf-style reloads.
+6. **Shared styles across components** in one file: converting to theme requires `createStyles(colors)` + per-component `useMemo` (see theming pattern above); forgetting `useTheme()` inside a helper component = "Cannot find name 'colors'" TS error.
+7. **Bookshelf default sort is by added time** (`added_at` from the local DB); `FilterState.sortBy` default `"added_at"` — when switching to other sort keys the whitelist (`SORT_WHITELIST`) must include them.
+8. **"其他"/genre 1 data is removed at seed-generation time** — genre/status filter sheets hide the "其他" (value 1) option; nav-grid stats on the home page count `DISTINCT` DB values (and merge status A-variants) so badge numbers match the list pages.
+
+## Key Files Quick Reference
+
+| File | Purpose |
+|---|---|
+| `constants/theme.ts` | `lightColors`, `darkColors`, `Colors`(=light), `FontSize`/`Spacing`/`BorderRadius` |
+| `components/ThemeProvider.tsx` | `ThemeProvider`, `useTheme()`, `ThemeMode` / `ThemeColors` types |
+| `utils/database.ts` | `initDatabase()` / `getDatabase()` (promise-cached singleton) |
+| `utils/bookshelfDb.ts` | bookshelf local db: `getBookshelf/addToBookshelf/removeFromBookshelf/clearBookshelf/isInBookshelf` |
+| `utils/mappings.ts` | `genreMapping`, `statusMapping`, `ptypeMapping`, `statusColors`, `normalizeStatus`, `formatNumber` |
+| `utils/urls.ts` | `coverUrl()`, `bannerUrl()` |
+| `components/Header.tsx` | `PageHeader` |
+| `components/TabHeader.tsx` | tab-page header (logo + search + right) |
+| `components/NovelRow.tsx` | novel list row (cover, badges, rank, optional extended stats/tags) |
+| `components/NovelFilterSheet.tsx` | generic filter bottom sheet (`FilterState` interface; reuse for novels & bookshelf) |
+| `components/Banner.tsx` / `BannerListItem.tsx` / `IndexBannerItem.tsx` | home carousel & banner list items |
+| `components/ConfirmDialog.tsx` / `AppInfoSheet.tsx` / `ImageLightbox.tsx` | reusable dialogs / lightbox |
+| `hooks/useNovels.ts` | novel list query hook (filters + paging + whitelisted ORDER BY) |
+| `hooks/useScrollToTop.ts` | back-to-top button behavior |
+
+## Contributing
+
+- Report bugs / suggest features via Issues; PRs welcome (fork → branch → PR).
+- Run `npx tsc --noEmit` and make sure it passes before submitting.
+- Keep this file accurate: when you fix a bug or discover a pitfall, add it to the lists above.

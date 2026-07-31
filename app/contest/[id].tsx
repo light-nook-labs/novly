@@ -1,30 +1,77 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
-import { Link, useLocalSearchParams } from "expo-router";
-import { useState, useEffect } from "react";
-import { getDatabase } from "../../lib/data/database";
-import { formatNumber, statusMapping, genreMapping, statusColors } from "../../utils/mappings";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
+import { useLocalSearchParams, router } from "expo-router";
+import { useState, useEffect, useMemo } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { getDatabase } from "../../utils/database";
+import { FontSize, Spacing } from "../../constants/theme";
+import { useTheme } from "../../components/ThemeProvider";
+import { PageHeader } from "../../components/Header";
+import { NovelRow, type NovelRowData } from "../../components/NovelRow";
+import { useScrollToTop } from "../../hooks/useScrollToTop";
 
 interface Contest {
   id: number;
   name: string;
 }
 
-interface Novel {
-  id: number;
-  title: string;
-  author: string | null;
-  genre: number;
-  status: number;
-  click_num: number | null;
-}
-
 export default function ContestDetailScreen() {
+  const { colors } = useTheme();
   const { id } = useLocalSearchParams();
   const [contest, setContest] = useState<Contest | null>(null);
-  const [novels, setNovels] = useState<Novel[]>([]);
+  const [novels, setNovels] = useState<NovelRowData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const PAGE_SIZE = 10;
+  const [listHeight, setListHeight] = useState(0);
+  const { scrollRef, showButton, onScroll, scrollToTop } = useScrollToTop();
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        loading: {
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: colors.background,
+          gap: Spacing.md,
+        },
+        loadingText: {
+          fontSize: FontSize.md,
+          color: colors.textTertiary,
+        },
+        list: {
+          paddingBottom: Spacing.xl,
+        },
+        backToTop: {
+          position: "absolute",
+          bottom: 20,
+          right: 20,
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: colors.surface,
+          justifyContent: "center",
+          alignItems: "center",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          elevation: 4,
+        },
+        empty: {
+          alignItems: "center",
+          paddingVertical: Spacing.xl * 2,
+          gap: Spacing.md,
+        },
+        emptyText: {
+          fontSize: FontSize.md,
+          color: colors.textTertiary,
+        },
+      }),
+    [colors]
+  );
 
   useEffect(() => {
     loadContest();
@@ -41,10 +88,12 @@ export default function ContestDetailScreen() {
       setContest(contestResult);
 
       if (contestResult) {
-        loadNovels(true);
+        await loadNovels(true);
       }
     } catch (error) {
       console.error("Failed to load contest:", error);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -53,8 +102,11 @@ export default function ContestDetailScreen() {
       const db = await getDatabase();
       const offset = reset ? 0 : page * PAGE_SIZE;
 
-      const results = await db.getAllAsync<Novel>(
-        "SELECT id, title, author, genre, status, click_num FROM novels WHERE contest_id = ? ORDER BY click_num DESC LIMIT ? OFFSET ?",
+      const results = await db.getAllAsync<NovelRowData>(
+        `SELECT id, title, author, cover, genre, status, ptype, click_num
+         FROM novels WHERE contest_id = ?
+         ORDER BY click_num DESC
+         LIMIT ? OFFSET ?`,
         [Number(id), PAGE_SIZE, offset]
       );
 
@@ -72,107 +124,71 @@ export default function ContestDetailScreen() {
     }
   }
 
+  if (loading) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   if (!contest) {
     return (
       <View style={styles.loading}>
-        <Text>Loading...</Text>
+        <Ionicons name="trophy-outline" size={48} color={colors.textMuted} />
+        <Text style={styles.loadingText}>赛事不存在</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.name}>{contest.name}</Text>
-      </View>
+      <PageHeader
+        title="Contest"
+        titleAppend={contest.name}
+        onSearchPress={() => router.push("/search")}
+      />
 
       <FlatList
+        ref={scrollRef}
         data={novels}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <Link href={`/novel/${item.id}`} asChild>
-            <TouchableOpacity style={styles.novelItem}>
-              <View style={styles.novelInfo}>
-                <Text style={styles.novelTitle} numberOfLines={1}>
-                  {item.title}
-                </Text>
-                <Text style={styles.novelAuthor}>{item.author}</Text>
-                <View style={styles.badges}>
-                  <View style={[styles.badge, { backgroundColor: statusColors[item.status] || "#999" }]}>
-                    <Text style={styles.badgeText}>{statusMapping[item.status]}</Text>
-                  </View>
-                  <View style={[styles.badge, { backgroundColor: "#666" }]}>
-                    <Text style={styles.badgeText}>{genreMapping[item.genre]}</Text>
-                  </View>
-                </View>
-              </View>
-              <Text style={styles.novelClicks}>{formatNumber(item.click_num)}</Text>
-            </TouchableOpacity>
-          </Link>
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}
+        onContentSizeChange={(_, h) => {
+          if (h <= listHeight && hasMore) {
+            loadNovels(false);
+          }
+        }}
+        contentContainerStyle={styles.list}
+        renderItem={({ item, index }) => (
+          <NovelRow
+            novel={item}
+            rank={index + 1}
+            value={item.click_num}
+            valueLabel="点击"
+          />
         )}
+        ListFooterComponent={
+          novels.length === 0 ? (
+            <View style={styles.empty}>
+              <Ionicons name="book-outline" size={36} color={colors.textMuted} />
+              <Text style={styles.emptyText}>暂无作品</Text>
+            </View>
+          ) : null
+        }
         onEndReached={() => {
           if (hasMore) loadNovels(false);
         }}
         onEndReachedThreshold={0.5}
       />
+
+      {showButton && (
+        <TouchableOpacity style={styles.backToTop} onPress={scrollToTop}>
+          <Ionicons name="arrow-up" size={20} color={colors.primary} />
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  loading: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  header: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  name: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  novelItem: {
-    flexDirection: "row",
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    alignItems: "center",
-  },
-  novelInfo: {
-    flex: 1,
-  },
-  novelTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  novelAuthor: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 2,
-  },
-  badges: {
-    flexDirection: "row",
-    marginTop: 4,
-    gap: 4,
-  },
-  badge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  badgeText: {
-    fontSize: 10,
-    color: "#fff",
-  },
-  novelClicks: {
-    fontSize: 12,
-    color: "#999",
-  },
-});

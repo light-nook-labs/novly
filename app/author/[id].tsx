@@ -1,31 +1,32 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
-import { Link, useLocalSearchParams } from "expo-router";
-import { useState, useEffect } from "react";
-import { getDatabase } from "../../lib/data/database";
-import { formatNumber, statusMapping, genreMapping, statusColors } from "../../utils/mappings";
-import { Colors, FontSize, Spacing, BorderRadius } from "../../constants/theme";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { useLocalSearchParams } from "expo-router";
+import { useState, useEffect, useMemo } from "react";
+import { getDatabase } from "../../utils/database";
+import { formatNumber } from "../../utils/mappings";
+import { FontSize, Spacing, BorderRadius } from "../../constants/theme";
+import { useTheme, type ThemeColors } from "../../components/ThemeProvider";
+import { Ionicons } from "@expo/vector-icons";
 import { PageHeader } from "../../components/Header";
+import { NovelRow, type NovelRowData } from "../../components/NovelRow";
 
-interface Author {
+interface AuthorStats {
   id: number;
   name: string;
   top_novel_title: string | null;
   top_novel_clicks: number;
-}
-
-interface Novel {
-  id: number;
-  title: string;
-  author: string | null;
-  genre: number;
-  status: number;
-  click_num: number | null;
+  novel_count: number;
+  total_clicks: number;
+  total_likes: number;
+  total_praise: number;
 }
 
 export default function AuthorDetailScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { id } = useLocalSearchParams();
-  const [author, setAuthor] = useState<Author | null>(null);
-  const [novels, setNovels] = useState<Novel[]>([]);
+  const [author, setAuthor] = useState<AuthorStats | null>(null);
+  const [novels, setNovels] = useState<NovelRowData[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadAuthor();
@@ -35,28 +36,71 @@ export default function AuthorDetailScreen() {
     try {
       const db = await getDatabase();
 
-      const authorResult = await db.getFirstAsync<Author>(
-        "SELECT id, name, top_novel_title, top_novel_clicks FROM authors WHERE id = ?",
+      const authorResult = await db.getFirstAsync<AuthorStats>(
+        `SELECT a.id, a.name, a.top_novel_title, a.top_novel_clicks,
+                COUNT(n.id) as novel_count,
+                COALESCE(SUM(n.click_num), 0) as total_clicks,
+                COALESCE(SUM(n.like_num), 0) as total_likes,
+                COALESCE(SUM(n.praise_num), 0) as total_praise
+         FROM authors a
+         LEFT JOIN novels n ON a.name = n.author
+         WHERE a.id = ?
+         GROUP BY a.id`,
         [Number(id)]
       );
       setAuthor(authorResult);
 
       if (authorResult) {
-        const novelsResult = await db.getAllAsync<Novel>(
-          "SELECT id, title, author, genre, status, click_num FROM novels WHERE author = ? ORDER BY click_num DESC",
+        const novelsResult = await db.getAllAsync<NovelRowData>(
+          `SELECT id, title, author, cover, genre, status, ptype,
+                  word_num, click_num, like_num, comment_num
+           FROM novels WHERE author = ?
+           ORDER BY click_num DESC`,
           [authorResult.name]
         );
+
+        // Fetch tags for all novels
+        if (novelsResult.length > 0) {
+          const ids = novelsResult.map((n) => n.id);
+          const placeholders = ids.map(() => "?").join(",");
+          const tagRows = await db.getAllAsync<{ novel_id: number; name: string }>(
+            `SELECT nt.novel_id, t.name
+             FROM novel_tags nt
+             JOIN tags t ON nt.tag_id = t.id
+             WHERE nt.novel_id IN (${placeholders})
+             ORDER BY t.name`,
+            ids
+          );
+          const tagMap: Record<number, string[]> = {};
+          for (const row of tagRows) {
+            if (!tagMap[row.novel_id]) tagMap[row.novel_id] = [];
+            tagMap[row.novel_id].push(row.name);
+          }
+          for (const novel of novelsResult) {
+            novel.tags = tagMap[novel.id] ?? [];
+          }
+        }
+
         setNovels(novelsResult);
       }
     } catch (error) {
       console.error("Failed to load author:", error);
+    } finally {
+      setLoading(false);
     }
   }
 
   if (!author) {
     return (
       <View style={styles.loading}>
-        <Text>Loading...</Text>
+        {loading ? (
+          <ActivityIndicator size="large" color={colors.primary} />
+        ) : (
+          <>
+            <Ionicons name="person-outline" size={48} color={colors.textMuted} />
+            <Text style={styles.loadingText}>作者不存在</Text>
+          </>
+        )}
       </View>
     );
   }
@@ -64,112 +108,140 @@ export default function AuthorDetailScreen() {
   return (
     <View style={styles.container}>
       <PageHeader title={author.name} />
-      <View style={styles.authorInfo}>
-        {author.top_novel_title && (
-          <Text style={styles.topNovel}>Top: {author.top_novel_title}</Text>
-        )}
-        <Text style={styles.clicks}>{formatNumber(author.top_novel_clicks)} clicks</Text>
-      </View>
 
       <FlatList
         data={novels}
         keyExtractor={(item) => item.id.toString()}
         ListHeaderComponent={
-          <Text style={styles.sectionTitle}>Novels ({novels.length})</Text>
+          <View>
+            {/* Author Stats Card */}
+            <View style={styles.statsCard}>
+              <View style={styles.statsRow}>
+                <StatItem icon="library-outline" label="作品" value={author.novel_count} />
+                <View style={styles.statDivider} />
+                <StatItem icon="flash-outline" label="总点击" value={author.total_clicks} />
+                <View style={styles.statDivider} />
+                <StatItem icon="heart-outline" label="总收藏" value={author.total_likes} />
+                <View style={styles.statDivider} />
+                <StatItem icon="flame-outline" label="总点赞" value={author.total_praise} />
+              </View>
+            </View>
+
+            {/* Section Title */}
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Novels</Text>
+              <Text style={styles.sectionCount}>{novels.length}</Text>
+            </View>
+          </View>
         }
         renderItem={({ item }) => (
-          <Link href={`/novel/${item.id}`} asChild>
-            <TouchableOpacity style={styles.novelItem}>
-              <View style={styles.novelInfo}>
-                <Text style={styles.novelTitle} numberOfLines={1}>
-                  {item.title}
-                </Text>
-                <View style={styles.badges}>
-                  <View style={[styles.badge, { backgroundColor: statusColors[item.status] || "#999" }]}>
-                    <Text style={styles.badgeText}>{statusMapping[item.status]}</Text>
-                  </View>
-                  <View style={[styles.badge, { backgroundColor: "#666" }]}>
-                    <Text style={styles.badgeText}>{genreMapping[item.genre]}</Text>
-                  </View>
-                </View>
-              </View>
-              <Text style={styles.novelClicks}>{formatNumber(item.click_num)}</Text>
-            </TouchableOpacity>
-          </Link>
+          <NovelRow
+            novel={item}
+            value={item.click_num}
+            valueLabel="点击"
+            extended
+          />
         )}
+        ListFooterComponent={
+          novels.length === 0 && !loading ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="book-outline" size={36} color={colors.textMuted} />
+              <Text style={styles.emptyText}>暂无作品</Text>
+            </View>
+          ) : null
+        }
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+function StatItem({ icon, label, value }: { icon: string; label: string; value: number }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  return (
+    <View style={styles.statItem}>
+      <Ionicons name={icon as any} size={16} color={colors.primary} />
+      <Text style={styles.statValue}>{formatNumber(value)}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   loading: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
+    gap: Spacing.md,
   },
-  authorInfo: {
-    padding: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    backgroundColor: Colors.surface,
-  },
-  topNovel: {
+  loadingText: {
     fontSize: FontSize.md,
-    color: Colors.textSecondary,
-    marginTop: Spacing.xs,
+    color: colors.textTertiary,
   },
-  clicks: {
-    fontSize: FontSize.sm,
-    color: Colors.textTertiary,
-    marginTop: Spacing.xs,
+  // Stats card
+  statsCard: {
+    backgroundColor: colors.surface,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.md,
   },
-  sectionTitle: {
-    fontSize: FontSize.md,
-    fontWeight: "bold",
-    padding: Spacing.md,
-    paddingBottom: Spacing.sm,
-    color: Colors.text,
-  },
-  novelItem: {
+  statsRow: {
     flexDirection: "row",
-    padding: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
     alignItems: "center",
-    backgroundColor: Colors.surface,
-    marginHorizontal: Spacing.md,
-    marginBottom: 1,
   },
-  novelInfo: {
+  statItem: {
     flex: 1,
+    alignItems: "center",
+    gap: 4,
   },
-  novelTitle: {
+  statDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: colors.surfaceBorder,
+  },
+  statValue: {
     fontSize: FontSize.md,
-    fontWeight: "bold",
-    color: Colors.text,
+    fontWeight: "700",
+    color: colors.text,
   },
-  badges: {
+  statLabel: {
+    fontSize: FontSize.xs,
+    color: colors.textTertiary,
+  },
+  // Section
+  sectionHeader: {
     flexDirection: "row",
-    marginTop: Spacing.xs,
+    alignItems: "baseline",
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.sm,
     gap: Spacing.xs,
   },
-  badge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-    borderRadius: BorderRadius.sm,
+  sectionTitle: {
+    fontSize: FontSize.lg,
+    fontWeight: "700",
+    color: colors.text,
   },
-  badgeText: {
-    fontSize: FontSize.xs,
-    color: "#fff",
-  },
-  novelClicks: {
+  sectionCount: {
     fontSize: FontSize.sm,
-    color: Colors.textTertiary,
+    color: colors.textTertiary,
   },
-});
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: Spacing.xl * 2,
+    gap: Spacing.md,
+  },
+  emptyText: {
+    fontSize: FontSize.md,
+    color: colors.textTertiary,
+  },
+  });
+}

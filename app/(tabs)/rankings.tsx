@@ -6,13 +6,14 @@ import {
   Text,
   ScrollView,
 } from "react-native";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { getDatabase } from "../../lib/data/database";
+import { getDatabase } from "../../utils/database";
 import { NovelRow } from "../../components/NovelRow";
 import { TabHeader } from "../../components/TabHeader";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
-import { Colors, FontSize, Spacing } from "../../constants/theme";
+import { FontSize, Spacing } from "../../constants/theme";
+import { useTheme } from "../../components/ThemeProvider";
 
 interface Novel {
   id: number;
@@ -40,6 +41,7 @@ const RANKING_TABS = [
 ];
 
 export default function RankingsScreen() {
+  const { colors } = useTheme();
   const [novels, setNovels] = useState<Novel[]>([]);
   const [selectedTab, setSelectedTab] = useState("click_num");
   const [loading, setLoading] = useState(true);
@@ -47,6 +49,71 @@ export default function RankingsScreen() {
   const [hasMore, setHasMore] = useState(true);
   const PAGE_SIZE = 10;
   const { scrollRef, showButton, onScroll, scrollToTop } = useScrollToTop();
+  const [listHeight, setListHeight] = useState(0);
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        tabBar: {
+          backgroundColor: colors.surface,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: colors.surfaceBorder,
+        },
+        tabScroll: {
+          paddingHorizontal: Spacing.md,
+          gap: Spacing.xs,
+          paddingVertical: Spacing.sm,
+        },
+        tab: {
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: Spacing.md,
+          paddingVertical: Spacing.sm,
+          borderRadius: 20,
+          gap: 4,
+        },
+        tabActive: {
+          backgroundColor: colors.primary,
+        },
+        tabText: {
+          fontSize: FontSize.sm,
+          color: colors.textSecondary,
+        },
+        tabTextActive: {
+          color: "#fff",
+          fontWeight: "600",
+        },
+        list: {
+          paddingBottom: Spacing.xl,
+        },
+        footer: {
+          paddingVertical: Spacing.xl,
+          alignItems: "center",
+        },
+        footerText: {
+          fontSize: FontSize.sm,
+          color: colors.textTertiary,
+        },
+        backToTop: {
+          position: "absolute",
+          bottom: 20,
+          right: 20,
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: colors.surface,
+          justifyContent: "center",
+          alignItems: "center",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          elevation: 4,
+        },
+      }),
+    [colors]
+  );
 
   useEffect(() => {
     setNovels([]);
@@ -109,7 +176,7 @@ export default function RankingsScreen() {
                 <Ionicons
                   name={tab.icon}
                   size={14}
-                  color={active ? "#fff" : Colors.textSecondary}
+                  color={active ? "#fff" : colors.textSecondary}
                 />
                 <Text style={[styles.tabText, active && styles.tabTextActive]}>
                   {tab.label}
@@ -125,6 +192,12 @@ export default function RankingsScreen() {
         data={novels}
         keyExtractor={(item) => item.id.toString()}
         onScroll={onScroll}
+        onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}
+        onContentSizeChange={(_, h) => {
+          if (h <= listHeight && hasMore && !loading) {
+            loadRankings(false);
+          }
+        }}
         contentContainerStyle={styles.list}
         renderItem={({ item, index }) => (
           <NovelRow
@@ -153,72 +226,9 @@ export default function RankingsScreen() {
 
       {showButton && (
         <TouchableOpacity style={styles.backToTop} onPress={scrollToTop}>
-          <Ionicons name="arrow-up" size={20} color={Colors.primary} />
+          <Ionicons name="arrow-up" size={20} color={colors.primary} />
         </TouchableOpacity>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  tabBar: {
-    backgroundColor: Colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.surfaceBorder,
-  },
-  tabScroll: {
-    paddingHorizontal: Spacing.md,
-    gap: Spacing.xs,
-    paddingVertical: Spacing.sm,
-  },
-  tab: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: 20,
-    gap: 4,
-  },
-  tabActive: {
-    backgroundColor: Colors.primary,
-  },
-  tabText: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
-  },
-  tabTextActive: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  list: {
-    paddingBottom: Spacing.xl,
-  },
-  footer: {
-    paddingVertical: Spacing.xl,
-    alignItems: "center",
-  },
-  footerText: {
-    fontSize: FontSize.sm,
-    color: Colors.textTertiary,
-  },
-  backToTop: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.surface,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-});

@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
-import { Text, Image, TouchableOpacity, StyleSheet, View, useWindowDimensions } from "react-native";
+import { useState, useEffect, useRef } from "react";
+import { Text, Image, TouchableOpacity, StyleSheet, View, useWindowDimensions, Animated } from "react-native";
 import { router } from "expo-router";
-import { Colors, FontSize, Spacing, BorderRadius } from "../constants/theme";
+import { FontSize, Spacing, BorderRadius } from "../constants/theme";
+import { useTheme } from "./ThemeProvider";
 
 export interface BannerNovel {
   id: number;
@@ -11,25 +12,60 @@ export interface BannerNovel {
 
 interface BannerItemProps extends BannerNovel {
   width?: number;
-  /** 固定高度（由父组件通过断点计算传入），不传时自适应 */
   height?: number;
 }
 
 const BANNER_PREFIX = "https://rs.sfacg.com/web/novel/images/images/beitouNew/";
 
+function LoadingPlaceholder({ width, height }: { width: number; height: number }) {
+  const { colors } = useTheme();
+  const opacity = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0.3,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        styles.placeholder,
+        { width, height, opacity, backgroundColor: colors.surfaceBorder },
+      ]}
+    />
+  );
+}
+
 export function BannerItem({ id, title, author, width, height }: BannerItemProps) {
+  const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
   const containerWidth = width ?? winWidth;
+  const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
   const uri = BANNER_PREFIX + id + ".jpg";
 
   useEffect(() => {
+    setLoaded(false);
     setLoadError(false);
     Image.getSize(
       uri,
-      () => {},
-      () => setLoadError(true)
+      () => setLoaded(true),
+      () => { setLoadError(true); setLoaded(true); }
     );
   }, [uri]);
 
@@ -38,13 +74,15 @@ export function BannerItem({ id, title, author, width, height }: BannerItemProps
   return (
     <TouchableOpacity
       activeOpacity={0.9}
-      style={[styles.card, { width: containerWidth, height: fixedHeight }]}
+      style={[styles.card, { width: containerWidth, height: fixedHeight, backgroundColor: colors.surfaceBorder }]}
       onPress={() => router.push(`/novel/${id}`)}
     >
       {loadError ? (
-        <View style={[styles.fallback, { width: containerWidth, height: fixedHeight }]}>
-          <Text style={styles.fallbackText}>{title}</Text>
+        <View style={[styles.fallback, { width: containerWidth, height: fixedHeight, backgroundColor: colors.primaryLight }]}>
+          <Text style={[styles.fallbackText, { color: colors.primary }]}>{title}</Text>
         </View>
+      ) : !loaded ? (
+        <LoadingPlaceholder width={containerWidth} height={fixedHeight} />
       ) : (
         <View style={{ width: containerWidth, height: fixedHeight, overflow: "hidden" }}>
           <Image
@@ -71,19 +109,8 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: BorderRadius.lg,
     overflow: "hidden",
-    backgroundColor: Colors.surfaceBorder,
   },
-  image: {
-    width: "100%",
-    height: "100%",
-  },
-  imageWrap: {
-    backgroundColor: "#1a1a1a",
-  },
-  overlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(0,0,0,0.25)",
-  },
+  placeholder: {},
   content: {
     position: "absolute",
     bottom: 0,
@@ -113,7 +140,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   fallback: {
-    backgroundColor: Colors.primaryLight,
     justifyContent: "center",
     alignItems: "center",
     padding: Spacing.lg,
@@ -121,7 +147,6 @@ const styles = StyleSheet.create({
   fallbackText: {
     fontSize: FontSize.lg,
     fontWeight: "700",
-    color: Colors.primary,
     textAlign: "center",
   },
 });

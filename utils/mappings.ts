@@ -21,6 +21,13 @@ export const statusMapping: Record<number, string> = {
   7: "下架",
 };
 
+// 带 A 后缀的状态归并到无 A 状态（断更A→断更、完结A→已完结）
+export function normalizeStatus(status: number): number {
+  if (status === 5) return 4;
+  if (status === 6) return 2;
+  return status;
+}
+
 export const ptypeMapping: Record<number, string> = {
   1: "其他",
   2: "免费",

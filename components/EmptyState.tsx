@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors, FontSize, Spacing } from "../constants/theme";
+import { FontSize, Spacing } from "../constants/theme";
+import { useTheme } from "./ThemeProvider";
 
 interface EmptyStateProps {
   icon?: keyof typeof Ionicons.glyphMap;
@@ -8,10 +9,11 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ icon = "folder-open-outline", message = "暂无数据" }: EmptyStateProps) {
+  const { colors } = useTheme();
   return (
     <View style={styles.container}>
-      <Ionicons name={icon} size={48} color={Colors.textMuted} />
-      <Text style={styles.text}>{message}</Text>
+      <Ionicons name={icon} size={48} color={colors.textMuted} />
+      <Text style={[styles.text, { color: colors.textTertiary }]}>{message}</Text>
     </View>
   );
 }
@@ -26,6 +28,5 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: FontSize.md,
-    color: Colors.textTertiary,
   },
 });

@@ -1,4 +1,4 @@
-export const Colors = {
+export const lightColors = {
   primary: "#5B5FE9",
   primaryLight: "#5B5FE915",
   background: "#F8F9FA",
@@ -14,6 +14,26 @@ export const Colors = {
   info: "#2196F3",
   shadow: "#000000",
 };
+
+export const darkColors: typeof lightColors = {
+  primary: "#8B8FF0",
+  primaryLight: "#8B8FF022",
+  background: "#121212",
+  surface: "#1E1E1E",
+  surfaceBorder: "#2A2A2A",
+  border: "#3A3A3A",
+  text: "#F5F5F5",
+  textSecondary: "#B0B0B0",
+  textTertiary: "#8A8A8A",
+  textMuted: "#666666",
+  danger: "#FF7A7A",
+  success: "#66BB6A",
+  info: "#4FC3F7",
+  shadow: "#000000",
+};
+
+// 兼容现有组件：Colors 默认指向浅色方案
+export const Colors = lightColors;
 
 export const FontSize = {
   xs: 10,

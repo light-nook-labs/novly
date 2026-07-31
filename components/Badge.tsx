@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet } from "react-native";
-import { Colors, FontSize } from "../constants/theme";
+import { FontSize } from "../constants/theme";
+import { useTheme } from "./ThemeProvider";
 
 type BadgeVariant = "status" | "genre" | "ptype" | "accent";
 
@@ -8,14 +9,14 @@ interface BadgeProps {
   variant: BadgeVariant;
 }
 
-const VARIANT_STYLES: Record<BadgeVariant, { bg: string; fg: string; border: string }> = {
-  status: { bg: Colors.primaryLight, fg: Colors.primary, border: Colors.primary + "30" },
-  genre: { bg: Colors.primaryLight, fg: Colors.primary, border: Colors.primary + "30" },
-  ptype: { bg: "#26A69A15", fg: "#26A69A", border: "#26A69A30" },
-  accent: { bg: "#FF6B6B15", fg: Colors.danger, border: Colors.danger + "30" },
-};
-
 export function Badge({ label, variant }: BadgeProps) {
+  const { colors } = useTheme();
+  const VARIANT_STYLES: Record<BadgeVariant, { bg: string; fg: string; border: string }> = {
+    status: { bg: colors.primaryLight, fg: colors.primary, border: colors.primary + "30" },
+    genre: { bg: colors.primaryLight, fg: colors.primary, border: colors.primary + "30" },
+    ptype: { bg: "#26A69A15", fg: "#26A69A", border: "#26A69A30" },
+    accent: { bg: "#FF6B6B15", fg: colors.danger, border: colors.danger + "30" },
+  };
   const style = VARIANT_STYLES[variant];
   return (
     <View style={[styles.badge, { backgroundColor: style.bg, borderColor: style.border }]}>
@@ -24,14 +25,14 @@ export function Badge({ label, variant }: BadgeProps) {
   );
 }
 
-const STATUS_COLORS: Record<number, string> = {
-  3: Colors.success,
-  2: Colors.primary,
-  6: Colors.primary,
-};
-
 export function StatusBadge({ statusId, label }: { statusId: number; label: string }) {
-  const fg = STATUS_COLORS[statusId] ?? Colors.textTertiary;
+  const { colors } = useTheme();
+  const STATUS_COLORS: Record<number, string> = {
+    3: colors.success,
+    2: colors.primary,
+    6: colors.primary,
+  };
+  const fg = STATUS_COLORS[statusId] ?? colors.textTertiary;
   return (
     <View style={[styles.badge, { backgroundColor: fg + "15", borderColor: fg + "30" }]}>
       <Text style={[styles.text, { color: fg }]}>{label}</Text>

@@ -1,19 +1,37 @@
 import { useState, useEffect, useCallback } from "react";
-import { getDatabase } from "../lib/data/database";
+import { getDatabase } from "../utils/database";
 import { type NovelRowData } from "../components/NovelRow";
 
 interface UseNovelsOptions {
   ptype?: number | null;
   status?: number | null;
   genre?: number | null;
+  year?: number | null;
+  minWordNum?: number | null;
+  maxWordNum?: number | null;
+  sortBy?: string;
+  descending?: boolean;
   pageSize?: number;
 }
+
+const SORT_WHITELIST = new Set([
+  "click_num",
+  "word_num",
+  "like_num",
+  "praise_num",
+  "last_update",
+]);
 
 export function useNovels({
   ptype = null,
   status = null,
   genre = null,
-  pageSize = 20,
+  year = null,
+  minWordNum = null,
+  maxWordNum = null,
+  sortBy = "click_num",
+  descending = true,
+  pageSize = 10,
 }: UseNovelsOptions = {}) {
   const [novels, setNovels] = useState<NovelRowData[]>([]);
   const [page, setPage] = useState(0);
@@ -39,17 +57,30 @@ export function useNovels({
         conditions.push("genre = ?");
         params.push(genre);
       }
+      if (year !== null) {
+        conditions.push("SUBSTR(last_update, 1, 4) = ?");
+        params.push(String(year));
+      }
+      if (minWordNum !== null) {
+        conditions.push("word_num >= ?");
+        params.push(minWordNum);
+      }
+      if (maxWordNum !== null) {
+        conditions.push("word_num < ?");
+        params.push(maxWordNum);
+      }
 
       if (conditions.length > 0) {
         query += " WHERE " + conditions.join(" AND ");
       }
 
-      query += " ORDER BY click_num DESC LIMIT ? OFFSET ?";
+      const orderField = SORT_WHITELIST.has(sortBy) ? sortBy : "click_num";
+      query += ` ORDER BY ${orderField} ${descending ? "DESC" : "ASC"} LIMIT ? OFFSET ?`;
       params.push(pageSize, pageNum * pageSize);
 
       return { query, params };
     },
-    [ptype, status, genre, pageSize]
+    [ptype, status, genre, year, minWordNum, maxWordNum, sortBy, descending, pageSize]
   );
 
   const loadPage = useCallback(
@@ -81,7 +112,7 @@ export function useNovels({
     setPage(0);
     setHasMore(true);
     loadPage(0, true);
-  }, [ptype, status, genre]);
+  }, [ptype, status, genre, year, minWordNum, maxWordNum, sortBy, descending]);
 
   const loadMore = useCallback(() => {
     if (!hasMore || loading) return;

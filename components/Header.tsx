@@ -1,18 +1,21 @@
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Keyboard } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Pressable, StyleSheet, Keyboard } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors, FontSize, Spacing } from "../constants/theme";
+import { FontSize, Spacing, BorderRadius } from "../constants/theme";
+import { useTheme } from "./ThemeProvider";
 
 interface PageHeaderProps {
   title: string;
+  titleAppend?: string;
   search?: string;
   setSearch?: (v: string) => void;
   onSearchPress?: () => void;
   right?: React.ReactNode;
 }
 
-export function PageHeader({ title, search, setSearch, onSearchPress, right }: PageHeaderProps) {
+export function PageHeader({ title, titleAppend, search, setSearch, onSearchPress, right }: PageHeaderProps) {
+  const { colors } = useTheme();
   const [searchVisible, setSearchVisible] = useState(false);
 
   const handleSearchPress = () => {
@@ -38,34 +41,33 @@ export function PageHeader({ title, search, setSearch, onSearchPress, right }: P
     if (searchVisible) {
       setSearchVisible(false);
       setSearch?.("");
-    } else {
-      router.replace("/(tabs)");
+      return;
     }
+    router.replace("/(tabs)");
   };
 
   return (
-    <View style={styles.header}>
-      <TouchableOpacity
+    <View style={[styles.header, { backgroundColor: colors.surface }]}>
+      <Pressable
         style={styles.iconButton}
         onPress={handleBackPress}
         onLongPress={handleBackLongPress}
-        activeOpacity={0.7}
         delayLongPress={500}
       >
         <Ionicons
           name={searchVisible ? "close" : "chevron-back"}
           size={24}
-          color={Colors.text}
+          color={colors.text}
         />
-      </TouchableOpacity>
+      </Pressable>
 
       {searchVisible && setSearch ? (
         <View style={styles.searchBar}>
-          <Ionicons name="search-outline" size={18} color={Colors.textTertiary} />
+          <Ionicons name="search-outline" size={18} color={colors.textTertiary} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text, backgroundColor: colors.surfaceBorder }]}
             placeholder="搜索..."
-            placeholderTextColor={Colors.textTertiary}
+            placeholderTextColor={colors.textTertiary}
             value={search}
             onChangeText={setSearch}
             autoFocus
@@ -74,18 +76,21 @@ export function PageHeader({ title, search, setSearch, onSearchPress, right }: P
           />
         </View>
       ) : (
-        <Text style={styles.title}>{title}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>
+          {title}
+          {titleAppend && <Text style={[styles.titleAppend, { color: colors.textTertiary }]}> {titleAppend}</Text>}
+        </Text>
       )}
 
       {!searchVisible && (
         <View style={styles.rightSection}>
-          {setSearch && (
+          {(setSearch || onSearchPress) && (
             <TouchableOpacity
               style={styles.iconButton}
               onPress={handleSearchPress}
               activeOpacity={0.7}
             >
-              <Ionicons name="search-outline" size={24} color={Colors.text} />
+              <Ionicons name="search-outline" size={24} color={colors.text} />
             </TouchableOpacity>
           )}
           {right}
@@ -103,7 +108,6 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.md,
     paddingBottom: Spacing.sm,
     gap: Spacing.md,
-    backgroundColor: Colors.surface,
   },
   iconButton: {
     width: 40,
@@ -115,23 +119,29 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: FontSize.lg,
     fontWeight: "bold",
-    color: Colors.text,
+  },
+  titleRow: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 0,
+  },
+  titleAppend: {
+    fontSize: FontSize.sm,
+    marginLeft: 4,
   },
   searchBar: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surfaceBorder,
-    borderRadius: 20,
-    paddingHorizontal: Spacing.lg,
-    height: 40,
     gap: Spacing.sm,
   },
   searchInput: {
     flex: 1,
+    height: 36,
     fontSize: FontSize.md,
-    color: Colors.text,
-    padding: 0,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.sm,
   },
   rightSection: {
     flexDirection: "row",

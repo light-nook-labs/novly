@@ -1,7 +1,8 @@
 import { View, Image, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { SearchBar } from "./SearchBar";
-import { Colors, Spacing } from "../constants/theme";
+import { Spacing } from "../constants/theme";
+import { useTheme } from "./ThemeProvider";
 
 interface TabHeaderProps {
   /** Enable input mode (controlled) */
@@ -21,10 +22,11 @@ export function TabHeader({
   onSearchPress,
   right,
 }: TabHeaderProps) {
+  const { colors } = useTheme();
   const isInputMode = search !== undefined && setSearch !== undefined;
 
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { backgroundColor: colors.surface }]}>
       <Image source={require("../assets/icon.png")} style={styles.icon} />
       {isInputMode ? (
         <SearchBar
@@ -51,7 +53,6 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.md,
     paddingBottom: Spacing.sm,
     gap: Spacing.md,
-    backgroundColor: Colors.surface,
   },
   icon: {
     width: 34,

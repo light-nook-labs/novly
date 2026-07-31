@@ -1,13 +1,14 @@
-import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, RefreshControl } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from "react-native";
 import { Link, router } from "expo-router";
 import { useState, useEffect, useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { getDatabase } from "../../lib/data/database";
+import { getDatabase } from "../../utils/database";
 import { formatNumber, genreMapping, statusMapping, ptypeMapping } from "../../utils/mappings";
 import { Colors, FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { Banner } from "../../components/Banner";
 import { NovelRow, type NovelRowData } from "../../components/NovelRow";
 import { TabHeader } from "../../components/TabHeader";
+import { useTheme } from "../../components/ThemeProvider";
 
 interface BannerNovel {
   id: number;
@@ -16,41 +17,36 @@ interface BannerNovel {
 }
 
 interface Stats {
-  novels: number;
   authors: number;
   tags: number;
   contests: number;
   genres: number;
   statuses: number;
-  ptypes: number;
 }
 
-// 固定 banner 不会被随机替换（如网站公告）
-const PINNED_BANNER_IDS: number[] = [];
-
 const NAV_ITEMS = [
-  { key: "novels", icon: "library-outline" as const, label: "小说", color: Colors.primary },
-  { key: "authors", icon: "person-outline" as const, label: "作者", color: Colors.primary },
-  { key: "tags", icon: "pricetag-outline" as const, label: "标签", color: Colors.primary },
-  { key: "contests", icon: "trophy-outline" as const, label: "比赛", color: Colors.primary },
-  { key: "genres", icon: "layers-outline" as const, label: "分类", color: Colors.primary },
-  { key: "statuses", icon: "pulse-outline" as const, label: "状态", color: Colors.primary },
-  { key: "ptypes", icon: "diamond-outline" as const, label: "类型", color: Colors.primary },
+  { key: "authors" as const, icon: "person-outline" as const, label: "作者", color: Colors.primary },
+  { key: "tags" as const, icon: "pricetag-outline" as const, label: "标签", color: Colors.primary },
+  { key: "contests" as const, icon: "trophy-outline" as const, label: "比赛", color: Colors.primary },
+  { key: "genres" as const, icon: "layers-outline" as const, label: "分类", color: Colors.primary },
+  { key: "statuses" as const, icon: "pulse-outline" as const, label: "状态", color: Colors.primary },
 ];
 
 const NAV_ROUTES: Record<string, string> = {
-  novels: "/novels",
   authors: "/authors",
   tags: "/tags",
   contests: "/contests",
   genres: "/genres",
   statuses: "/statuses",
-  ptypes: "/ptypes",
 };
 
 const BANNER_COUNT = 5;
 
+// 固定 banner 不会被随机替换（如网站公告）
+const PINNED_BANNER_IDS: number[] = [];
+
 export default function HomeScreen() {
+  const { colors } = useTheme();
   const [bannerNovels, setBannerNovels] = useState<BannerNovel[]>([]);
   const [topNovels, setTopNovels] = useState<NovelRowData[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -64,7 +60,6 @@ export default function HomeScreen() {
     try {
       const db = await getDatabase();
 
-      // Load pinned banners + random banners
       const banners = await loadBanners(db);
       setBannerNovels(banners);
 
@@ -73,20 +68,27 @@ export default function HomeScreen() {
       );
       setTopNovels(top);
 
-      const [n, a, t, c] = await Promise.all([
-        db.getFirstAsync<{ v: number }>("SELECT COUNT(*) as v FROM novels"),
+      const [a, t, c, g, s] = await Promise.all([
         db.getFirstAsync<{ v: number }>("SELECT COUNT(*) as v FROM authors"),
         db.getFirstAsync<{ v: number }>("SELECT COUNT(*) as v FROM tags"),
         db.getFirstAsync<{ v: number }>("SELECT COUNT(*) as v FROM contests"),
+        // 分类：DB 实际不同的 genre 值（生成 db 时已删除"其他"）
+        db.getFirstAsync<{ v: number }>("SELECT COUNT(DISTINCT genre) as v FROM novels"),
+        // 状态：与 statuses 页一致，归并 A 变体并排除"其他"/"下架"
+        db.getFirstAsync<{ v: number }>(
+          `SELECT COUNT(DISTINCT CASE
+             WHEN status = 5 THEN 4
+             WHEN status = 6 THEN 2
+             ELSE status END) as v
+           FROM novels WHERE status IN (2, 3, 4, 5, 6)`
+        ),
       ]);
       setStats({
-        novels: n?.v ?? 0,
         authors: a?.v ?? 0,
         tags: t?.v ?? 0,
         contests: c?.v ?? 0,
-        genres: Object.keys(genreMapping).length,
-        statuses: Object.keys(statusMapping).length,
-        ptypes: Object.keys(ptypeMapping).length,
+        genres: g?.v ?? 0,
+        statuses: s?.v ?? 0,
       });
     } catch (error) {
       console.error("Failed to load data:", error);
@@ -138,14 +140,14 @@ export default function HomeScreen() {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          tintColor={Colors.primary}
-          colors={[Colors.primary]}
+          tintColor={colors.primary}
+          colors={[colors.primary]}
         />
       }
     >
@@ -153,26 +155,26 @@ export default function HomeScreen() {
         placeholder="搜索小说..."
         right={
           <TouchableOpacity onPress={() => router.push("/settings")} style={styles.settingsBtn}>
-            <Ionicons name="settings-outline" size={22} color={Colors.textSecondary} />
+            <Ionicons name="settings-outline" size={22} color={colors.textSecondary} />
           </TouchableOpacity>
         }
       />
 
       <Banner data={bannerNovels} />
 
-      <View style={styles.navGrid}>
+      <View style={[styles.navGrid, { backgroundColor: colors.surface }]}>
         {NAV_ITEMS.map((item) => (
           <TouchableOpacity
             key={item.key}
             style={styles.navItem}
-            onPress={() => router.push(NAV_ROUTES[item.key] as any)}
+            onPress={() => router.push(NAV_ROUTES[item.key])}
           >
             <View style={[styles.navIconWrap, { backgroundColor: item.color + "15" }]}>
               <Ionicons name={item.icon} size={22} color={item.color} />
             </View>
-            <Text style={styles.navLabel}>{item.label}</Text>
+            <Text style={[styles.navLabel, { color: colors.text }]}>{item.label}</Text>
             {stats && (
-              <Text style={styles.navCount}>
+              <Text style={[styles.navCount, { color: colors.textTertiary }]}>
                 {formatNumber(stats[item.key as keyof Stats] ?? 0)}
               </Text>
             )}
@@ -181,11 +183,11 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>热门排行</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>热门排行</Text>
         <Link href="/novels" asChild>
           <TouchableOpacity style={styles.seeAllBtn}>
-            <Text style={styles.seeAllText}>查看全部</Text>
-            <Ionicons name="chevron-forward" size={14} color={Colors.primary} />
+            <Text style={[styles.seeAllText, { color: colors.primary }]}>查看全部</Text>
+            <Ionicons name="chevron-forward" size={14} color={colors.primary} />
           </TouchableOpacity>
         </Link>
       </View>
@@ -225,14 +227,11 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.lg,
     borderRadius: BorderRadius.lg,
     paddingVertical: Spacing.lg,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
+    boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
     elevation: 2,
   },
   navItem: {
-    width: "14.28%",
+    width: "20%",
     alignItems: "center",
     marginBottom: Spacing.sm,
   },

@@ -1,21 +1,24 @@
 import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
-import { router } from "expo-router";
 import { useState, useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { getDatabase } from "../../lib/data/database";
+import { getDatabase } from "../../utils/database";
 import { BannerListItem, type BannerNovel } from "../../components/BannerListItem";
+import { PageHeader } from "../../components/Header";
 import { Colors, FontSize, Spacing, BorderRadius } from "../../constants/theme";
+import { useTheme } from "../../components/ThemeProvider";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export default function BannerSearchScreen() {
+  const { colors } = useTheme();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<BannerNovel[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [listHeight, setListHeight] = useState(0);
 
   async function doSearch(reset = false) {
     const trimmed = query.trim();
@@ -65,16 +68,14 @@ export default function BannerSearchScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <PageHeader title="Banner Search" />
       {/* Search bar with button */}
       <View style={styles.searchBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color={Colors.text} />
-        </TouchableOpacity>
         <TextInput
           style={styles.input}
           placeholder="搜索背投标题或作者..."
-          placeholderTextColor={Colors.textTertiary}
+          placeholderTextColor={colors.textTertiary}
           value={query}
           onChangeText={setQuery}
           returnKeyType="search"
@@ -95,6 +96,12 @@ export default function BannerSearchScreen() {
       <FlatList
         data={results}
         keyExtractor={(item) => item.id.toString()}
+        onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}
+        onContentSizeChange={(_, h) => {
+          if (h <= listHeight && hasMore && !loading) {
+            handleLoadMore();
+          }
+        }}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
           <BannerListItem
@@ -107,12 +114,12 @@ export default function BannerSearchScreen() {
         ListEmptyComponent={
           searched && !loading ? (
             <View style={styles.empty}>
-              <Ionicons name="search-outline" size={48} color={Colors.textMuted} />
+              <Ionicons name="search-outline" size={48} color={colors.textMuted} />
               <Text style={styles.emptyText}>未找到匹配的背投</Text>
             </View>
           ) : !searched ? (
             <View style={styles.empty}>
-              <Ionicons name="images-outline" size={48} color={Colors.textMuted} />
+              <Ionicons name="images-outline" size={48} color={colors.textMuted} />
               <Text style={styles.emptyText}>输入关键词搜索背投</Text>
             </View>
           ) : null
@@ -120,7 +127,7 @@ export default function BannerSearchScreen() {
         ListFooterComponent={
           loading ? (
             <View style={styles.footer}>
-              <ActivityIndicator size="small" color={Colors.primary} />
+              <ActivityIndicator size="small" color={colors.primary} />
             </View>
           ) : null
         }
@@ -145,12 +152,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.surfaceBorder,
     gap: Spacing.sm,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
   },
   input: {
     flex: 1,
