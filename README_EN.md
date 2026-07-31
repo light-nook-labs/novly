@@ -22,6 +22,19 @@ Novly is an offline-first light-novel metadata browsing app: all data is bundled
 - 🖼️ **Banner gallery**: browse and full-screen preview novel banner images
 - 🌐 **Cross-platform**: Web / Android / iOS
 
+## Screenshots
+
+> The following screenshots showcase Novly's core features: home carousel & navigation, banner gallery, multi-dimension rankings, novel detail, theme switching (dark/light) and the about page.
+
+| Page | Dark mode | Light mode |
+| --- | --- | --- |
+| Home | <img src="screenshots/home.png" width="220" /> | <img src="screenshots/home-light.png" width="220" /> |
+| Banners | <img src="screenshots/banners.png" width="220" /> | <img src="screenshots/banners-light.png" width="220" /> |
+| Rankings | <img src="screenshots/rank.png" width="220" /> | <img src="screenshots/rank-light.png" width="220" /> |
+| Novel detail | <img src="screenshots/detail.png" width="220" /> | <img src="screenshots/detail-light.png" width="220" /> |
+| Settings | <img src="screenshots/settings.png" width="220" /> | <img src="screenshots/settings-light.png" width="220" /> |
+| About | <img src="screenshots/about.png" width="220" /> | <img src="screenshots/about-light.png" width="220" /> |
+
 ## Tech Stack
 
 | Category        | Technology                                                                                     |
