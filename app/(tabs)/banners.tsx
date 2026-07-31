@@ -17,6 +17,8 @@ import { TabHeader } from "../../components/TabHeader";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
 import { Colors, FontSize, Spacing } from "../../constants/theme";
 import { useTheme } from "../../components/ThemeProvider";
+import { BackToTop } from "../../components/BackToTop";
+import { LoadingFooter } from "../../components/Loading";
 
 const PAGE_SIZE = 10;
 
@@ -26,6 +28,7 @@ export default function BannersScreen() {
   const [allBanners, setAllBanners] = useState<BannerNovel[]>([]);
   const [loading, setLoading] = useState(true);
   const [reversed, setReversed] = useState(false);
+  const [reversing, setReversing] = useState(false);
   const { scrollRef, showButton, onScroll, scrollToTop } = useScrollToTop();
 
   useEffect(() => {
@@ -57,9 +60,15 @@ export default function BannersScreen() {
         right={
           <TouchableOpacity
             style={styles.sortBtn}
+            disabled={reversing}
             onPress={() => {
+              // 翻转期间禁止滑动,避免用户误以为按钮未生效
+              setReversing(true);
               setReversed((r) => !r);
-              setTimeout(scrollToTop, 50);
+              setTimeout(() => {
+                scrollToTop();
+                setTimeout(() => setReversing(false), 400);
+              }, 50);
             }}
           >
             <Ionicons
@@ -75,6 +84,7 @@ export default function BannersScreen() {
         ref={scrollRef}
         data={data}
         keyExtractor={(item) => item.id.toString()}
+        scrollEnabled={!reversing}
         onScroll={onScroll}
         contentContainerStyle={styles.list}
 renderItem={({ item }) => (
@@ -95,18 +105,12 @@ renderItem={({ item }) => (
         }
         ListFooterComponent={
           loading ? (
-            <View style={styles.footer}>
-              <ActivityIndicator size="small" color={Colors.primary} />
-            </View>
+            <LoadingFooter />
           ) : null
         }
       />
 
-      {showButton && (
-        <TouchableOpacity style={styles.backToTop} onPress={scrollToTop}>
-          <Ionicons name="arrow-up" size={20} color={Colors.primary} />
-        </TouchableOpacity>
-      )}
+      {showButton && <BackToTop onPress={scrollToTop} />}
     </View>
   );
 }
@@ -129,18 +133,5 @@ const styles = StyleSheet.create({
   footer: {
     paddingVertical: Spacing.xl,
     alignItems: "center",
-  },
-  backToTop: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.surface,
-    justifyContent: "center",
-    alignItems: "center",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-    elevation: 4,
   },
 });

@@ -1,11 +1,11 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Linking } from "react-native";
 import { Link, router } from "expo-router";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
 import { formatNumber, genreMapping, statusMapping, ptypeMapping } from "../../utils/mappings";
 import { Colors, FontSize, Spacing, BorderRadius } from "../../constants/theme";
-import { Banner } from "../../components/Banner";
+import { Banner, DEFAULT_PINNED, type PinnedBanner } from "../../components/Banner";
 import { NovelRow, type NovelRowData } from "../../components/NovelRow";
 import { TabHeader } from "../../components/TabHeader";
 import { useTheme } from "../../components/ThemeProvider";
@@ -40,10 +40,40 @@ const NAV_ROUTES: Record<string, string> = {
   statuses: "/statuses",
 };
 
-const BANNER_COUNT = 5;
+const BANNER_COUNT = 6;
 
 // 固定 banner 不会被随机替换（如网站公告）
 const PINNED_BANNER_IDS: number[] = [];
+
+// 用户反馈问卷(MS Form)
+const SURVEY_URL = "https://forms.cloud.microsoft/r/JfeiiwEYaA";
+
+/** 第二个固定 banner:用户反馈问卷,点击打开 MS Form */
+const SURVEY_PIN: PinnedBanner = {
+  id: -2,
+  render: (width, height) => <SurveyCard width={width} height={height} />,
+  onPress: () => {
+    Linking.openURL(SURVEY_URL).catch(() => {});
+  },
+};
+
+/** 问卷卡片:图标 + 文案,无 title#id 文字 */
+function SurveyCard({ width, height }: { width: number; height: number }) {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.surveyCard, { width, height, backgroundColor: colors.primary }]}>
+      <View style={[styles.surveyIconWrap, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
+        <Ionicons name="clipboard-outline" size={30} color="#fff" />
+      </View>
+      <Text style={styles.surveyTitle}>用户反馈问卷</Text>
+      <Text style={styles.surveyHint}>点此填写,帮助我们做得更好</Text>
+      <View style={styles.surveyProviderRow}>
+        <Ionicons name="shield-checkmark-outline" size={13} color="rgba(255,255,255,0.85)" />
+        <Text style={styles.surveyProvider}>由 Microsoft Forms 提供</Text>
+      </View>
+    </View>
+  );
+}
 
 export default function HomeScreen() {
   const { colors } = useTheme();
@@ -51,6 +81,15 @@ export default function HomeScreen() {
   const [topNovels, setTopNovels] = useState<NovelRowData[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  // 防抖:防止快速多次点击导航按钮导致同一页面重复入栈
+  const lastNavRef = useRef(0);
+
+  const openSettings = useCallback(() => {
+    const now = Date.now();
+    if (now - lastNavRef.current < 500) return;
+    lastNavRef.current = now;
+    router.push("/settings");
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -154,13 +193,13 @@ export default function HomeScreen() {
       <TabHeader
         placeholder="搜索小说..."
         right={
-          <TouchableOpacity onPress={() => router.push("/settings")} style={styles.settingsBtn}>
+          <TouchableOpacity onPress={openSettings} style={styles.settingsBtn}>
             <Ionicons name="settings-outline" size={22} color={colors.textSecondary} />
           </TouchableOpacity>
         }
       />
 
-      <Banner data={bannerNovels} />
+      <Banner data={bannerNovels} pinned={[DEFAULT_PINNED, SURVEY_PIN]} maxItems={BANNER_COUNT} />
 
       <View style={[styles.navGrid, { backgroundColor: colors.surface }]}>
         {NAV_ITEMS.map((item) => (
@@ -212,6 +251,44 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  surveyCard: {
+    justifyContent: "center",
+    alignItems: "center",
+    gap: Spacing.xs,
+  },
+  surveyIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: Spacing.sm,
+  },
+  surveyTitle: {
+    fontSize: FontSize.xl,
+    fontWeight: "700",
+    color: "#fff",
+    textAlign: "center",
+  },
+  surveyHint: {
+    fontSize: FontSize.sm,
+    fontWeight: "600",
+    color: "rgba(255,255,255,0.9)",
+    textAlign: "center",
+    marginTop: Spacing.xs,
+  },
+  surveyProviderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: Spacing.md,
+  },
+  surveyProvider: {
+    fontSize: FontSize.xs,
+    fontWeight: "600",
+    color: "rgba(255,255,255,0.85)",
+    textAlign: "center",
+  },
   settingsBtn: {
     width: 40,
     height: 40,
@@ -246,11 +323,15 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     color: Colors.text,
     marginTop: 6,
+    alignSelf: "stretch",
+    textAlign: "center",
   },
   navCount: {
     fontSize: FontSize.xs - 1,
     color: Colors.textTertiary,
     marginTop: 1,
+    alignSelf: "stretch",
+    textAlign: "center",
   },
   sectionHeader: {
     flexDirection: "row",

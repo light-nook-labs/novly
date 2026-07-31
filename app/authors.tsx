@@ -6,6 +6,9 @@ import { formatNumber } from "../utils/mappings";
 import { useScrollToTop } from "../hooks/useScrollToTop";
 import { FontSize, Spacing } from "../constants/theme";
 import { useTheme } from "../components/ThemeProvider";
+import { BackToTop } from "../components/BackToTop";
+import { NoteCard, NoteStrong } from "../components/NoteCard";
+import { LoadingFooter } from "../components/Loading";
 import { PageHeader } from "../components/Header";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -35,7 +38,7 @@ export default function AuthorsScreen() {
           backgroundColor: colors.background,
         },
         list: {
-          padding: Spacing.lg,
+          paddingVertical: Spacing.sm,
         },
         authorItem: {
           flexDirection: "row",
@@ -57,12 +60,21 @@ export default function AuthorsScreen() {
         },
         topNovel: {
           fontSize: FontSize.sm,
+          fontWeight: "600",
           color: colors.textSecondary,
           marginTop: 2,
+          paddingHorizontal: 2,
+        },
+        clicksWrap: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 2,
         },
         clicks: {
           fontSize: FontSize.sm,
+          fontWeight: "600",
           color: colors.textTertiary,
+          paddingHorizontal: 2,
         },
         emptyState: {
           alignItems: "center",
@@ -70,7 +82,10 @@ export default function AuthorsScreen() {
         },
         emptyText: {
           fontSize: FontSize.md,
+          fontWeight: "600",
           color: colors.textTertiary,
+          alignSelf: "stretch",
+          textAlign: "center",
         },
         footer: {
           paddingVertical: Spacing.xl,
@@ -78,20 +93,9 @@ export default function AuthorsScreen() {
         },
         footerText: {
           fontSize: FontSize.sm,
+          fontWeight: "600",
           color: colors.textTertiary,
-        },
-        backToTop: {
-          position: "absolute",
-          bottom: 20,
-          right: 20,
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: colors.surface,
-          justifyContent: "center",
-          alignItems: "center",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-          elevation: 4,
+          paddingHorizontal: 2,
         },
       }),
     [colors]
@@ -164,6 +168,7 @@ export default function AuthorsScreen() {
         setSearch={setQuery}
       />
 
+      {/* 排序规则 / 右侧数据含义说明 */}
       <FlatList
         ref={scrollRef}
         data={authors}
@@ -175,7 +180,15 @@ export default function AuthorsScreen() {
             loadAuthors(false);
           }
         }}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={7}
         contentContainerStyle={styles.list}
+        ListHeaderComponent={
+          <NoteCard>
+            作者按代表作点击量从高到低排序。每行右侧的 <NoteStrong>点击量</NoteStrong> 为该作者代表作的累计点击数
+          </NoteCard>
+        }
         renderItem={({ item }) => (
           <TouchableOpacity 
             style={styles.authorItem}
@@ -189,7 +202,10 @@ export default function AuthorsScreen() {
                 </Text>
               )}
             </View>
-            <Text style={styles.clicks}>{formatNumber(item.top_novel_clicks)}</Text>
+            <View style={styles.clicksWrap}>
+              <Ionicons name="eye-outline" size={14} color={colors.textTertiary} />
+              <Text style={styles.clicks}>{formatNumber(item.top_novel_clicks)}</Text>
+            </View>
           </TouchableOpacity>
         )}
         ListEmptyComponent={
@@ -201,9 +217,7 @@ export default function AuthorsScreen() {
         }
         ListFooterComponent={
           hasMore ? (
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>加载中...</Text>
-            </View>
+            <LoadingFooter />
           ) : null
         }
         onEndReached={() => {
@@ -212,11 +226,7 @@ export default function AuthorsScreen() {
         onEndReachedThreshold={0.5}
       />
 
-      {showButton && (
-        <TouchableOpacity style={styles.backToTop} onPress={scrollToTop}>
-          <Ionicons name="arrow-up" size={20} color={colors.primary} />
-        </TouchableOpacity>
-      )}
+      {showButton && <BackToTop onPress={scrollToTop} />}
     </View>
   );
 }

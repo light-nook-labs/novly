@@ -70,9 +70,12 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: FontSize.md,
+    fontWeight: "600",
     padding: 0,
   },
   placeholder: {
     fontSize: FontSize.md,
+    fontWeight: "600",
+    paddingHorizontal: 2,
   },
 });

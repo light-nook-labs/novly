@@ -7,6 +7,7 @@ import { getDatabase } from "../utils/database";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { useTheme } from "../components/ThemeProvider";
 import { PageHeader } from "../components/Header";
+import { Loading } from "../components/Loading";
 
 interface Contest {
   id: number;
@@ -147,10 +148,7 @@ export default function ContestsScreen() {
       />
 
       {loading && contests.length === 0 ? (
-        <View style={styles.loading}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>加载赛事中...</Text>
-        </View>
+        <Loading />
       ) : (
         <FlatList
           data={filtered}

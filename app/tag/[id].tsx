@@ -5,6 +5,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
 import { FontSize, Spacing } from "../../constants/theme";
 import { useTheme } from "../../components/ThemeProvider";
+import { BackToTop } from "../../components/BackToTop";
+import { Loading } from "../../components/Loading";
 import { PageHeader } from "../../components/Header";
 import { NovelRow, type NovelRowData } from "../../components/NovelRow";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
@@ -46,19 +48,6 @@ export default function TagDetailScreen() {
         },
         list: {
           paddingBottom: Spacing.xl,
-        },
-        backToTop: {
-          position: "absolute",
-          bottom: 20,
-          right: 20,
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: colors.surface,
-          justifyContent: "center",
-          alignItems: "center",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-          elevation: 4,
         },
         empty: {
           alignItems: "center",
@@ -127,11 +116,7 @@ export default function TagDetailScreen() {
   }
 
   if (loading) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <Loading />;
   }
 
   if (!tag) {
@@ -163,6 +148,9 @@ export default function TagDetailScreen() {
             loadNovels(false);
           }
         }}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={7}
         contentContainerStyle={styles.list}
         renderItem={({ item, index }) => (
           <NovelRow
@@ -186,11 +174,7 @@ export default function TagDetailScreen() {
         onEndReachedThreshold={0.5}
       />
 
-      {showButton && (
-        <TouchableOpacity style={styles.backToTop} onPress={scrollToTop}>
-          <Ionicons name="arrow-up" size={20} color={colors.primary} />
-        </TouchableOpacity>
-      )}
+      {showButton && <BackToTop onPress={scrollToTop} />}
     </View>
   );
 }

@@ -11,3 +11,5 @@ minimumReleaseAgeExclude:
   - expo-constants@57.0.8
   - expo-modules-core@57.0.8
   - expo@57.0.9
+patchedDependencies:
+  react-native-worklets@0.10.3: patches/react-native-worklets@0.10.3.patch

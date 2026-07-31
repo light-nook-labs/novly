@@ -1,0 +1,16 @@
+diff --git a/android/CMakeLists.txt b/android/CMakeLists.txt
+index d10aa6bbb60233f7217bc00cf75c307867512cbb..43aeb8c326aa11db2b57913aeda1e7d15714cc03 100644
+--- a/android/CMakeLists.txt
++++ b/android/CMakeLists.txt
+@@ -50,9 +50,9 @@ set(BUILD_DIR "${CMAKE_SOURCE_DIR}/build")
+ set(ANDROID_CPP_DIR "${CMAKE_SOURCE_DIR}/src/main/cpp")
+ set(COMMON_CPP_DIR "${CMAKE_SOURCE_DIR}/../Common/cpp")
+ 
+-file(GLOB_RECURSE WORKLETS_COMMON_CPP_SOURCES CONFIGURE_DEPENDS
++file(GLOB_RECURSE WORKLETS_COMMON_CPP_SOURCES
+      "${COMMON_CPP_DIR}/worklets/*.cpp")
+-file(GLOB_RECURSE WORKLETS_ANDROID_CPP_SOURCES CONFIGURE_DEPENDS
++file(GLOB_RECURSE WORKLETS_ANDROID_CPP_SOURCES
+      "${ANDROID_CPP_DIR}/worklets/*.cpp")
+ 
+ add_library(worklets SHARED ${WORKLETS_COMMON_CPP_SOURCES}

@@ -11,6 +11,8 @@ import { getDatabase } from "../../utils/database";
 import { Colors, FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { NovelFilterSheet } from "../../components/NovelFilterSheet";
 import { useTheme } from "../../components/ThemeProvider";
+import { BackToTop } from "../../components/BackToTop";
+import { LoadingFooter } from "../../components/Loading";
 
 const PTYPES = [
   { key: null, label: "全部", icon: "list-outline" as const },
@@ -52,7 +54,7 @@ export default function NovelsScreen() {
     status: status ? Number(status) : null,
   });
   const [filterVisible, setFilterVisible] = useState(false);
-  const { novels, loading, hasMore, loadMore } = useNovels({
+  const { novels, loading, hasMore, loadMore, refresh, error } = useNovels({
     ptype: selectedPtype,
     genre: filters.genre,
     status: filters.status,
@@ -154,16 +156,23 @@ export default function NovelsScreen() {
             loadMore();
           }
         }}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={7}
         contentContainerStyle={{ paddingVertical: Spacing.sm }}
         renderItem={({ item, index }) => (
           <NovelRow novel={item} rank={index + 1} value={item.click_num} valueLabel="点击" />
         )}
-        ListEmptyComponent={!loading ? <EmptyState message="暂无小说" /> : null}
+        ListEmptyComponent={
+          error ? (
+            <EmptyState icon="cloud-offline-outline" message="加载失败,请检查后重试" onRetry={refresh} />
+          ) : !loading ? (
+            <EmptyState message="暂无小说" />
+          ) : null
+        }
         ListFooterComponent={
           loading ? (
-            <View style={styles.footer}>
-              <ActivityIndicator size="small" color={colors.primary} />
-            </View>
+            <LoadingFooter />
           ) : !hasMore && novels.length > 0 ? (
             <View style={styles.footer}>
               <Text style={styles.footerText}>没有更多了</Text>
@@ -176,11 +185,7 @@ export default function NovelsScreen() {
         onEndReachedThreshold={0.5}
       />
 
-      {showButton && (
-        <TouchableOpacity style={styles.backToTop} onPress={scrollToTop}>
-          <Ionicons name="arrow-up" size={20} color={colors.primary} />
-        </TouchableOpacity>
-      )}
+      {showButton && <BackToTop onPress={scrollToTop} />}
 
       <NovelFilterSheet
         visible={filterVisible}
@@ -250,18 +255,7 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: FontSize.sm,
     color: Colors.textTertiary,
-  },
-  backToTop: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.surface,
-    justifyContent: "center",
-    alignItems: "center",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-    elevation: 4,
+    alignSelf: "stretch",
+    textAlign: "center",
   },
 });

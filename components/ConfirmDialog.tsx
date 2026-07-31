@@ -85,10 +85,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FontSize.lg,
     fontWeight: "700",
+    alignSelf: "stretch",
     textAlign: "center",
   },
   message: {
     fontSize: FontSize.sm,
+    alignSelf: "stretch",
     textAlign: "center",
     marginTop: Spacing.sm,
     lineHeight: 20,
@@ -110,10 +112,14 @@ const styles = StyleSheet.create({
   cancelText: {
     fontSize: FontSize.md,
     fontWeight: "600",
+    alignSelf: "stretch",
+    textAlign: "center",
   },
   confirmText: {
     fontSize: FontSize.md,
     fontWeight: "700",
     color: "#fff",
+    alignSelf: "stretch",
+    textAlign: "center",
   },
 });

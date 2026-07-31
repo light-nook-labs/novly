@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { memo } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ID } from "./ID";
@@ -33,7 +34,7 @@ interface NovelRowProps {
 
 const RANK_COLORS = ["#FFD700", "#C0C0C0", "#CD7F32"];
 
-export function NovelRow({ novel, rank, value, valueLabel, extended }: NovelRowProps) {
+export const NovelRow = memo(function NovelRow({ novel, rank, value, valueLabel, extended }: NovelRowProps) {
   const { colors } = useTheme();
   const isTop3 = rank !== undefined && rank <= 3;
 
@@ -54,7 +55,7 @@ export function NovelRow({ novel, rank, value, valueLabel, extended }: NovelRowP
       )}
       <Cover cover={novel.cover} width={68} height={90} />
       <View style={styles.info}>
-        <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>{novel.title}<ID id={novel.id} /></Text>
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>{novel.title}<ID id={novel.id} weight="600" /></Text>
         {novel.author && (
           <Text style={[styles.author, { color: colors.textSecondary }]} numberOfLines={1}>{novel.author}</Text>
         )}
@@ -112,15 +113,14 @@ export function NovelRow({ novel, rank, value, valueLabel, extended }: NovelRowP
       </View>
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
-    marginHorizontal: Spacing.lg,
     marginBottom: 1,
     gap: Spacing.md,
   },

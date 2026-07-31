@@ -28,7 +28,7 @@ npx tsc --noEmit   # ALWAYS run type check before finishing / committing — mus
 - **Global DB** (`utils/database.ts`): `initDatabase()` / `getDatabase()` — promise-cached singleton, loads `assets/seed.sql.gz` on first run (Web uses OPFS via expo-sqlite). Read-only app data.
 - **Bookshelf local DB** (`utils/bookshelfDb.ts`): separate `bookshelf.sqlite` for user-private data — NEVER read the bookshelf from the global DB. API: `getBookshelf()`, `addToBookshelf(novel)` (takes `Omit<BookshelfNovel, "added_at">`), `removeFromBookshelf(id)`, `clearBookshelf()`, `isInBookshelf(id)`.
 - **Pagination**: lists page at 10 items per page (`PAGE_SIZE = 10`); infinite scroll via `onEndReached` + `onContentSizeChange` auto-fill on tall screens.
-- **Status normalization** (`normalizeStatus` in `utils/mappings.ts`): A-variants are merged — status `5` (断更A/Abandoned-A) → `4`, status `6` (完结A/Completed-A) → `2`. The `statuses` list page groups by the normalized value; `NovelRow` renders the raw value (both display fine via `statusMapping`).
+- **Status normalization** (`normalizeStatus` in `utils/mappings.ts`): A-variants are merged — status `5` (Abandoned-A) → `4`, status `6` (Completed-A) → `2`. The `statuses` list page groups by the normalized value; `NovelRow` renders the raw value (both display fine via `statusMapping`).
 
 ### Theming (COMPLETE — all pages & components support light/dark)
 
@@ -80,7 +80,12 @@ Rules:
 5. **Tab pages are persistent** — `useEffect([])` won't reload data when returning to the tab. Use `useFocusEffect(useCallback(...))` (expo-router) for bookshelf-style reloads.
 6. **Shared styles across components** in one file: converting to theme requires `createStyles(colors)` + per-component `useMemo` (see theming pattern above); forgetting `useTheme()` inside a helper component = "Cannot find name 'colors'" TS error.
 7. **Bookshelf default sort is by added time** (`added_at` from the local DB); `FilterState.sortBy` default `"added_at"` — when switching to other sort keys the whitelist (`SORT_WHITELIST`) must include them.
-8. **"其他"/genre 1 data is removed at seed-generation time** — genre/status filter sheets hide the "其他" (value 1) option; nav-grid stats on the home page count `DISTINCT` DB values (and merge status A-variants) so badge numbers match the list pages.
+8. **"Other"/genre 1 data is removed at seed-generation time** — genre/status filter sheets hide the "Other" (value 1) option; nav-grid stats on the home page count `DISTINCT` DB values (and merge status A-variants) so badge numbers match the list pages.
+9. **Banner image offset aligns the core frame — not a bug** — sfacg banner images are ultra-wide 1920×430 (≈4.47:1), with the core visual in the 35%~95% width band. The container is ≈2.2:1 (`height = width * 0.45`); the image uses `resizeMode="cover"` with a negative offset to crop to the core band: `IndexBannerItem` uses `left: -width*0.45 / width: width*1.45`, `BannerListItem` uses `left: -width*0.65 / width: width*1.65`. Changing these values moves the visible window — it does not "fix" cropping. Container height must stay >2:1 (phone tier uses `width * 0.45`), otherwise the frame is cut off.
+10. **RN Android truncates the last CJK glyph (missing trailing Chinese chars like year/month/day suffixes or trailing digits)** — Android (especially Huawei HarmonyOS Sans) measures CJK glyph widths slightly too small, so with `fontWeight: "400"` the last character paints outside the view bounds and gets clipped; web/iOS are fine. Unified fix, pick by container type:
+    - **Fixed-width centered container** (nav counts, empty states, buttons): add `alignSelf: "stretch"` + `textAlign: "center"` to the Text so the TextView fills the container width and bypasses measurement;
+    - **Content-width container** (chips, badges, inline meta text): `alignSelf: "stretch"` has no parent width to fill, so use `fontWeight: "600"` (the 400 weight triggers the bug, 600 is fine) + `paddingHorizontal: 2` for breathing room.
+    - A `#id` nested inside a title Text (`ID` component) must be rendered with `<Text onPress>`, not wrapped in `TouchableOpacity` (a block-level View inside Text shifts the line box/baseline, sitting ~half a glyph higher).
 
 ## Key Files Quick Reference
 

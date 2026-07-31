@@ -14,6 +14,7 @@ import { useTheme, type ThemeColors } from "../../components/ThemeProvider";
 import { Cover } from "../../components/Cover";
 import { ID } from "../../components/ID";
 import { ImageLightbox } from "../../components/ImageLightbox";
+import { DetailSkeleton } from "../../components/Skeleton";
 
 interface Novel {
   id: number;
@@ -111,8 +112,10 @@ export default function NovelDetailScreen() {
       Linking.openURL(webUrl);
     } else if (Platform.OS === "android") {
       // Mobile: show options
+      // 菠萝包轻小说注册的深链: sfacg://m.sfacg.com/novel/{id} / sf://m.sfacg.com/novel/{id}
+      const appUrl = `sfacg://m.sfacg.com/novel/${id}`;
       Alert.alert("打开方式", "选择打开方式", [
-        { text: "在 App 中打开", onPress: () => Linking.openURL("intent://#Intent;package=com.sfacg;end") },
+        { text: "在 App 中打开", onPress: () => Linking.openURL(appUrl) },
         { text: "在浏览器中打开", onPress: () => Linking.openURL(webUrl) },
       ]);
     } else {
@@ -253,11 +256,7 @@ export default function NovelDetailScreen() {
   }
 
   if (loading) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <DetailSkeleton />;
   }
 
   if (!novel) {
@@ -281,10 +280,9 @@ export default function NovelDetailScreen() {
           </ImageLightbox>
           <View style={styles.heroInfo}>
             <View style={styles.titleRow}>
-              <TouchableOpacity onPress={handleCopyTitle}>
-                <Text style={styles.title}>{novel.title}</Text>
+              <TouchableOpacity onPress={handleCopyTitle} style={styles.titleButton}>
+                <Text style={styles.title}>{novel.title}<ID id={novel.id} weight="700" /></Text>
               </TouchableOpacity>
-              <ID id={novel.id} />
             </View>
             {novel.author && (
               <TouchableOpacity
@@ -353,14 +351,12 @@ export default function NovelDetailScreen() {
             <StatItem icon="eye-outline" label="点击" value={novel.click_num} rank={rankings.click} />
             <StatItem icon="heart-outline" label="收藏" value={novel.like_num} rank={rankings.like} />
             <StatItem icon="flame-outline" label="点赞" value={novel.praise_num} rank={rankings.praise} />
-            <StatItem icon="chatbubble-outline" label="评论" value={novel.comment_num} rank={rankings.comment} />
           </View>
           <View style={styles.statsDivider} />
           <View style={styles.statsRow}>
+            <StatItem icon="chatbubble-outline" label="评论" value={novel.comment_num} rank={rankings.comment} />
             <StatItem icon="document-text-outline" label="字数" value={novel.word_num} rank={rankings.word} />
             <StatItem icon="reader-outline" label="长评" value={novel.review_num} rank={rankings.review} />
-            <StatItem icon="flag-outline" label="状态" value={null} textOverride={statusMapping[novel.status]} />
-            <StatItem icon="pricetag-outline" label="类型" value={null} textOverride={ptypeMapping[novel.ptype]} />
           </View>
         </View>
 
@@ -483,6 +479,8 @@ function createStyles(colors: ThemeColors) {
   loadingText: {
     fontSize: FontSize.md,
     color: colors.textTertiary,
+    alignSelf: "stretch",
+    textAlign: "center",
   },
   // Hero
   heroSection: {
@@ -505,8 +503,12 @@ function createStyles(colors: ThemeColors) {
   },
   titleRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 4,
+  },
+  titleButton: {
+    flex: 1,
+    flexShrink: 1,
   },
   authorRow: {
     flexDirection: "row",
@@ -515,7 +517,9 @@ function createStyles(colors: ThemeColors) {
   },
   author: {
     fontSize: FontSize.md,
+    fontWeight: "600",
     color: colors.primary,
+    paddingHorizontal: 2,
   },
   badgeRow: {
     flexDirection: "row",
@@ -529,7 +533,9 @@ function createStyles(colors: ThemeColors) {
   },
   badgeText: {
     fontSize: FontSize.xs,
+    fontWeight: "600",
     color: "#fff",
+    paddingHorizontal: 2,
   },
   // Stats
   statsCard: {
@@ -572,6 +578,8 @@ function createStyles(colors: ThemeColors) {
   statLabel: {
     fontSize: FontSize.xs,
     color: colors.textTertiary,
+    alignSelf: "stretch",
+    textAlign: "center",
   },
   // Section
   section: {
@@ -685,7 +693,9 @@ function createStyles(colors: ThemeColors) {
   },
   metaValue: {
     fontSize: FontSize.sm,
+    fontWeight: "600",
     color: colors.text,
+    paddingHorizontal: 2,
   },
   metaLink: {
     fontSize: FontSize.sm,

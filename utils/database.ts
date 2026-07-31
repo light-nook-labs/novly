@@ -1,11 +1,40 @@
 import * as SQLite from "expo-sqlite";
 import { Asset } from "expo-asset";
 import { Platform } from "react-native";
-import pako from "pako";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pako = require("pako");
 
-let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
+let currentDb: SQLite.SQLiteDatabase | null = null;
 const DB_NAME = "novel_hub.sqlite";
-const MERGED_MARKER = ".db_merged_v2";
+const MERGED_MARKER = ".db_merged_v5";
+const SQLITE_SUBDIR = "SQLite";
+
+// 初始化进度(供 header 显示):null = 未在初始化 / 已完成
+export let initProgress: string | null = null;
+const initProgressListeners = new Set<(p: string | null) => void>();
+
+export function subscribeInitProgress(cb: (p: string | null) => void): () => void {
+  initProgressListeners.add(cb);
+  return () => {
+    initProgressListeners.delete(cb);
+  };
+}
+
+function setInitProgress(p: string | null) {
+  initProgress = p;
+  initProgressListeners.forEach((cb) => cb(p));
+}
+
+export const dbLogs: string[] = [];
+export function dbLog(message: string) {
+  dbLogs.push(message);
+  if (dbLogs.length > 30) dbLogs.shift();
+  console.log(`[db] ${message}`);
+}
+
+function toFsPath(uri: string): string {
+  return uri.replace(/^file:\/\//, "");
+}
 
 let FileSystem: any;
 async function getFS() {
@@ -32,11 +61,16 @@ function uint8ArrayToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
-async function decompressGzip(data: Uint8Array): Promise<Uint8Array> {
+async function decompressAsset(module: number): Promise<Uint8Array> {
   if (Platform.OS === "web") {
+    const assets = await Asset.loadAsync(module);
+    const asset = assets[0];
+    if (!asset.uri) throw new Error("Asset not loaded");
+    const response = await fetch(asset.uri);
+    const buf = await response.arrayBuffer();
     const ds = new DecompressionStream("gzip");
     const writer = ds.writable.getWriter();
-    writer.write(data.buffer as ArrayBuffer);
+    writer.write(buf);
     writer.close();
     const reader = ds.readable.getReader();
     const chunks: Uint8Array[] = [];
@@ -55,30 +89,14 @@ async function decompressGzip(data: Uint8Array): Promise<Uint8Array> {
     return result;
   }
 
-  return pako.inflate(data);
-}
-
-async function decompressAsset(module: number): Promise<Uint8Array> {
-  if (Platform.OS === "web") {
-    const assets = await Asset.loadAsync(module);
-    const asset = assets[0];
-    if (!asset.uri) throw new Error("Asset not loaded");
-
-    const response = await fetch(asset.uri);
-    const buf = await response.arrayBuffer();
-    return decompressGzip(new Uint8Array(buf));
-  }
-
   const FS = await getFS();
   const assets = await Asset.loadAsync(module);
   const asset = assets[0];
   if (!asset.localUri) throw new Error("Asset not downloaded");
-
   const base64 = await FS.readAsStringAsync(asset.localUri, {
     encoding: FS.EncodingType.Base64,
   });
-
-  return decompressGzip(base64ToUint8Array(base64));
+  return pako.inflate(base64ToUint8Array(base64));
 }
 
 async function decompressAndWriteChunk(
@@ -86,166 +104,263 @@ async function decompressAndWriteChunk(
   targetPath: string
 ): Promise<void> {
   const FS = await getFS();
-  console.log(`Decompressing chunk to ${targetPath.split("/").pop()}...`);
+  dbLog(`Decompressing ${targetPath.split("/").pop()}...`);
   const decompressed = await decompressAsset(module);
   const base64 = uint8ArrayToBase64(decompressed);
   await FS.writeAsStringAsync(targetPath, base64, {
     encoding: FS.EncodingType.Base64,
   });
-  console.log(`Written ${(decompressed.length / 1024 / 1024).toFixed(1)} MB`);
+  dbLog(`Written ${(decompressed.length / 1024 / 1024).toFixed(1)} MB`);
 }
 
-async function mergeNativeChunks(docDir: string): Promise<void> {
+async function decompressAndWriteChunkStreaming(
+  module: number,
+  targetPath: string
+): Promise<void> {
   const FS = await getFS();
+  const name = targetPath.split("/").pop();
+  dbLog(`Streaming decompress to ${name}...`);
 
-  const coldPath = `${docDir}cold_chunk.sqlite`;
-  const warmPath = `${docDir}warm_chunk.sqlite`;
-  const hotPath = `${docDir}hot_chunk.sqlite`;
-  const dbPath = `${docDir}${DB_NAME}`;
+  const assets = await Asset.loadAsync(module);
+  const asset = assets[0];
+  if (!asset.localUri) throw new Error("Asset not downloaded");
 
-  // Decompress all 3 chunks
+  const base64Data = await FS.readAsStringAsync(asset.localUri, {
+    encoding: FS.EncodingType.Base64,
+  });
+  const compressed = base64ToUint8Array(base64Data);
+  dbLog(`Compressed size: ${(compressed.length / 1024 / 1024).toFixed(1)} MB`);
+
+  // 注意:pako@3 的 onData/onEnd 回调不会触发,解压结果在全部 push 完成后存于 inf.result。
+  // 因此这里先分片 push(保持 JS 线程让出),最后一次性读取 result,再分块写入文件。
+  const inf = new pako.Inflate({ chunkSize: 256 * 1024 });
+
+  // 分片喂给 pako:每片之间 await 让出 JS 线程,避免一次性同步解压大文件冻结 UI
+  const SLICE = 512 * 1024; // 512KB 压缩数据/片
+  let lastReportedPct = -1;
+  for (let i = 0; i < compressed.length; i += SLICE) {
+    const slice = compressed.subarray(i, Math.min(i + SLICE, compressed.length));
+    inf.push(slice, false);
+
+    // 每 ~5% 更新一次进度(节流,避免频繁刷新)
+    const pct = Math.floor((i / compressed.length) * 100);
+    if (pct >= lastReportedPct + 5) {
+      lastReportedPct = pct;
+      setInitProgress(`正在解压冷数据 ${Math.min(pct, 99)}%...`);
+    }
+
+    await new Promise((r) => setTimeout(r, 0)); // 让出线程,保持 UI 响应
+  }
+  inf.push(new Uint8Array(0), true); // flush 剩余数据
+  const decompressed: Uint8Array = inf.result;
+  if (!decompressed || decompressed.length === 0) {
+    throw new Error(`Decompress produced no output for ${name}`);
+  }
+  dbLog(`Decompressed ${(decompressed.length / 1024 / 1024).toFixed(1)} MB`);
+
+  // 分块写入文件(每次 1MB),避免一次性转出超大 base64 字符串
+  setInitProgress("正在写入冷数据...");
+  lastReportedPct = -1;
+  const WRITE_CHUNK = 1024 * 1024;
+  let isFirst = true;
+  let written = 0;
+  for (let off = 0; off < decompressed.length; off += WRITE_CHUNK) {
+    const part = decompressed.subarray(off, Math.min(off + WRITE_CHUNK, decompressed.length));
+    const b64 = uint8ArrayToBase64(part);
+    if (isFirst) {
+      await FS.writeAsStringAsync(targetPath, b64, { encoding: FS.EncodingType.Base64 });
+      isFirst = false;
+    } else {
+      await FS.writeAsStringAsync(targetPath, b64, { encoding: FS.EncodingType.Base64, append: true });
+    }
+    written += part.length;
+
+    const pct = Math.floor((off / decompressed.length) * 100);
+    if (pct >= lastReportedPct + 5) {
+      lastReportedPct = pct;
+      setInitProgress(`正在写入冷数据 ${pct}%...`);
+    }
+    await new Promise((r) => setTimeout(r, 0)); // 让出线程,保持 UI 响应
+  }
+
+  setInitProgress(null);
+  dbLog(`Written ${(written / 1024 / 1024).toFixed(1)} MB to ${name}`);
+}
+
+async function mergeChunkIntoDb(
+  targetDb: SQLite.SQLiteDatabase,
+  alias: string,
+  chunkPath: string
+): Promise<void> {
+  const fsPath = toFsPath(chunkPath);
+  dbLog(`ATTACH ${alias} -> ${fsPath}`);
+  await targetDb.execAsync(`ATTACH '${fsPath}' AS ${alias}`);
+
+  dbLog(`Merging novels from ${alias}...`);
+  await targetDb.execAsync(
+    `INSERT OR REPLACE INTO novels SELECT * FROM ${alias}.novels`
+  );
+
+  dbLog(`Merging contests from ${alias}...`);
+  await targetDb.execAsync(
+    `INSERT OR IGNORE INTO contests (name) SELECT name FROM ${alias}.contests`
+  );
+  await targetDb.execAsync(`
+    UPDATE novels SET contest_id = (
+      SELECT t.id FROM contests t JOIN ${alias}.contests a ON t.name = a.name
+      WHERE a.id = novels.contest_id
+    )
+    WHERE contest_id IN (SELECT id FROM ${alias}.contests)
+  `);
+
+  dbLog(`Merging tags from ${alias}...`);
+  await targetDb.execAsync(
+    `INSERT OR IGNORE INTO tags (name) SELECT name FROM ${alias}.tags`
+  );
+  await targetDb.execAsync(`
+    INSERT OR IGNORE INTO novel_tags (novel_id, tag_id)
+    SELECT nt.novel_id, t.id
+    FROM ${alias}.novel_tags nt
+    JOIN ${alias}.tags at ON at.id = nt.tag_id
+    JOIN tags t ON t.name = at.name
+  `);
+
+  dbLog(`Merging authors from ${alias}...`);
+  await targetDb.execAsync(
+    `INSERT OR IGNORE INTO authors (name, top_novel_id, top_novel_title, top_novel_clicks) SELECT name, top_novel_id, top_novel_title, top_novel_clicks FROM ${alias}.authors`
+  );
+  await targetDb.execAsync(`
+    UPDATE authors SET
+      top_novel_id = c.top_novel_id,
+      top_novel_title = c.top_novel_title,
+      top_novel_clicks = c.top_novel_clicks
+    FROM ${alias}.authors c
+    WHERE authors.name = c.name AND c.top_novel_clicks > authors.top_novel_clicks
+  `);
+
+  await targetDb.execAsync(`DETACH ${alias}`);
+  dbLog(`Merged ${alias} into base.`);
+}
+
+async function loadWebSeed(database: SQLite.SQLiteDatabase): Promise<void> {
+  dbLog("Loading seed data for web...");
+  const decompressed = await decompressAsset(require("../assets/seed.sql.gz"));
+  const sql = new TextDecoder().decode(decompressed);
+  const lines = sql.split("\n");
+  const BATCH_SIZE = 500;
+  for (let i = 0; i < lines.length; i += BATCH_SIZE) {
+    const batch = lines
+      .slice(i, i + BATCH_SIZE)
+      .filter((l) => l.trim().length > 0);
+    if (batch.length > 0) {
+      try {
+        await database.execAsync(batch.join("\n"));
+      } catch (e) {
+        dbLog(`Batch ${i}-${i + batch.length} failed: ${String(e)}`);
+      }
+    }
+  }
+}
+
+export function initDatabase(): Promise<SQLite.SQLiteDatabase> {
+  if (currentDb) {
+    return Promise.resolve(currentDb);
+  }
+  return initDatabaseInternal();
+}
+
+async function initDatabaseInternal(): Promise<SQLite.SQLiteDatabase> {
+  if (Platform.OS === "web") {
+    const database = await SQLite.openDatabaseAsync(DB_NAME);
+    try {
+      const count = await database.getFirstAsync<{ c: number }>(
+        "SELECT COUNT(*) as c FROM novels"
+      );
+      if (count && count.c > 0) {
+        currentDb = database;
+        return database;
+      }
+    } catch {}
+    await loadWebSeed(database);
+    currentDb = database;
+    return database;
+  }
+
+  const FS = await getFS();
+  const docDir = FS.documentDirectory;
+  const markerPath = `${docDir}${MERGED_MARKER}`;
+  const dbDir = `${docDir}${SQLITE_SUBDIR}`;
+  const hotPath = `${dbDir}/hot_chunk.sqlite`;
+  dbLog(`docDir: ${docDir}`);
+  dbLog(`dbDir: ${dbDir}`);
+  dbLog(`hotPath: ${hotPath}`);
+  dbLog(`markerPath: ${markerPath}`);
+
+  await FS.makeDirectoryAsync(dbDir, { intermediates: true }).catch(() => {});
+
+  const hotInfo = await FS.getInfoAsync(hotPath);
+  const markerInfo = await FS.getInfoAsync(markerPath);
+  dbLog(`hot exists: ${hotInfo.exists}, marker exists: ${markerInfo.exists}`);
+
+  if (hotInfo.exists && markerInfo.exists) {
+    // 快速路径:直接打开已合并的全量库。
+    // 若文件损坏(如进程在上次 swap 阶段被杀),打开失败则删除并走首次启动重建
+    try {
+      const db = await SQLite.openDatabaseAsync("hot_chunk.sqlite");
+      await db.getFirstAsync("SELECT 1");
+      currentDb = db;
+      return db;
+    } catch (e) {
+      dbLog(`hot db corrupted, rebuilding: ${String(e)}`);
+      await FS.deleteAsync(hotPath, { idempotent: true });
+      await FS.deleteAsync(markerPath, { idempotent: true });
+    }
+  }
+
+  dbLog("First launch: decompressing hot+warm...");
+  const warmPath = `${dbDir}/warm_chunk.sqlite`;
+  const coldPath = `${dbDir}/cold_chunk.sqlite`;
+
+  // 清理上次进程被杀可能残留的半成品中间文件,避免脏文件干扰重建
+  await FS.deleteAsync(warmPath, { idempotent: true });
+  await FS.deleteAsync(coldPath, { idempotent: true });
+
+  // 首次初始化:通过 header 进度条展示解压进度
+  setInitProgress("正在准备热数据...");
+
   await decompressAndWriteChunk(
-    require("../assets/chunks/cold_chunk.sqlite.gz"),
-    coldPath
+    require("../assets/chunks/hot_chunk.sqlite.gz"),
+    hotPath
   );
   await decompressAndWriteChunk(
     require("../assets/chunks/warm_chunk.sqlite.gz"),
     warmPath
   );
-  await decompressAndWriteChunk(
-    require("../assets/chunks/hot_chunk.sqlite.gz"),
-    hotPath
-  );
 
-  // Open cold as the base database and merge warm+hot into it
-  console.log("Merging chunks...");
-  const coldDb = await SQLite.openDatabaseAsync("cold_chunk.sqlite");
+  const db = await SQLite.openDatabaseAsync("hot_chunk.sqlite");
 
-  // ATTACH warm and hot chunks
-  await coldDb.execAsync(`ATTACH '${warmPath}' AS warm`);
-  await coldDb.execAsync(`ATTACH '${hotPath}' AS hot`);
+  await mergeChunkIntoDb(db, "warm", warmPath);
+  await FS.deleteAsync(warmPath, { idempotent: true });
 
-  await coldDb.execAsync("BEGIN");
+  dbLog("Hot+warm ready. Page can render now.");
+  currentDb = db;
 
-  // Merge novels (INSERT OR REPLACE gives hot > warm > cold priority)
-  await coldDb.execAsync("INSERT OR REPLACE INTO novels SELECT * FROM warm.novels");
-  await coldDb.execAsync("INSERT OR REPLACE INTO novels SELECT * FROM hot.novels");
+  // 始终执行 cold 合并(dev 与 release 一致,便于真机观测性能);
+  // 延迟 3s 再启动,优先保证首屏渲染与交互顺畅
+  setTimeout(() => {
+    mergeColdInBackground(db, docDir, coldPath, hotPath, markerPath)
+      .then(() => setInitProgress(null))
+      .catch((e) => {
+        dbLog(`Background cold merge failed: ${String(e)}`);
+        setInitProgress(null);
+      });
+  }, 3000);
 
-  // Merge contests (name-based dedup)
-  const contestRows = await coldDb.getAllAsync<{ name: string; id: number }>(
-    "SELECT name, id FROM contests"
-  );
-  const contestMap: Record<string, number> = Object.fromEntries(
-    contestRows.map((r) => [r.name, r.id])
-  );
+  return db;
+}
 
-  for (const alias of ["warm", "hot"]) {
-    const chunkContests = await coldDb.getAllAsync<{ id: number; name: string }>(
-      `SELECT id, name FROM ${alias}.contests`
-    );
-    const oldToNew: Record<number, number> = {};
-
-    for (const row of chunkContests) {
-      if (contestMap[row.name]) {
-        oldToNew[row.id] = contestMap[row.name];
-      } else {
-        await coldDb.execAsync(
-          `INSERT OR IGNORE INTO contests (name) VALUES ('${row.name.replace(/'/g, "''")}')`
-        );
-        const r = await coldDb.getFirstAsync<{ id: number }>(
-          `SELECT id FROM contests WHERE name = '${row.name.replace(/'/g, "''")}'`
-        );
-        if (r) {
-          contestMap[row.name] = r.id;
-          oldToNew[row.id] = r.id;
-        }
-      }
-    }
-
-    for (const [oldId, newId] of Object.entries(oldToNew)) {
-      if (+oldId !== newId) {
-        await coldDb.execAsync(
-          `UPDATE novels SET contest_id = ${newId} WHERE contest_id = ${+oldId} AND id IN (SELECT id FROM ${alias}.novels)`
-        );
-      }
-    }
-  }
-
-  // Merge tags (name-based dedup)
-  const tagRows = await coldDb.getAllAsync<{ name: string; id: number }>(
-    "SELECT name, id FROM tags"
-  );
-  const tagMap: Record<string, number> = Object.fromEntries(
-    tagRows.map((r) => [r.name, r.id])
-  );
-
-  for (const alias of ["warm", "hot"]) {
-    const chunkTags = await coldDb.getAllAsync<{ id: number; name: string }>(
-      `SELECT id, name FROM ${alias}.tags`
-    );
-    const oldToNew: Record<number, number> = {};
-
-    for (const row of chunkTags) {
-      if (tagMap[row.name]) {
-        oldToNew[row.id] = tagMap[row.name];
-      } else {
-        await coldDb.execAsync(
-          `INSERT OR IGNORE INTO tags (name) VALUES ('${row.name.replace(/'/g, "''")}')`
-        );
-        const r = await coldDb.getFirstAsync<{ id: number }>(
-          `SELECT id FROM tags WHERE name = '${row.name.replace(/'/g, "''")}'`
-        );
-        if (r) {
-          tagMap[row.name] = r.id;
-          oldToNew[row.id] = r.id;
-        }
-      }
-    }
-
-    const chunkNovelTags = await coldDb.getAllAsync<{
-      novel_id: number;
-      tag_id: number;
-    }>(`SELECT novel_id, tag_id FROM ${alias}.novel_tags`);
-    for (const row of chunkNovelTags) {
-      const newTagId = oldToNew[row.tag_id];
-      if (newTagId) {
-        await coldDb.execAsync(
-          `INSERT OR IGNORE INTO novel_tags (novel_id, tag_id) VALUES (${row.novel_id}, ${newTagId})`
-        );
-      }
-    }
-  }
-
-  // Merge authors
-  await coldDb.execAsync(`
-    UPDATE authors SET
-      top_novel_id = w.top_novel_id,
-      top_novel_title = w.top_novel_title,
-      top_novel_clicks = w.top_novel_clicks
-    FROM warm.authors w
-    WHERE authors.name = w.name AND w.top_novel_clicks > authors.top_novel_clicks
-  `);
-  await coldDb.execAsync(`
-    UPDATE authors SET
-      top_novel_id = h.top_novel_id,
-      top_novel_title = h.top_novel_title,
-      top_novel_clicks = h.top_novel_clicks
-    FROM hot.authors h
-    WHERE authors.name = h.name AND h.top_novel_clicks > authors.top_novel_clicks
-  `);
-  await coldDb.execAsync(
-    "INSERT OR IGNORE INTO authors (name, top_novel_id, top_novel_title, top_novel_clicks) SELECT name, top_novel_id, top_novel_title, top_novel_clicks FROM warm.authors"
-  );
-  await coldDb.execAsync(
-    "INSERT OR IGNORE INTO authors (name, top_novel_id, top_novel_title, top_novel_clicks) SELECT name, top_novel_id, top_novel_title, top_novel_clicks FROM hot.authors"
-  );
-
-  await coldDb.execAsync("COMMIT");
-  await coldDb.execAsync("DETACH warm");
-  await coldDb.execAsync("DETACH hot");
-
-  // Create indexes
-  await coldDb.execAsync(`
+async function createIndexes(db: SQLite.SQLiteDatabase): Promise<void> {
+  await db.execAsync(`
     CREATE INDEX IF NOT EXISTS idx_novels_click_num ON novels(click_num);
     CREATE INDEX IF NOT EXISTS idx_novels_genre ON novels(genre);
     CREATE INDEX IF NOT EXISTS idx_novels_status ON novels(status);
@@ -254,83 +369,43 @@ async function mergeNativeChunks(docDir: string): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_novel_tags_novel_id ON novel_tags(novel_id);
     CREATE INDEX IF NOT EXISTS idx_novel_tags_tag_id ON novel_tags(tag_id);
   `);
-
-  // Close and rename to final name
-  await coldDb.closeAsync();
-
-  // Use the cold_chunk.sqlite as the final database
-  await FS.moveAsync({ from: coldPath, to: dbPath });
-
-  // Cleanup temp chunks
-  await FS.deleteAsync(warmPath, { idempotent: true });
-  await FS.deleteAsync(hotPath, { idempotent: true });
-
-  console.log("Merge complete!");
 }
 
-async function loadWebSeed(database: SQLite.SQLiteDatabase): Promise<void> {
-  console.log("Loading seed data for web...");
-  const decompressed = await decompressAsset(require("../assets/seed.sql.gz"));
-  const sql = new TextDecoder().decode(decompressed);
-
-  const lines = sql.split("\n");
-  const BATCH_SIZE = 500;
-
-  for (let i = 0; i < lines.length; i += BATCH_SIZE) {
-    const batch = lines.slice(i, i + BATCH_SIZE).filter((l) => l.trim().length > 0);
-    if (batch.length > 0) {
-      const stmt = batch.join("\n");
-      try {
-        await database.execAsync(stmt);
-      } catch (e) {
-        console.warn(`Batch ${i}-${i + batch.length} failed:`, e);
-      }
-    }
-  }
-}
-
-export function initDatabase(): Promise<SQLite.SQLiteDatabase> {
-  if (!dbPromise) {
-    dbPromise = initDatabaseInternal();
-  }
-  return dbPromise;
-}
-
-async function initDatabaseInternal(): Promise<SQLite.SQLiteDatabase> {
-  if (Platform.OS === "web") {
-    const database = await SQLite.openDatabaseAsync(DB_NAME);
-
-    try {
-      const count = await database.getFirstAsync<{ c: number }>("SELECT COUNT(*) as c FROM novels");
-      if (count && count.c > 0) return database;
-    } catch {
-      // Table doesn't exist yet, need to seed
-    }
-
-    await loadWebSeed(database);
-    return database;
-  }
-
+async function mergeColdInBackground(
+  oldDb: SQLite.SQLiteDatabase,
+  docDir: string,
+  coldPath: string,
+  hotPath: string,
+  markerPath: string
+): Promise<void> {
   const FS = await getFS();
-  const docDir = FS.documentDirectory;
-  const dbPath = `${docDir}${DB_NAME}`;
-  const markerPath = `${docDir}${MERGED_MARKER}`;
 
-  const dbInfo = await FS.getInfoAsync(dbPath);
-  const markerInfo = await FS.getInfoAsync(markerPath);
+  await decompressAndWriteChunkStreaming(
+    require("../assets/chunks/cold_chunk.sqlite.gz"),
+    coldPath
+  );
 
-  if (dbInfo.exists && markerInfo.exists) {
-    return await SQLite.openDatabaseAsync(DB_NAME);
-  }
+  dbLog("Opening cold DB and merging hot+warm into it...");
+  setInitProgress("正在合并数据库...");
+  const coldDb = await SQLite.openDatabaseAsync("cold_chunk.sqlite");
 
-  console.log("First launch: decompressing and merging 3 chunks...");
-  await mergeNativeChunks(docDir);
+  await mergeChunkIntoDb(coldDb, "hotwarm", hotPath);
 
+  dbLog("Creating indexes on merged DB...");
+  setInitProgress("正在创建索引...");
+  await createIndexes(coldDb);
+
+  dbLog("Swapping cold DB into place...");
+  await oldDb.closeAsync();
+  await FS.deleteAsync(hotPath, { idempotent: true });
+  await FS.moveAsync({ from: coldPath, to: hotPath });
   await FS.writeAsStringAsync(markerPath, "1");
 
-  return await SQLite.openDatabaseAsync(DB_NAME);
+  currentDb = coldDb;
+  dbLog("Full database ready with cold data.");
 }
 
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
+  if (currentDb) return currentDb;
   return initDatabase();
 }

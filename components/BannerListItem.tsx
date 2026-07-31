@@ -9,7 +9,6 @@ import {
   Animated,
   Modal,
   Pressable,
-  useWindowDimensions,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -31,17 +30,16 @@ interface BannerItemProps extends BannerNovel {
   height?: number;
 }
 
-/** 根据屏幕宽度返回适配的 Banner 高度 */
+/** 根据容器宽度返回适配的 Banner 高度(宽高比 > 2:1,保持图片截取逻辑不变) */
 function getBannerHeight(w: number): number {
   if (w >= 1024) return 400;
   if (w >= 768) return 320;
   if (w >= 600) return 280;
-  return 200;
+  return Math.round(w * 0.45);
 }
 
 export function BannerListItem({ id, title, author, width, height }: BannerItemProps) {
   const { colors } = useTheme();
-  const { width: winWidth } = useWindowDimensions();
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
@@ -60,7 +58,7 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
 
   const uri = BANNER_PREFIX + id + ".jpg";
   const containerWidth = width;
-  const fixedHeight = height ?? getBannerHeight(winWidth);
+  const fixedHeight = height ?? getBannerHeight(containerWidth);
 
   useEffect(() => {
     setLoaded(false);
@@ -134,7 +132,7 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
       >
         <View style={styles.titleContainer}>
           <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>{title}</Text>
-          <ID id={id} />
+          <ID id={id} weight="700" />
         </View>
         {author && <Text style={[styles.author, { color: colors.textSecondary }]} numberOfLines={1}>{author}</Text>}
       </TouchableOpacity>
@@ -183,6 +181,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xl,
     fontWeight: "700",
     textAlign: "center",
+    alignSelf: "stretch",
   },
   loading: {
     justifyContent: "center",

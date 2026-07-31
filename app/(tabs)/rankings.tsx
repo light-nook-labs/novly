@@ -14,6 +14,8 @@ import { TabHeader } from "../../components/TabHeader";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
 import { FontSize, Spacing } from "../../constants/theme";
 import { useTheme } from "../../components/ThemeProvider";
+import { BackToTop } from "../../components/BackToTop";
+import { Loading, LoadingFooter } from "../../components/Loading";
 
 interface Novel {
   id: number;
@@ -97,19 +99,8 @@ export default function RankingsScreen() {
         footerText: {
           fontSize: FontSize.sm,
           color: colors.textTertiary,
-        },
-        backToTop: {
-          position: "absolute",
-          bottom: 20,
-          right: 20,
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: colors.surface,
-          justifyContent: "center",
-          alignItems: "center",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-          elevation: 4,
+          alignSelf: "stretch",
+          textAlign: "center",
         },
       }),
     [colors]
@@ -198,6 +189,9 @@ export default function RankingsScreen() {
             loadRankings(false);
           }
         }}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={7}
         contentContainerStyle={styles.list}
         renderItem={({ item, index }) => (
           <NovelRow
@@ -207,11 +201,12 @@ export default function RankingsScreen() {
             valueLabel={currentTab?.label}
           />
         )}
+        ListEmptyComponent={
+          loading ? <Loading /> : null
+        }
         ListFooterComponent={
-          loading ? (
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>加载中...</Text>
-            </View>
+          loading && novels.length > 0 ? (
+            <LoadingFooter />
           ) : !hasMore && novels.length > 0 ? (
             <View style={styles.footer}>
               <Text style={styles.footerText}>没有更多了</Text>
@@ -224,11 +219,7 @@ export default function RankingsScreen() {
         onEndReachedThreshold={0.5}
       />
 
-      {showButton && (
-        <TouchableOpacity style={styles.backToTop} onPress={scrollToTop}>
-          <Ionicons name="arrow-up" size={20} color={colors.primary} />
-        </TouchableOpacity>
-      )}
+      {showButton && <BackToTop onPress={scrollToTop} />}
     </View>
   );
 }

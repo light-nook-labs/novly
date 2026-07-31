@@ -8,6 +8,7 @@ import { genreMapping } from "../utils/mappings";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { useTheme } from "../components/ThemeProvider";
 import { PageHeader } from "../components/Header";
+import { Loading } from "../components/Loading";
 
 interface GenreCount {
   genre: number;
@@ -135,10 +136,7 @@ export default function GenresScreen() {
       />
 
       {loading && genres.length === 0 ? (
-        <View style={styles.loading}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>加载分类中...</Text>
-        </View>
+        <Loading />
       ) : (
         <FlatList
           data={genres}

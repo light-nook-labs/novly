@@ -1,17 +1,83 @@
 import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
 import { BannerListItem, type BannerNovel } from "../../components/BannerListItem";
 import { PageHeader } from "../../components/Header";
-import { Colors, FontSize, Spacing, BorderRadius } from "../../constants/theme";
-import { useTheme } from "../../components/ThemeProvider";
+import { LoadingFooter } from "../../components/Loading";
+import { FontSize, Spacing, BorderRadius } from "../../constants/theme";
+import { useTheme, type ThemeColors } from "../../components/ThemeProvider";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const PAGE_SIZE = 10;
 
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    searchBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: Spacing.sm,
+      backgroundColor: colors.surface,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.surfaceBorder,
+      gap: Spacing.sm,
+    },
+    input: {
+      flex: 1,
+      height: 40,
+      fontSize: FontSize.md,
+      color: colors.text,
+      paddingHorizontal: Spacing.md,
+      backgroundColor: colors.surfaceBorder,
+      borderRadius: BorderRadius.sm,
+    },
+    searchBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      height: 40,
+      paddingHorizontal: Spacing.lg,
+      backgroundColor: colors.primary,
+      borderRadius: BorderRadius.sm,
+      gap: Spacing.xs,
+    },
+    searchBtnDisabled: {
+      opacity: 0.5,
+    },
+    searchBtnText: {
+      fontSize: FontSize.md,
+      color: "#fff",
+      fontWeight: "600",
+    },
+    list: {
+      padding: Spacing.lg,
+      gap: Spacing.xl,
+    },
+    empty: {
+      alignItems: "center",
+      paddingTop: 80,
+      gap: Spacing.md,
+    },
+    emptyText: {
+      fontSize: FontSize.md,
+      color: colors.textTertiary,
+      alignSelf: "stretch",
+      textAlign: "center",
+    },
+    footer: {
+      paddingVertical: Spacing.xl,
+      alignItems: "center",
+    },
+  });
+}
+
 export default function BannerSearchScreen() {
   const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<BannerNovel[]>([]);
   const [loading, setLoading] = useState(false);
@@ -126,9 +192,7 @@ export default function BannerSearchScreen() {
         }
         ListFooterComponent={
           loading ? (
-            <View style={styles.footer}>
-              <ActivityIndicator size="small" color={colors.primary} />
-            </View>
+            <LoadingFooter />
           ) : null
         }
         onEndReached={handleLoadMore}
@@ -137,62 +201,3 @@ export default function BannerSearchScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.sm,
-    backgroundColor: Colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.surfaceBorder,
-    gap: Spacing.sm,
-  },
-  input: {
-    flex: 1,
-    height: 40,
-    fontSize: FontSize.md,
-    color: Colors.text,
-    paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.surfaceBorder,
-    borderRadius: BorderRadius.sm,
-  },
-  searchBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    height: 40,
-    paddingHorizontal: Spacing.lg,
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.sm,
-    gap: Spacing.xs,
-  },
-  searchBtnDisabled: {
-    opacity: 0.5,
-  },
-  searchBtnText: {
-    fontSize: FontSize.md,
-    color: "#fff",
-    fontWeight: "600",
-  },
-  list: {
-    padding: Spacing.lg,
-  },
-  empty: {
-    alignItems: "center",
-    paddingTop: 80,
-    gap: Spacing.md,
-  },
-  emptyText: {
-    fontSize: FontSize.md,
-    color: Colors.textTertiary,
-  },
-  footer: {
-    paddingVertical: Spacing.xl,
-    alignItems: "center",
-  },
-});

@@ -8,6 +8,7 @@ import { useTheme, type ThemeColors } from "../../components/ThemeProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { PageHeader } from "../../components/Header";
 import { NovelRow, type NovelRowData } from "../../components/NovelRow";
+import { DetailSkeleton } from "../../components/Skeleton";
 
 interface AuthorStats {
   id: number;
@@ -91,16 +92,13 @@ export default function AuthorDetailScreen() {
   }
 
   if (!author) {
+    if (loading) {
+      return <DetailSkeleton />;
+    }
     return (
       <View style={styles.loading}>
-        {loading ? (
-          <ActivityIndicator size="large" color={colors.primary} />
-        ) : (
-          <>
-            <Ionicons name="person-outline" size={48} color={colors.textMuted} />
-            <Text style={styles.loadingText}>作者不存在</Text>
-          </>
-        )}
+        <Ionicons name="person-outline" size={48} color={colors.textMuted} />
+        <Text style={styles.loadingText}>作者不存在</Text>
       </View>
     );
   }
@@ -183,6 +181,8 @@ function createStyles(colors: ThemeColors) {
   loadingText: {
     fontSize: FontSize.md,
     color: colors.textTertiary,
+    alignSelf: "stretch",
+    textAlign: "center",
   },
   // Stats card
   statsCard: {
@@ -211,10 +211,14 @@ function createStyles(colors: ThemeColors) {
     fontSize: FontSize.md,
     fontWeight: "700",
     color: colors.text,
+    alignSelf: "stretch",
+    textAlign: "center",
   },
   statLabel: {
     fontSize: FontSize.xs,
     color: colors.textTertiary,
+    alignSelf: "stretch",
+    textAlign: "center",
   },
   // Section
   sectionHeader: {
@@ -242,6 +246,8 @@ function createStyles(colors: ThemeColors) {
   emptyText: {
     fontSize: FontSize.md,
     color: colors.textTertiary,
+    alignSelf: "stretch",
+    textAlign: "center",
   },
   });
 }

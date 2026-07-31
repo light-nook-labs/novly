@@ -1,13 +1,15 @@
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, Modal, Pressable } from "react-native";
 import { useState, useEffect, useMemo } from "react";
+import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
+import * as Clipboard from "expo-clipboard";
+import Toast from "react-native-toast-message";
 import { getDatabase } from "../utils/database";
 import { clearBookshelf } from "../utils/bookshelfDb";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { PageHeader } from "../components/Header";
-import { AppInfoSheet } from "../components/AppInfoSheet";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useTheme, type ThemeColors, type ThemeMode } from "../components/ThemeProvider";
 
@@ -26,7 +28,6 @@ export default function SettingsScreen() {
     tags: 0,
     contests: 0,
   });
-  const [infoVisible, setInfoVisible] = useState(false);
   const [themeVisible, setThemeVisible] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState<"bookshelf" | "reset" | null>(null);
 
@@ -225,7 +226,7 @@ export default function SettingsScreen() {
         <View style={styles.card}>
           <TouchableOpacity
             style={styles.aboutRow}
-            onPress={() => setInfoVisible(true)}
+            onPress={() => router.push("/about")}
             activeOpacity={0.6}
           >
             <View style={styles.aboutInfo}>
@@ -356,14 +357,31 @@ export default function SettingsScreen() {
 
       {/* Copyright */}
       <View style={styles.copyright}>
-        <Text style={styles.copyrightText}>© {new Date().getFullYear()} light-nook-labs</Text>
+        <TouchableOpacity
+          style={styles.copyrightLink}
+          activeOpacity={0.6}
+          onPress={() => Linking.openURL("mailto:intersetwq@gmail.com")}
+        >
+          <Text textBreakStrategy="simple" style={styles.copyrightText}>Email: intersetwq@gmail.com</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.copyrightLink}
+          activeOpacity={0.6}
+          onPress={() => {
+            Clipboard.setStringAsync("881041631");
+            Toast.show({
+              type: "success",
+              text1: "已复制QQ群号",
+              text2: "881041631",
+              position: "top",
+            });
+          }}
+        >
+          <Text textBreakStrategy="simple" style={styles.copyrightText}>QQ Group: 881041631</Text>
+        </TouchableOpacity>
+        <Text textBreakStrategy="simple" style={[styles.copyrightText, styles.copyrightBrand]}>© {new Date().getFullYear()} light-nook-labs</Text>
       </View>
     </ScrollView>
-
-      <AppInfoSheet
-        visible={infoVisible}
-        onClose={() => setInfoVisible(false)}
-      />
 
       {/* Theme picker modal */}
       <Modal visible={themeVisible} transparent animationType="fade" onRequestClose={() => setThemeVisible(false)}>
@@ -444,9 +462,17 @@ function createSettingsStyles(colors: ThemeColors) {
     alignItems: "center",
     paddingVertical: Spacing.xl,
   },
+  copyrightLink: {
+    alignSelf: "stretch",
+  },
   copyrightText: {
     fontSize: FontSize.sm,
     color: colors.textTertiary,
+    alignSelf: "stretch",
+    textAlign: "center",
+  },
+  copyrightBrand: {
+    marginTop: Spacing.sm,
   },
   section: {
     paddingHorizontal: Spacing.lg,

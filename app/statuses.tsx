@@ -8,6 +8,7 @@ import { statusMapping, statusColors } from "../utils/mappings";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { useTheme } from "../components/ThemeProvider";
 import { PageHeader } from "../components/Header";
+import { Loading } from "../components/Loading";
 
 interface StatusCount {
   status: number;
@@ -181,10 +182,7 @@ export default function StatusesScreen() {
       </View>
 
       {loading && statuses.length === 0 ? (
-        <View style={styles.loading}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>加载状态中...</Text>
-        </View>
+        <Loading />
       ) : (
         <FlatList
           data={statuses}

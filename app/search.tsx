@@ -76,10 +76,11 @@ export default function SearchScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <PageHeader title="Search" />
-      <View style={styles.searchBar}>
+      <View style={[styles.searchBar, { backgroundColor: colors.surface, borderBottomColor: colors.surfaceBorder }]}>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { color: colors.text, backgroundColor: colors.surfaceBorder, borderColor: colors.surfaceBorder }]}
           placeholder="搜索标题、作者或小说 ID..."
+          placeholderTextColor={colors.textTertiary}
           value={query}
           onChangeText={setQuery}
           autoFocus
@@ -97,14 +98,14 @@ export default function SearchScreen() {
         }}
         renderItem={({ item }) => (
           <Link href={`/novel/${item.id}`} asChild>
-            <TouchableOpacity style={styles.resultItem}>
+            <TouchableOpacity style={StyleSheet.flatten([styles.resultItem, { borderBottomColor: colors.surfaceBorder }])}>
               <View style={styles.resultInfo}>
-                <Text style={styles.resultTitle} numberOfLines={2}>
+                <Text style={[styles.resultTitle, { color: colors.text }]} numberOfLines={2}>
                   {item.title} #{item.id}
                 </Text>
-                <Text style={styles.resultAuthor}>{item.author}</Text>
+                <Text style={[styles.resultAuthor, { color: colors.textSecondary }]}>{item.author}</Text>
               </View>
-              <Text style={styles.resultClicks}>{formatNumber(item.click_num)}</Text>
+              <Text style={StyleSheet.flatten([styles.resultClicks, { color: colors.textTertiary }])}>{formatNumber(item.click_num)}</Text>
             </TouchableOpacity>
           </Link>
         )}
@@ -116,12 +117,12 @@ export default function SearchScreen() {
           query ? (
             <View style={styles.empty}>
               <Ionicons name="search-outline" size={48} color={colors.textMuted} />
-              <Text style={styles.emptyText}>未找到匹配结果</Text>
+              <Text style={[styles.emptyText, { color: colors.textTertiary }]}>未找到匹配结果</Text>
             </View>
           ) : (
             <View style={styles.empty}>
               <Ionicons name="search-outline" size={48} color={colors.textMuted} />
-              <Text style={styles.emptyText}>输入关键词搜索小说</Text>
+              <Text style={[styles.emptyText, { color: colors.textTertiary }]}>输入关键词搜索小说</Text>
             </View>
           )
         }
@@ -173,7 +174,9 @@ const styles = StyleSheet.create({
   },
   resultClicks: {
     fontSize: 12,
+    fontWeight: "600",
     color: "#999",
+    paddingHorizontal: 2,
   },
   empty: {
     alignItems: "center",
@@ -183,5 +186,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     color: "#999",
+    alignSelf: "stretch",
+    textAlign: "center",
   },
 });

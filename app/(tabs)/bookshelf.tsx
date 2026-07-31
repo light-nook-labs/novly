@@ -170,6 +170,9 @@ export default function BookshelfScreen() {
         data={filteredNovels}
         keyExtractor={(item) => item.id.toString()}
         numColumns={NUM_COLUMNS}
+        initialNumToRender={12}
+        maxToRenderPerBatch={12}
+        windowSize={7}
         contentContainerStyle={styles.list}
         columnWrapperStyle={styles.row}
         ListEmptyComponent={
@@ -274,9 +277,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: FontSize.md,
     color: Colors.textTertiary,
+    alignSelf: "stretch",
+    textAlign: "center",
   },
   emptyHint: {
     fontSize: FontSize.sm,
     color: Colors.textMuted,
+    alignSelf: "stretch",
+    textAlign: "center",
   },
 });

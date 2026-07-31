@@ -37,6 +37,7 @@ export function useNovels({
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const buildQuery = useCallback(
     (pageNum: number) => {
@@ -97,8 +98,10 @@ export function useNovels({
         }
         setPage(pageNum + 1);
         setHasMore(results.length === pageSize);
+        setError(null);
       } catch (e) {
         console.error("Failed to load novels:", e);
+        setError(e instanceof Error ? e.message : String(e));
       } finally {
         setLoading(false);
       }
@@ -111,6 +114,7 @@ export function useNovels({
     setNovels([]);
     setPage(0);
     setHasMore(true);
+    setError(null);
     loadPage(0, true);
   }, [ptype, status, genre, year, minWordNum, maxWordNum, sortBy, descending]);
 
@@ -122,8 +126,9 @@ export function useNovels({
 
   const refresh = useCallback(() => {
     setLoading(true);
+    setError(null);
     loadPage(0, true);
   }, [loadPage]);
 
-  return { novels, loading, hasMore, loadMore, refresh };
+  return { novels, loading, hasMore, loadMore, refresh, error };
 }

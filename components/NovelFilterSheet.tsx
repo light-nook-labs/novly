@@ -299,9 +299,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm - 2,
     borderRadius: BorderRadius.xl,
+    alignItems: "center",
   },
   chipText: {
     fontSize: FontSize.sm,
+    fontWeight: "600",
+    textAlign: "center",
+    paddingHorizontal: 2,
   },
   sortRow: {
     gap: Spacing.sm,
@@ -334,5 +338,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     fontWeight: "700",
     color: "#fff",
+    alignSelf: "stretch",
+    textAlign: "center",
   },
 });
