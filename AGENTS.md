@@ -6,7 +6,7 @@ Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before 
 
 ## Project Overview
 
-**Novly** — an offline-first novel metadata browser built with React Native / Expo (SDK 57) + TypeScript. Repo: `light-nook-labs/novly`.
+**Novly** — an offline-first novel metadata browser (also packaged as a Windows desktop app via Tauri v2) built with React Native / Expo (SDK 57) + TypeScript. Repo: `light-nook-labs/novly`.
 
 - Data is bundled locally (`assets/seed.sql.gz` → SQLite via `utils/database.ts`); no network needed.
 - Upstream data source: `light-nook-labs/novel_hub`. Sibling Flutter app: `light-nook-labs/NovelHubMobile`.
@@ -19,6 +19,7 @@ pnpm install       # install deps
 pnpm start         # dev server (interactive platform picker)
 pnpm run web       # web (fastest iteration)
 npx tsc --noEmit   # ALWAYS run type check before finishing / committing — must pass
+pnpm tauri build  # build Windows desktop installer (NSIS)
 ```
 
 ## Architecture & Conventions
@@ -105,6 +106,7 @@ Rules:
 | `components/ConfirmDialog.tsx` / `AppInfoSheet.tsx` / `ImageLightbox.tsx` | reusable dialogs / lightbox |
 | `hooks/useNovels.ts` | novel list query hook (filters + paging + whitelisted ORDER BY) |
 | `hooks/useScrollToTop.ts` | back-to-top button behavior |
+| `src-tauri/` | Tauri v2 desktop packaging (tauri.conf.json, nsis-hooks.nsh, icons) |
 
 ## Contributing
 

@@ -1,4 +1,4 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Platform, useWindowDimensions } from "react-native";
+import { View, Text, ScrollView, FlatList, TouchableOpacity, StyleSheet, Alert, Platform, useWindowDimensions } from "react-native";
 import { Link, useFocusEffect } from "expo-router";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -43,15 +43,16 @@ const NUM_COLUMNS = 3;
 export default function BookshelfScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
+  // 封面固定高度,宽度按 3:4 比例自适应(容器尺寸可控)
+  const coverHeight = 154;
+  const itemWidth = Math.round(coverHeight * 0.75);
   const [novels, setNovels] = useState<BookshelfNovel[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTER);
   const [filterVisible, setFilterVisible] = useState(false);
 
-  const itemWidth = (winWidth - Spacing.lg * 2 - Spacing.sm * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
-  const coverHeight = itemWidth * 1.4;
-
+    
   // 书架范围内的搜索 + 过滤 + 排序（内存操作，数据量小）
   const filteredNovels = useMemo(() => {
     let list = novels;
@@ -165,56 +166,47 @@ export default function BookshelfScreen() {
           </TouchableOpacity>
         }
       />
-      <FlatList
-        style={styles.container}
-        data={filteredNovels}
-        keyExtractor={(item) => item.id.toString()}
-        numColumns={NUM_COLUMNS}
-        initialNumToRender={12}
-        maxToRenderPerBatch={12}
-        windowSize={7}
-        contentContainerStyle={styles.list}
-        columnWrapperStyle={styles.row}
-        ListEmptyComponent={
-          loaded ? (
-            <View style={styles.empty}>
-              <Ionicons name="bookmark-outline" size={48} color={Colors.textMuted} />
-              <Text style={styles.emptyText}>书架空空如也</Text>
-              <Text style={styles.emptyHint}>去小说详情页点击「加入书架」收藏作品</Text>
-            </View>
-          ) : null
-        }
-        renderItem={({ item }) => (
-          <View style={StyleSheet.flatten([styles.item, { width: itemWidth }])}>
-            <View>
+      <ScrollView contentContainerStyle={styles.list}>
+        <View style={styles.grid}>
+          {filteredNovels.map((item) => (
+            <View key={item.id} style={[styles.item, { width: itemWidth }]}>
+              <View>
+                <Link href={`/novel/${item.id}`} asChild>
+                  <TouchableOpacity activeOpacity={0.7}>
+                    <Cover
+                      cover={item.cover}
+                      width={itemWidth}
+                      height={coverHeight}
+                      borderRadius={BorderRadius.md}
+                    />
+                  </TouchableOpacity>
+                </Link>
+                <TouchableOpacity
+                  style={styles.removeBtn}
+                  onPress={() => removeFromBookshelf(item.id)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons name="close" size={14} color="#fff" />
+                </TouchableOpacity>
+              </View>
               <Link href={`/novel/${item.id}`} asChild>
                 <TouchableOpacity activeOpacity={0.7}>
-                  <Cover
-                    cover={item.cover}
-                    width={itemWidth}
-                    height={coverHeight}
-                    borderRadius={BorderRadius.md}
-                  />
+                  <Text style={styles.title} numberOfLines={2}>
+                    {item.title}
+                  </Text>
                 </TouchableOpacity>
               </Link>
-              <TouchableOpacity
-                style={styles.removeBtn}
-                onPress={() => removeFromBookshelf(item.id)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Ionicons name="close" size={14} color="#fff" />
-              </TouchableOpacity>
             </View>
-            <Link href={`/novel/${item.id}`} asChild>
-              <TouchableOpacity activeOpacity={0.7}>
-                <Text style={styles.title} numberOfLines={2}>
-                  {item.title}
-                </Text>
-              </TouchableOpacity>
-            </Link>
+          ))}
+        </View>
+        {loaded && filteredNovels.length === 0 && (
+          <View style={styles.empty}>
+            <Ionicons name="bookmark-outline" size={48} color={Colors.textMuted} />
+            <Text style={styles.emptyText}>书架空空如也</Text>
+            <Text style={styles.emptyHint}>去小说详情页点击「加入书架」收藏作品</Text>
           </View>
         )}
-      />
+      </ScrollView>
 
       <NovelFilterSheet
         visible={filterVisible}
@@ -246,6 +238,11 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: Spacing.lg,
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.md,
   },
   row: {
     gap: Spacing.sm,

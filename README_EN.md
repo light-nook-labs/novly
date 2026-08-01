@@ -46,6 +46,24 @@ Novly is an offline-first light-novel metadata browsing app: all data is bundled
 | Persistence     | AsyncStorage (theme preference, list caches)                                                   |
 | Package manager | pnpm                                                                                           |
 
+## Desktop App (Windows)
+
+Novly can be packaged as a Windows desktop app (Tauri v2), same source as the Web version, offline-first.
+
+### Build
+
+```bash
+pnpm tauri build
+```
+
+Output: `src-tauri/target/release/bundle/nsis/Novly_1.0.0_x64-setup.exe`
+
+### Install behavior
+
+- Custom install directory supported
+- Default directory: `D:\novly` (falls back to `C:\Program Files\Novly` if no D: drive)
+- Auto-creates directories, includes uninstaller
+
 ## Getting Started
 
 ```bash

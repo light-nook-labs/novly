@@ -35,6 +35,16 @@ Novly 是一个离线优先的轻小说元数据浏览应用：数据打包内�
 | 设置 | <img src="screenshots/settings.png" width="220" /> | <img src="screenshots/settings-light.png" width="220" /> |
 | 关于 | <img src="screenshots/about.png" width="220" /> | <img src="screenshots/about-light.png" width="220" /> |
 
+### PC 桌面版
+
+> 桌面应用(Tauri v2)在宽屏下的界面效果(多列网格布局)。
+
+| 页面 | 预览 |
+|---|---|
+| 首页 | <img src="screenshots/home-pc.png" width="480" /> |
+| 小说列表 | <img src="screenshots/novels-pc.png" width="480" /> |
+| 背投 | <img src="screenshots/banners-pc.png" width="480" /> |
+
 ## 技术栈
 
 | 类别 | 技术 |
@@ -45,6 +55,24 @@ Novly 是一个离线优先的轻小说元数据浏览应用：数据打包内�
 | 数据库 | expo-sqlite（全局数据 + 书架本地库） |
 | 持久化 | AsyncStorage（主题偏好、列表缓存） |
 | 包管理 | pnpm |
+
+## 桌面应用(Windows)
+
+Novly 支持打包为 Windows 桌面应用(Tauri v2),与 Web 版同源,离线优先。
+
+### 构建
+
+```bash
+pnpm tauri build
+```
+
+产物:`src-tauri/target/release/bundle/nsis/Novly_1.0.0_x64-setup.exe`
+
+### 安装行为
+
+- 安装时可自定义安装目录
+- 默认目录:`D:\novly`(无 D 盘时回退 `C:\Program Files\Novly`)
+- 自动创建目录,内置卸载程序
 
 ## 快速开始
 
