@@ -314,7 +314,13 @@ export function initDatabase(): Promise<SQLite.SQLiteDatabase> {
 
 async function initDatabaseInternal(): Promise<SQLite.SQLiteDatabase> {
   if (Platform.OS === "web") {
-    const database = await SQLite.openDatabaseAsync(DB_NAME);
+    // Tauri 安卓 WebView 无 OPFS(navigator.storage.getDirectory 不存在),
+    // 回退到内存数据库 + seed 加载(每次启动重新加载)
+    const hasOPFS =
+      typeof navigator !== "undefined" &&
+      !!navigator.storage &&
+      typeof (navigator.storage as any).getDirectory === "function";
+    const database = await SQLite.openDatabaseAsync(hasOPFS ? DB_NAME : ":memory:");
     try {
       const count = await database.getFirstAsync<{ c: number }>(
         "SELECT COUNT(*) as c FROM novels"
