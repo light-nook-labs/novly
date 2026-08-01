@@ -464,6 +464,7 @@ function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
   container: {
     flex: 1,
+    ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
     backgroundColor: colors.background,
   },
   scrollContent: {

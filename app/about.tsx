@@ -1,4 +1,4 @@
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, Linking, Modal, Pressable } from "react-native";
+import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, Linking, Modal, Pressable, Platform } from "react-native";
 import { useMemo, useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
@@ -26,6 +26,7 @@ function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     container: {
       flex: 1,
+      
       backgroundColor: colors.background,
     },
     content: {
@@ -82,6 +83,7 @@ function createStyles(colors: ThemeColors) {
       backgroundColor: colors.surfaceBorder,
     },
     featureRow: {
+
       flexDirection: "row",
       alignItems: "center",
       paddingVertical: Spacing.md,
@@ -132,6 +134,7 @@ function createStyles(colors: ThemeColors) {
       color: colors.textTertiary,
     },
     supportRow: {
+
       flexDirection: "row",
       alignItems: "center",
     },
@@ -264,9 +267,10 @@ export default function AboutScreen() {
         {/* Features */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Features</Text>
+          <View style={Platform.OS === "web" ? { flexDirection: "row", flexWrap: "wrap" } : undefined}>
           {FEATURES.map((f, index) => (
-            <View key={f.title}>
-              {index > 0 && <View style={styles.divider} />}
+            <View key={f.title} style={Platform.OS === "web" ? { width: "50%", paddingRight: (index + 1) % 2 !== 0 ? 16 : 0 } : undefined}>
+              {index > 0 && Platform.OS !== "web" && <View style={styles.divider} />}
               <View style={styles.featureRow}>
                 <View style={styles.featureIconWrap}>
                   <Ionicons name={f.icon} size={20} color={colors.primary} />
@@ -278,6 +282,7 @@ export default function AboutScreen() {
               </View>
             </View>
           ))}
+          </View>
         </View>
 
         {/* Tech stack */}

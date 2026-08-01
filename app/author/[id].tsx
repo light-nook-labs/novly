@@ -1,4 +1,4 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator , Platform} from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator , Platform, useWindowDimensions} from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import { getDatabase } from "../../utils/database";
@@ -23,6 +23,8 @@ interface AuthorStats {
 
 export default function AuthorDetailScreen() {
   const { colors } = useTheme();
+  const { width: winWidth } = useWindowDimensions();
+  const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { id } = useLocalSearchParams();
   const [author, setAuthor] = useState<AuthorStats | null>(null);
@@ -110,6 +112,9 @@ export default function AuthorDetailScreen() {
       <FlatList
         data={novels}
         keyExtractor={(item) => item.id.toString()}
+        numColumns={numColumns}
+        key={`grid-${numColumns}`}
+        columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
         ListHeaderComponent={
           <View>
             {/* Author Stats Card */}
@@ -167,6 +172,10 @@ function StatItem({ icon, label, value }: { icon: string; label: string; value: 
 
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
+    gridRow: {
+      gap: 16,
+      marginBottom: 16,
+    },
   container: {
     flex: 1,    ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
 

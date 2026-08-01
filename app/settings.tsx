@@ -109,10 +109,10 @@ export default function SettingsScreen() {
       {/* Database Statistics */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>DATABASE STATISTICS</Text>
-        <View style={styles.card}>
+        <View style={[styles.card, Platform.OS === "web" ? { flexDirection: "row", flexWrap: "wrap" } : null]}>
           {statRows.map((item, index) => (
-            <View key={item.label}>
-              {index > 0 && <View style={styles.statDivider} />}
+            <View key={item.label} style={Platform.OS === "web" ? { width: "50%", paddingRight: (index + 1) % 2 !== 0 ? 16 : 0, paddingBottom: 16 } : undefined}>
+              {index > 0 && Platform.OS !== "web" && <View style={styles.statDivider} />}
               <View style={styles.statRow}>
                 <View style={styles.statLeft}>
                   <Ionicons
@@ -165,9 +165,9 @@ export default function SettingsScreen() {
       {/* Dangerous Area */}
       <View style={styles.section}>
         <Text style={styles.dangerSectionTitle}>DANGEROUS AREA</Text>
-        <View style={styles.dangerCard}>
+        <View style={[styles.dangerCard, Platform.OS === "web" ? { flexDirection: "row", flexWrap: "wrap" } : null]}>
           <TouchableOpacity
-            style={styles.actionRow}
+            style={[styles.actionRow, Platform.OS === "web" ? { width: "50%", paddingRight: 16 } : null]}
             onPress={handleClearBookshelf}
             activeOpacity={0.6}
           >
@@ -190,10 +190,10 @@ export default function SettingsScreen() {
             />
           </TouchableOpacity>
 
-          <View style={styles.dangerDivider} />
+          {Platform.OS !== "web" && <View style={styles.dangerDivider} />}
 
           <TouchableOpacity
-            style={styles.actionRow}
+            style={[styles.actionRow, Platform.OS === "web" ? { width: "50%", paddingRight: 16 } : null]}
             onPress={handleResetData}
             activeOpacity={0.6}
           >
@@ -221,9 +221,9 @@ export default function SettingsScreen() {
       {/* About */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>ABOUT</Text>
-        <View style={styles.card}>
+        <View style={[styles.card, Platform.OS === "web" ? { flexDirection: "row", flexWrap: "wrap" } : null]}>
           <TouchableOpacity
-            style={styles.aboutRow}
+            style={[styles.aboutRow, Platform.OS === "web" ? { width: "100%", paddingBottom: 16 } : null]}
             onPress={() => router.push("/about")}
             activeOpacity={0.6}
           >
@@ -240,10 +240,10 @@ export default function SettingsScreen() {
             />
           </TouchableOpacity>
 
-          <View style={styles.divider} />
+          {Platform.OS !== "web" && <View style={styles.divider} />}
 
           <TouchableOpacity
-            style={styles.linkRow}
+            style={[styles.linkRow, Platform.OS === "web" ? { width: "50%", paddingRight: 16 } : null]}
             onPress={() =>
               handleOpenUrl("https://github.com/light-nook-labs/novel_hub")
             }
@@ -268,10 +268,10 @@ export default function SettingsScreen() {
             />
           </TouchableOpacity>
 
-          <View style={styles.divider} />
+          {Platform.OS !== "web" && <View style={styles.divider} />}
 
           <TouchableOpacity
-            style={styles.linkRow}
+            style={[styles.linkRow, Platform.OS === "web" ? { width: "50%", paddingRight: 16 } : null]}
             onPress={() =>
               handleOpenUrl(
                 "https://github.com/light-nook-labs/NovelHubMobile"
@@ -298,10 +298,10 @@ export default function SettingsScreen() {
             />
           </TouchableOpacity>
 
-          <View style={styles.divider} />
+          {Platform.OS !== "web" && <View style={styles.divider} />}
 
           <TouchableOpacity
-            style={styles.linkRow}
+            style={[styles.linkRow, Platform.OS === "web" ? { width: "50%", paddingRight: 16 } : null]}
             onPress={() =>
               handleOpenUrl("https://github.com/light-nook-labs/novly")
             }
@@ -326,10 +326,10 @@ export default function SettingsScreen() {
             />
           </TouchableOpacity>
 
-          <View style={styles.divider} />
+          {Platform.OS !== "web" && <View style={styles.divider} />}
 
           <TouchableOpacity
-            style={styles.linkRow}
+            style={[styles.linkRow, Platform.OS === "web" ? { width: "50%", paddingRight: 16 } : null]}
             onPress={() =>
               handleOpenUrl("https://github.com/light-nook-labs/novly/blob/master/LICENSE")
             }
@@ -429,12 +429,16 @@ function createSettingsStyles(colors: ThemeColors) {
   return StyleSheet.create({
   container: {
     flex: 1,
+    
     backgroundColor: colors.background,
   },
   content: {
+      
     paddingBottom: Spacing.xl + Spacing.lg,
   },
   copyright: {
+
+      alignSelf: "center",
     alignItems: "center",
     paddingVertical: Spacing.xl,
   },
@@ -442,6 +446,8 @@ function createSettingsStyles(colors: ThemeColors) {
     alignSelf: "stretch",
   },
   copyrightText: {
+    fontWeight: "600",
+    paddingHorizontal: 2,
     fontSize: FontSize.sm,
     color: colors.textTertiary,
     alignSelf: "stretch",
@@ -451,6 +457,7 @@ function createSettingsStyles(colors: ThemeColors) {
     marginTop: Spacing.sm,
   },
   section: {
+      
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.xl,
   },
@@ -499,6 +506,7 @@ function createSettingsStyles(colors: ThemeColors) {
   },
   // Stat rows
   statRow: {
+      
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",

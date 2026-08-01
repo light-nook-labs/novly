@@ -1,4 +1,4 @@
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Dimensions , Platform} from "react-native";
+import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Dimensions , Platform, useWindowDimensions} from "react-native";
 import { useState, useCallback, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
@@ -13,6 +13,10 @@ const PAGE_SIZE = 10;
 
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
+    gridRow: {
+      gap: 16,
+      marginBottom: 16,
+    },
     container: {
       flex: 1,      ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
 
@@ -78,6 +82,8 @@ function createStyles(colors: ThemeColors) {
 
 export default function BannerSearchScreen() {
   const { colors } = useTheme();
+  const { width: winWidth } = useWindowDimensions();
+  const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<BannerNovel[]>([]);
@@ -161,6 +167,9 @@ export default function BannerSearchScreen() {
 
       {/* Results */}
       <FlatList
+        numColumns={numColumns}
+        key={`grid-${numColumns}`}
+        columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
         data={results}
         keyExtractor={(item) => item.id.toString()}
         onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}
@@ -170,13 +179,10 @@ export default function BannerSearchScreen() {
           }
         }}
         contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <BannerListItem
-            id={item.id}
-            title={item.title}
-            author={item.author}
-            width={SCREEN_WIDTH - Spacing.lg * 2}
-          />
+        renderItem={({ item, index }) => (
+          <View style={{ width: `${100 / numColumns}%`, paddingRight: (index + 1) % numColumns !== 0 ? 16 : 0, paddingBottom: 16 }}>
+            <BannerListItem id={item.id} title={item.title} author={item.author} />
+          </View>
         )}
         ListEmptyComponent={
           searched && !loading ? (
