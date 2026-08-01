@@ -88,6 +88,8 @@ Rules:
     - **Content-width container** (chips, badges, inline meta text): `alignSelf: "stretch"` has no parent width to fill, so use `fontWeight: "600"` (the 400 weight triggers the bug, 600 is fine) + `paddingHorizontal: 2` for breathing room.
     - A `#id` nested inside a title Text (`ID` component) must be rendered with `<Text onPress>`, not wrapped in `TouchableOpacity` (a block-level View inside Text shifts the line box/baseline, sitting ~half a glyph higher).
 
+11. **Android System WebView has no OPFS** — `navigator.storage.getDirectory` is not implemented in Android System WebView, but expo-sqlite's web backend (wa-sqlite) depends on OPFS. So **Tauri v2 Android (WebView shell) is NOT viable** for this app: the Android build must use the native RN/Expo path (native SQLite). Don't attempt `pnpm tauri android build` here (decided 2026-08-01, commit 2cef9ee); `src-tauri/gen/android` is a generated dir — keep it untracked.
+
 ## Key Files Quick Reference
 
 | File | Purpose |
