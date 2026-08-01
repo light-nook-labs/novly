@@ -261,15 +261,14 @@ function WelcomeModal({
   useEffect(() => {
     if (!visible) return;
     setCountdown(3);
+    // 基于结束时间戳计算剩余:JS 线程被冷合并等占用导致 interval 延迟时,
+    // 回调按真实时间计算剩余秒数,倒计时不会"卡住不刷新"
+    const end = Date.now() + 3000;
     const id = setInterval(() => {
-      setCountdown((c) => {
-        if (c <= 1) {
-          clearInterval(id);
-          return 0;
-        }
-        return c - 1;
-      });
-    }, 1000);
+      const remain = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+      setCountdown(remain);
+      if (remain <= 0) clearInterval(id);
+    }, 200);
     return () => clearInterval(id);
   }, [visible]);
 
