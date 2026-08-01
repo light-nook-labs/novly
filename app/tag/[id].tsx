@@ -117,6 +117,8 @@ export default function TagDetailScreen() {
       setHasMore(results.length === PAGE_SIZE);
     } catch (error) {
       console.error("Failed to load novels:", error);
+    } finally {
+      setLoading(false);
     }
   }
 

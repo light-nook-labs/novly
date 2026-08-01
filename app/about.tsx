@@ -260,7 +260,7 @@ export default function AboutScreen() {
         <View style={styles.logoSection}>
           <Image source={require("../assets/icon.png")} style={styles.logo} />
           <Text textBreakStrategy="simple" style={styles.appName}>Novly</Text>
-          <Text textBreakStrategy="simple" style={styles.version}>v1.0.0</Text>
+          <Text textBreakStrategy="simple" style={styles.version}>v1.0.1</Text>
           <Text textBreakStrategy="simple" style={styles.tagline}>Offline-first novel metadata browser</Text>
         </View>
 

@@ -115,6 +115,8 @@ export default function ContestDetailScreen() {
       setHasMore(results.length === PAGE_SIZE);
     } catch (error) {
       console.error("Failed to load novels:", error);
+    } finally {
+      setLoading(false);
     }
   }
 

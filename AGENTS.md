@@ -110,6 +110,20 @@ Rules:
 | `hooks/useScrollToTop.ts` | back-to-top button behavior |
 | `src-tauri/` | Tauri v2 desktop packaging (tauri.conf.json, nsis-hooks.nsh, icons) |
 
+## Version Bump
+
+Version lives in MANY places — bump them ALL together, or Settings/About pages will show a stale version:
+
+- `package.json` → `"version"`
+- `app.json` → `expo.version`
+- `src-tauri/tauri.conf.json` → `version`
+- `src-tauri/Cargo.toml` → `version`
+- `android/app/build.gradle` → `versionCode` (+1) & `versionName`
+- **`app/settings.tsx`** — footer text `vX.Y.Z` (easy to forget!)
+- **`app/about.tsx`** — logo section `<Text>vX.Y.Z</Text>` (easy to forget!)
+
+Checklist before release: `grep -rn "v1\.0\.0\|1\.0\.0" app/ src-tauri/ package.json` to catch leftovers.
+
 ## Contributing
 
 - Report bugs / suggest features via Issues; PRs welcome (fork → branch → PR).

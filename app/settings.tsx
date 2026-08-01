@@ -17,6 +17,16 @@ const THEME_OPTIONS: { key: ThemeMode; label: string; icon: string }[] = [
   { key: "dark", label: "深色模式", icon: "moon-outline" },
 ];
 
+const CHANGELOG_TEXT = `[1.0.1] - 2026-08-01
+- 修复:初始化重复执行 / 冷合并冲突与 NPE / 欢迎弹窗倒计时 / head tab 防抖 / contest、tag 白屏
+- 优化:冷合并分批执行不卡顿、进度条及时显示、日志时间戳
+- 新增:列表多列网格、书架封面墙布局
+
+[1.0.0] - 2026-08-01
+- 离线优先的轻小说元数据浏览器(数据内置,无需网络)
+- 首页轮播 / 导航 / 排行、多维列表、搜索、书架、详情
+- 深色模式、桌面应用(Tauri v2)`;
+
 export default function SettingsScreen() {
   const { colors, mode, setMode } = useTheme();
   const styles = useMemo(() => createSettingsStyles(colors), [colors]);
@@ -27,6 +37,7 @@ export default function SettingsScreen() {
     contests: 0,
   });
   const [themeVisible, setThemeVisible] = useState(false);
+  const [changelogVisible, setChangelogVisible] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState<"bookshelf" | "reset" | null>(null);
 
   useEffect(() => {
@@ -232,7 +243,7 @@ export default function SettingsScreen() {
             <View style={styles.aboutInfo}>
               <Text style={styles.aboutAppName}>Novly</Text>
               <Text style={styles.aboutVersion}>
-                v1.0.0 · Offline-first browser for novel metadata
+                v1.0.1 · Offline-first browser for novel metadata
               </Text>
             </View>
             <Ionicons
@@ -240,6 +251,21 @@ export default function SettingsScreen() {
               size={18}
               color={colors.textMuted}
             />
+          </TouchableOpacity>
+
+          {Platform.OS !== "web" && <View style={styles.divider} />}
+
+          <TouchableOpacity
+            style={[styles.linkRow, Platform.OS === "web" ? { width: "50%", paddingRight: 16 } : null]}
+            onPress={() => setChangelogVisible(true)}
+            activeOpacity={0.6}
+          >
+            <Ionicons name="document-text-outline" size={22} color={colors.textSecondary} style={styles.actionIcon} />
+            <View style={styles.actionInfo}>
+              <Text style={styles.actionLabel}>更新日志</Text>
+              <Text style={styles.actionSubtitle}>查看版本功能变更与修复</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </TouchableOpacity>
 
           {Platform.OS !== "web" && <View style={styles.divider} />}
@@ -398,6 +424,20 @@ export default function SettingsScreen() {
                 </View>
               );
             })}
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal visible={changelogVisible} transparent animationType="fade" onRequestClose={() => setChangelogVisible(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setChangelogVisible(false)}>
+          <Pressable style={[styles.modalCard, { backgroundColor: colors.surface }]} onPress={() => {}}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>更新日志</Text>
+            <ScrollView style={{ maxHeight: 420 }}>
+              <Text style={[styles.modalText, { color: colors.textSecondary }]}>{CHANGELOG_TEXT}</Text>
+            </ScrollView>
+            <TouchableOpacity style={[styles.modalClose, { backgroundColor: colors.primary }]} onPress={() => setChangelogVisible(false)}>
+              <Text style={styles.modalCloseText}>关闭</Text>
+            </TouchableOpacity>
           </Pressable>
         </Pressable>
       </Modal>
