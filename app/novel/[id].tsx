@@ -350,7 +350,7 @@ export default function NovelDetailScreen() {
           <View style={styles.statsRow}>
             <StatItem icon="eye-outline" label="点击" value={novel.click_num} rank={rankings.click} />
             <StatItem icon="heart-outline" label="收藏" value={novel.like_num} rank={rankings.like} />
-            <StatItem icon="flame-outline" label="点赞" value={novel.praise_num} rank={rankings.praise} />
+            <StatItem icon="thumbs-up-outline" label="点赞" value={novel.praise_num} rank={rankings.praise} />
           </View>
           <View style={styles.statsDivider} />
           <View style={styles.statsRow}>

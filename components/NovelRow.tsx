@@ -117,6 +117,7 @@ export const NovelRow = memo(function NovelRow({ novel, rank, value, valueLabel,
 
 const styles = StyleSheet.create({
   row: {
+    flex: 1, // web 多列 grid 时均分列宽
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.md,

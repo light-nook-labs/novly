@@ -1,4 +1,4 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, useWindowDimensions } from "react-native";
 import { useState, useEffect } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -43,6 +43,9 @@ const DEFAULT_FILTER: FilterState = {
 
 export default function NovelsScreen() {
   const { colors } = useTheme();
+  const { width: winWidth } = useWindowDimensions();
+  // web 按窗口宽度动态列数:≥1400 三列,≥900 两列,否则单列;手机恒为单列
+  const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const { genre, status, ptype } = useLocalSearchParams<{ genre?: string; status?: string; ptype?: string }>();
   const [selectedPtype, setSelectedPtype] = useState<number | null>(
     ptype ? Number(ptype) : null
@@ -149,6 +152,9 @@ export default function NovelsScreen() {
         ref={scrollRef}
         data={novels}
         keyExtractor={(item) => item.id.toString()}
+        numColumns={numColumns}
+        key={`grid-${numColumns}`}
+        columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
         onScroll={onScroll}
         onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}
         onContentSizeChange={(_, h) => {
@@ -203,7 +209,13 @@ export default function NovelsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
+
     backgroundColor: Colors.background,
+  },
+  gridRow: {
+    gap: Spacing.lg,
+    marginBottom: Spacing.lg,
   },
   filterBtn: {
     width: 40,

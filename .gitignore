@@ -66,3 +66,7 @@ web_start_err.log
 # patches build artifacts
 patches/android/.gradle/
 patches/android/build/
+
+# tauri build artifacts
+src-tauri/target/
+src-tauri/gen/

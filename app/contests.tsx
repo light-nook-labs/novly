@@ -1,4 +1,4 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator , useWindowDimensions, Platform} from "react-native";
 import { Link } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -25,6 +25,8 @@ interface CacheEntry {
 
 export default function ContestsScreen() {
   const { colors } = useTheme();
+  const { width: winWidth } = useWindowDimensions();
+  const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const [contests, setContests] = useState<Contest[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -32,7 +34,11 @@ export default function ContestsScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: {
+          gridRow: {
+    gap: 16,
+    marginBottom: 16,
+  },
+container: {
           flex: 1,
           backgroundColor: colors.background,
         },
@@ -40,6 +46,7 @@ export default function ContestsScreen() {
           padding: Spacing.lg,
         },
         contestItem: {
+    flex: 1,
           flexDirection: "row",
           alignItems: "center",
           paddingHorizontal: Spacing.lg,
@@ -151,6 +158,9 @@ export default function ContestsScreen() {
         <Loading />
       ) : (
         <FlatList
+        numColumns={numColumns}
+        key={`grid-${numColumns}`}
+        columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
           data={filtered}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.list}

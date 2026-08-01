@@ -1,6 +1,6 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, useWindowDimensions, Platform, type NativeSyntheticEvent, type NativeScrollEvent } from "react-native";
 import { router } from "expo-router";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { getDatabase } from "../utils/database";
 import { formatNumber } from "../utils/mappings";
 import { useScrollToTop } from "../hooks/useScrollToTop";
@@ -21,6 +21,8 @@ interface Author {
 
 export default function AuthorsScreen() {
   const { colors } = useTheme();
+  const { width: winWidth } = useWindowDimensions();
+  const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const [authors, setAuthors] = useState<Author[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [query, setQuery] = useState("");
@@ -33,7 +35,11 @@ export default function AuthorsScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: {
+          gridRow: {
+    gap: 16,
+    marginBottom: 16,
+  },
+container: {
           flex: 1,
           backgroundColor: colors.background,
         },
@@ -41,6 +47,7 @@ export default function AuthorsScreen() {
           paddingVertical: Spacing.sm,
         },
         authorItem: {
+    flex: 1,
           flexDirection: "row",
           alignItems: "center",
           paddingHorizontal: Spacing.lg,
@@ -123,7 +130,22 @@ export default function AuthorsScreen() {
     return () => clearTimeout(timer);
   }, [query]);
 
+  const loadingRef = useRef(false);
+  const wasNearBottomRef = useRef(false);
+  // web 上 onEndReached 可能不触发:手动检测滚动接近底部触发分页加载
+  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    onScroll(e);
+    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+    const nearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 80;
+    wasNearBottomRef.current = nearBottom;
+    if (nearBottom && hasMore) {
+      loadAuthors(false);
+    }
+  };
+
   async function loadAuthors(reset = false) {
+    if (!reset && loadingRef.current) return;
+    if (!reset) loadingRef.current = true;
     try {
       const db = await getDatabase();
       const offset = reset ? 0 : page * PAGE_SIZE;
@@ -157,6 +179,7 @@ export default function AuthorsScreen() {
     } catch (error) {
       console.error("Failed to load authors:", error);
     }
+    loadingRef.current = false;
   }
 
   return (
@@ -170,19 +193,24 @@ export default function AuthorsScreen() {
 
       {/* 排序规则 / 右侧数据含义说明 */}
       <FlatList
+        numColumns={numColumns}
+        key={`grid-${numColumns}`}
+        columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
         ref={scrollRef}
         data={authors}
         keyExtractor={(item) => item.id.toString()}
-        onScroll={onScroll}
+        onScroll={handleScroll}
         onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}
         onContentSizeChange={(_, h) => {
-          if (h <= listHeight && hasMore && authors.length >= PAGE_SIZE) {
+          if (h <= listHeight && hasMore) {
+            loadAuthors(false);
+          } else if (wasNearBottomRef.current && hasMore) {
             loadAuthors(false);
           }
         }}
-        initialNumToRender={10}
-        maxToRenderPerBatch={10}
-        windowSize={7}
+        initialNumToRender={50}
+        maxToRenderPerBatch={50}
+        windowSize={21}
         contentContainerStyle={styles.list}
         ListHeaderComponent={
           <NoteCard>

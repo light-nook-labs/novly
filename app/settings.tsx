@@ -4,8 +4,6 @@ import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
-import * as Clipboard from "expo-clipboard";
-import Toast from "react-native-toast-message";
 import { getDatabase } from "../utils/database";
 import { clearBookshelf } from "../utils/bookshelfDb";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
@@ -357,29 +355,7 @@ export default function SettingsScreen() {
 
       {/* Copyright */}
       <View style={styles.copyright}>
-        <TouchableOpacity
-          style={styles.copyrightLink}
-          activeOpacity={0.6}
-          onPress={() => Linking.openURL("mailto:intersetwq@gmail.com")}
-        >
-          <Text textBreakStrategy="simple" style={styles.copyrightText}>Email: intersetwq@gmail.com</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.copyrightLink}
-          activeOpacity={0.6}
-          onPress={() => {
-            Clipboard.setStringAsync("881041631");
-            Toast.show({
-              type: "success",
-              text1: "已复制QQ群号",
-              text2: "881041631",
-              position: "top",
-            });
-          }}
-        >
-          <Text textBreakStrategy="simple" style={styles.copyrightText}>QQ Group: 881041631</Text>
-        </TouchableOpacity>
-        <Text textBreakStrategy="simple" style={[styles.copyrightText, styles.copyrightBrand]}>© {new Date().getFullYear()} light-nook-labs</Text>
+        <Text textBreakStrategy="simple" style={styles.copyrightText}>© {new Date().getFullYear()} light-nook-labs</Text>
       </View>
     </ScrollView>
 

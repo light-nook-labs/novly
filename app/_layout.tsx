@@ -1,9 +1,10 @@
 import { Stack } from "expo-router";
-import { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, StyleSheet, Modal, Pressable, TouchableOpacity } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { useEffect, useState, useRef } from "react";
+import { View, Text, ActivityIndicator, StyleSheet, Modal, Pressable, TouchableOpacity, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { initDatabase, dbLogs } from "../utils/database";
+import { initDatabase, isFirstInit } from "../utils/database";
 import Toast from "react-native-toast-message";
 import * as Clipboard from "expo-clipboard";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -13,48 +14,71 @@ import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 const WELCOME_SHOWN_KEY = "welcome_shown_v1";
 const QQ_GROUP = "881041631";
 
+const TIPS = [
+  "数据完全离线:断网也能浏览全部小说元数据",
+  "点击标题旁的 #ID 可一键复制小说 ID",
+  "长按返回按钮可快速回到首页",
+  "在设置中可切换浅色 / 深色 / 跟随系统主题",
+  "书架数据仅存于本地,重置全局数据不影响书架",
+  "点击背投图片可全屏预览大图",
+  "发现 bug 或有建议?在关于页提交 Issue 或加入 QQ 群反馈",
+];
+
 function LoadingScreen() {
   const { colors } = useTheme();
-  const [logs, setLogs] = useState<string[]>([]);
-  // 心跳计时:每 10s 递增,证明是 app 在加载(而非 bundle 还在下载)
-  const [tick, setTick] = useState(0);
+  // logo 呼吸动画
+  const logoOpacity = useRef(new Animated.Value(0.6)).current;
+  // 小技巧轮换
+  const [tipIndex, setTipIndex] = useState(0);
+  const tipOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setLogs([...dbLogs]);
-    }, 500);
-    return () => clearInterval(id);
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(logoOpacity, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(logoOpacity, { toValue: 0.5, duration: 900, useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
   }, []);
 
+  // 每 6s 淡出切换一条小技巧
   useEffect(() => {
     const id = setInterval(() => {
-      setTick((t) => t + 1);
-    }, 10000);
+      Animated.timing(tipOpacity, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }).start(() => {
+        setTipIndex((i) => (i + 1) % TIPS.length);
+        Animated.timing(tipOpacity, { toValue: 1, duration: 250, useNativeDriver: true }).start();
+      });
+    }, 6000);
     return () => clearInterval(id);
   }, []);
 
   return (
     <View style={[styles.loading, { backgroundColor: colors.background }]}>
-      <ActivityIndicator size="large" color={colors.primary} />
-      <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-        Loading database...
+      <Animated.Image
+        source={require("../assets/icon.png")}
+        style={[styles.logo, { opacity: logoOpacity }]}
+      />
+      <Text style={[styles.appName, { color: colors.text }]}>Novly</Text>
+      <Text style={[styles.tagline, { color: colors.textSecondary }]}>
+        离线优先的轻小说元数据浏览器
       </Text>
-      <Text style={[styles.heartbeat, { color: colors.textTertiary }]}>
-        {tick === 0 ? "正在启动..." : `仍在加载中(已等待 ${tick * 10}s)...`}
-      </Text>
-      {logs.length > 0 && (
-        <View style={styles.logBox}>
-          {logs.slice(-12).map((line, i) => (
-            <Text
-              key={i}
-              numberOfLines={1}
-              style={[styles.logLine, { color: colors.textTertiary }]}
-            >
-              {line}
-            </Text>
-          ))}
-        </View>
-      )}
+
+      <View style={styles.tipBox}>
+        <Animated.Text
+          style={[styles.tipText, { color: colors.textTertiary, opacity: tipOpacity }]}
+          numberOfLines={3}
+        >
+          💡 {TIPS[tipIndex]}
+        </Animated.Text>
+      </View>
+
+      <ActivityIndicator size="small" color={colors.primary} style={styles.spinner} />
     </View>
   );
 }
@@ -69,7 +93,7 @@ function BackButton() {
 }
 
 function AppContent({ ready, error }: { ready: boolean; error: string | null }) {
-  const { colors } = useTheme();
+  const { colors, mode } = useTheme();
 
   if (error) {
     return (
@@ -90,6 +114,7 @@ function AppContent({ ready, error }: { ready: boolean; error: string | null }) 
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <StatusBar style={mode === "dark" ? "light" : "dark"} />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
@@ -164,19 +189,34 @@ export default function RootLayout() {
   const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
+    // 仅首次初始化(需解压 hot+warm)时 LoadingScreen 至少展示 3s;
+    // 快速路径(库已就绪)直接渲染页面,不显示 loading
+    const start = Date.now();
     initDatabase()
-      .then(() => setReady(true))
+      .then(() => {
+        if (!isFirstInit) {
+          setReady(true);
+          return;
+        }
+        const elapsed = Date.now() - start;
+        const wait = Math.max(0, 3000 - elapsed);
+        setTimeout(() => setReady(true), wait);
+      })
       .catch((e) => setError(e.message));
   }, []);
 
-  // 首次启动时展示欢迎弹窗,鼓励加入 QQ 群
+  // 欢迎弹窗:页面渲染成功(ready)后再延迟 2s 弹出,不抢占 LoadingScreen
   useEffect(() => {
-    AsyncStorage.getItem(WELCOME_SHOWN_KEY)
-      .then((v) => {
-        if (!v) setShowWelcome(true);
-      })
-      .catch(() => {});
-  }, []);
+    if (!ready) return;
+    const timer = setTimeout(() => {
+      AsyncStorage.getItem(WELCOME_SHOWN_KEY)
+        .then((v) => {
+          if (!v) setShowWelcome(true);
+        })
+        .catch(() => {});
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [ready]);
 
   const handleJoinQQ = () => {
     Clipboard.setStringAsync(QQ_GROUP);
@@ -215,9 +255,29 @@ function WelcomeModal({
   onClose: () => void;
 }) {
   const { colors } = useTheme();
+  // 倒计时 3s:期间禁止交互(按钮置灰),避免与后台 cold 合并竞争导致点击无响应
+  const [countdown, setCountdown] = useState(3);
+
+  useEffect(() => {
+    if (!visible) return;
+    setCountdown(3);
+    const id = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(id);
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [visible]);
+
+  const locked = countdown > 0;
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.welcomeBackdrop} onPress={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={locked ? undefined : onClose}>
+      <Pressable style={styles.welcomeBackdrop} onPress={locked ? undefined : onClose}>
         <Pressable style={[styles.welcomeCard, { backgroundColor: colors.surface }]} onPress={() => {}}>
           <View style={[styles.welcomeIconWrap, { backgroundColor: colors.primary + "15" }]}>
             <Ionicons name="chatbubbles-outline" size={30} color={colors.primary} />
@@ -231,14 +291,27 @@ function WelcomeModal({
             <Text style={[styles.welcomeGroupValue, { color: colors.text }]}>{QQ_GROUP}</Text>
           </View>
           <TouchableOpacity
-            style={[styles.welcomeBtn, { backgroundColor: colors.primary }]}
-            onPress={onCopyQQ}
+            style={[styles.welcomeBtn, { backgroundColor: colors.primary }, locked && styles.welcomeBtnLocked]}
+            disabled={locked}
+            onPress={() => {
+              onCopyQQ();
+              onClose();
+            }}
             activeOpacity={0.8}
           >
-            <Text style={styles.welcomeBtnText}>复制群号加入</Text>
+            <Text style={styles.welcomeBtnText}>
+              {locked ? `复制群号加入 (${countdown}s)` : "复制群号加入"}
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.welcomeLater} onPress={onClose} activeOpacity={0.7}>
-            <Text style={[styles.welcomeLaterText, { color: colors.textTertiary }]}>以后再说</Text>
+          <TouchableOpacity
+            style={styles.welcomeLater}
+            onPress={locked ? undefined : onClose}
+            disabled={locked}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.welcomeLaterText, { color: colors.textTertiary }]}>
+              {locked ? `${countdown}s 后可操作` : "以后再说"}
+            </Text>
           </TouchableOpacity>
         </Pressable>
       </Pressable>
@@ -255,33 +328,42 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
+  logo: {
+    width: 96,
+    height: 96,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.lg,
+  },
+  appName: {
+    fontSize: FontSize.xxl,
+    fontWeight: "700",
+    alignSelf: "stretch",
+    textAlign: "center",
+  },
+  tagline: {
+    fontSize: FontSize.sm,
     fontWeight: "600",
+    marginTop: Spacing.xs,
     alignSelf: "stretch",
     textAlign: "center",
     paddingHorizontal: 2,
   },
-  heartbeat: {
-    marginTop: 6,
-    fontSize: 12,
+  tipBox: {
+    marginTop: Spacing.xl * 2,
+    paddingHorizontal: Spacing.xl,
+    maxWidth: 320,
+    minHeight: 60,
+    justifyContent: "center",
+  },
+  tipText: {
+    fontSize: FontSize.sm,
     fontWeight: "600",
-    alignSelf: "stretch",
+    lineHeight: 20,
     textAlign: "center",
     paddingHorizontal: 2,
   },
-  logBox: {
-    marginTop: 20,
-    paddingHorizontal: 24,
-    width: "100%",
-  },
-  logLine: {
-    fontSize: 11,
-    fontWeight: "600",
-    marginBottom: 2,
-    paddingHorizontal: 2,
-    fontFamily: "monospace",
+  spinner: {
+    marginTop: Spacing.xl * 2,
   },
   errorText: {
     fontSize: 16,
@@ -324,10 +406,12 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontSize: FontSize.md,
+    fontWeight: "600",
     lineHeight: 22,
     marginBottom: Spacing.lg,
     alignSelf: "stretch",
     textAlign: "center",
+    paddingHorizontal: 2,
   },
   welcomeGroup: {
     flexDirection: "row",
@@ -340,11 +424,14 @@ const styles = StyleSheet.create({
   },
   welcomeGroupLabel: {
     fontSize: FontSize.sm,
+    fontWeight: "600",
+    paddingHorizontal: 2,
   },
   welcomeGroupValue: {
     fontSize: FontSize.lg,
     fontWeight: "700",
     letterSpacing: 1,
+    paddingHorizontal: 2,
   },
   welcomeBtn: {
     height: 46,
@@ -352,6 +439,9 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     justifyContent: "center",
     alignItems: "center",
+  },
+  welcomeBtnLocked: {
+    opacity: 0.5,
   },
   welcomeBtnText: {
     fontSize: FontSize.md,
@@ -365,5 +455,7 @@ const styles = StyleSheet.create({
   },
   welcomeLaterText: {
     fontSize: FontSize.sm,
+    fontWeight: "600",
+    paddingHorizontal: 2,
   },
 });

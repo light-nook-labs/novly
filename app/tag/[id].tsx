@@ -1,4 +1,4 @@
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity , Platform, useWindowDimensions} from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,6 +18,9 @@ interface Tag {
 
 export default function TagDetailScreen() {
   const { colors } = useTheme();
+  const { width: winWidth } = useWindowDimensions();
+  // web 按窗口宽度动态列数:≥1400 三列,≥900 两列,否则单列;手机恒为单列
+  const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const { id } = useLocalSearchParams();
   const [tag, setTag] = useState<Tag | null>(null);
   const [novels, setNovels] = useState<NovelRowData[]>([]);
@@ -32,7 +35,8 @@ export default function TagDetailScreen() {
     () =>
       StyleSheet.create({
         container: {
-          flex: 1,
+          flex: 1,          ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
+
           backgroundColor: colors.background,
         },
         loading: {
@@ -88,6 +92,7 @@ export default function TagDetailScreen() {
 
   async function loadNovels(reset = false) {
     try {
+      setLoading(true);
       const db = await getDatabase();
       const offset = reset ? 0 : page * PAGE_SIZE;
 
@@ -140,6 +145,9 @@ export default function TagDetailScreen() {
         ref={scrollRef}
         data={novels}
         keyExtractor={(item) => item.id.toString()}
+        numColumns={numColumns}
+        key={`grid-${numColumns}`}
+        columnWrapperStyle={numColumns > 1 ? { gap: 16, marginBottom: 16 } : undefined}
         onScroll={onScroll}
         scrollEventThrottle={16}
         onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}

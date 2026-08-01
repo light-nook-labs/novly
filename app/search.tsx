@@ -1,4 +1,4 @@
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet , Platform, useWindowDimensions} from "react-native";
 import { Link } from "expo-router";
 import { useState, useEffect, useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,6 +17,9 @@ interface Novel {
 
 export default function SearchScreen() {
   const { colors } = useTheme();
+  const { width: winWidth } = useWindowDimensions();
+  // web 按窗口宽度动态列数:≥1400 三列,≥900 两列,否则单列;手机恒为单列
+  const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Novel[]>([]);
   const [page, setPage] = useState(0);
@@ -90,6 +93,9 @@ export default function SearchScreen() {
       <FlatList
         data={results}
         keyExtractor={(item) => item.id.toString()}
+        numColumns={numColumns}
+        key={`grid-${numColumns}`}
+        columnWrapperStyle={numColumns > 1 ? { gap: 16, marginBottom: 16 } : undefined}
         onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}
         onContentSizeChange={(_, h) => {
           if (h <= listHeight && hasMore) {
@@ -153,6 +159,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   resultItem: {
+    flex: 1, // web 多列 grid 时均分列宽
     flexDirection: "row",
     padding: 12,
     borderBottomWidth: 1,

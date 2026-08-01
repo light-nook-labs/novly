@@ -15,6 +15,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { ID } from "./ID";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { useTheme } from "./ThemeProvider";
+import { ImageShimmer } from "./ImageShimmer";
+import { delayImageLoad } from "../utils/imageDelay";
 
 const BANNER_PREFIX = "https://rs.sfacg.com/web/novel/images/images/beitouNew/";
 
@@ -25,7 +27,8 @@ export interface BannerNovel {
 }
 
 interface BannerItemProps extends BannerNovel {
-  width: number;
+  /** 固定宽度;不传时用 onLayout 自适应测量(配合百分比宽度排布) */
+  width?: number;
   /** 固定高度（由父组件传入），不传时按宽度比例计算 */
   height?: number;
 }
@@ -40,10 +43,12 @@ function getBannerHeight(w: number): number {
 
 export function BannerListItem({ id, title, author, width, height }: BannerItemProps) {
   const { colors } = useTheme();
-  const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [ready, setReady] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
+  const [measuredW, setMeasuredW] = useState(0);
   const pulseAnim = useRef(new Animated.Value(0.3)).current;
+  const imgOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const anim = Animated.loop(
@@ -57,17 +62,21 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
   }, []);
 
   const uri = BANNER_PREFIX + id + ".jpg";
-  const containerWidth = width;
-  const fixedHeight = height ?? getBannerHeight(containerWidth);
+  const containerWidth = width ?? measuredW;
+  const fixedHeight = height ?? getBannerHeight(containerWidth || 1);
 
   useEffect(() => {
-    setLoaded(false);
+    let cancelled = false;
     setLoadError(false);
-    Image.getSize(
-      uri,
-      () => setLoaded(true),
-      () => { setLoadError(true); setLoaded(true); }
-    );
+    setReady(false);
+    imgOpacity.setValue(0);
+    // 人为延迟加载(便于测试加载动画);上线置 0 后立即 ready
+    delayImageLoad().then(() => {
+      if (!cancelled) setReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [uri]);
 
   function handleLongPress() {
@@ -81,7 +90,12 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      onLayout={(e) => {
+        if (!width) setMeasuredW(e.nativeEvent.layout.width);
+      }}
+    >
       <TouchableOpacity
         activeOpacity={0.9}
         style={[styles.imageCard, { width: containerWidth, height: fixedHeight, backgroundColor: colors.surfaceBorder }]}
@@ -92,24 +106,26 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
           <View style={[styles.fallback, { width: containerWidth, height: fixedHeight, backgroundColor: colors.surface }]}>
             <Text style={[styles.fallbackText, { color: colors.primary }]}>{title}</Text>
           </View>
-        ) : !loaded ? (
-          <Animated.View
-            style={[
-              styles.placeholder,
-              { width: containerWidth, height: fixedHeight, opacity: pulseAnim, backgroundColor: colors.surfaceBorder },
-            ]}
-          />
+        ) : !ready ? (
+          <ImageShimmer width={containerWidth} height={fixedHeight} borderRadius={BorderRadius.lg} />
         ) : (
-          <View style={{ width: containerWidth, height: fixedHeight, overflow: "hidden", backgroundColor: "#1a1a1a" }}>
-            <Image
+          <View style={{ width: containerWidth, height: fixedHeight, overflow: "hidden", backgroundColor: colors.surfaceBorder }}>
+            {/* 图片加载中显示水波占位,onLoad 后淡入,避免露出黑/白容器 */}
+            <ImageShimmer width={containerWidth} height={fixedHeight} borderRadius={BorderRadius.lg} />
+            <Animated.Image
               source={{ uri }}
               style={{
                 position: "absolute",
                 left: -containerWidth * 0.65,
                 width: containerWidth * 1.65,
                 height: fixedHeight,
+                opacity: imgOpacity,
               }}
               resizeMode="cover"
+              onLoad={() => {
+                Animated.timing(imgOpacity, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+              }}
+              onError={() => setLoadError(true)}
             />
           </View>
         )}
@@ -131,7 +147,7 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
         onPress={handleTitlePress}
       >
         <View style={styles.titleContainer}>
-          <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>{title}</Text>
+          <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>{title}</Text>
           <ID id={id} weight="700" />
         </View>
         {author && <Text style={[styles.author, { color: colors.textSecondary }]} numberOfLines={1}>{author}</Text>}
@@ -167,6 +183,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xl,
     fontWeight: "700",
     flex: 1,
+    flexShrink: 1, // 窄卡片(多列)时标题收缩,#id 不溢出容器
   },
   author: {
     fontSize: FontSize.sm,

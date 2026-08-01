@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback, type ReactNode } from "react"
 import * as Clipboard from "expo-clipboard";
 import Toast from "react-native-toast-message";
 import { BannerItem, type BannerNovel } from "./IndexBannerItem";
+import { bannerUrl } from "../utils/urls";
 import { useTheme } from "./ThemeProvider";
 import { FontSize, Spacing } from "../constants/theme";
 
@@ -20,8 +21,8 @@ export type { BannerNovel };
 export interface PinnedBanner {
   /** 唯一 id(建议用负数,避开数据库小说 id) */
   id: number;
-  /** 卡片内容渲染(接收卡片宽高) */
-  render: (width: number, height: number) => ReactNode;
+  /** 卡片内容渲染(接收卡片宽高 + 可选背景图 uri,大屏 pin 用) */
+  render: (width: number, height: number, bgUri?: string) => ReactNode;
   /** 点击行为 */
   onPress?: () => void;
 }
@@ -29,7 +30,7 @@ export interface PinnedBanner {
 /** 默认固定项:欢迎加入 QQ 群(logo + 文案 + QQ 号,点击复制群号) */
 export const DEFAULT_PINNED: PinnedBanner = {
   id: -1,
-  render: (width, height) => <WelcomeCard width={width} height={height} />,
+  render: (width, height, bgUri) => <WelcomeCard width={width} height={height} bgUri={bgUri} />,
   onPress: () => {
     Clipboard.setStringAsync(QQ_GROUP);
     Toast.show({
@@ -83,12 +84,20 @@ export function Banner({
   // 强制重新渲染以适配屏幕旋转
   const [renderKey, setRenderKey] = useState(0);
 
-  // 监听屏幕尺寸变化，重绘轮播
+  // 监听屏幕尺寸变化，重绘轮播。
+  // web 上窗口缩放会连续触发 change,防抖 250ms 后再重建,避免频繁刷新
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
     const sub = Dimensions.addEventListener("change", () => {
-      setRenderKey((k) => k + 1);
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        setRenderKey((k) => k + 1);
+      }, 250);
     });
-    return () => sub.remove();
+    return () => {
+      sub.remove();
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   const itemW = itemWidth ?? winWidth;
@@ -97,10 +106,15 @@ export function Banner({
   // 固定项(最多 MAX_PINS 个)排在前面,后接随机数据;总数量不超过 maxItems(封顶 MAX_ITEMS)
   const pins = pinned.slice(0, MAX_PINS);
   const limit = Math.min(Math.max(maxItems, 1), MAX_ITEMS);
+  // pin 卡片背景图:按序取前 pins.length 张随机 banner(每张不同),并从轮播展示中排除,
+  // 避免 pin 背景与紧随其后的轮播图重复(前三个 banner 互不相同)
+  const pinBgItems = data.slice(0, pins.length);
+  const pinBgUris = pins.map((_, i) => (pinBgItems[i] ? bannerUrl(pinBgItems[i].id) : undefined));
+  const remainingData = data.slice(pins.length);
   const remaining = Math.max(limit - pins.length, 0);
   const items: BannerNovel[] = [
     ...pins.map((p) => ({ id: p.id, title: "pinned", author: null })),
-    ...data.slice(0, remaining),
+    ...remainingData.slice(0, remaining),
   ];
   const pinnedIds = new Set(pins.map((p) => p.id));
 
@@ -216,7 +230,7 @@ export function Banner({
             activeOpacity={0.9}
             onPress={onlyPin ? () => onlyPin.onPress?.() : () => {}}
           >
-            {onlyPin ? onlyPin.render(itemW, finalHeight) : (
+            {onlyPin ? onlyPin.render(itemW, finalHeight, pinBgUris[0]) : (
               <BannerItem id={only.id} title={only.title} author={only.author} width={itemW} height={finalHeight} />
             )}
           </TouchableOpacity>
@@ -244,6 +258,7 @@ export function Banner({
           {extendedData.map((item, index) => {
             const isPinned = pinnedIds.has(item.id);
             const pin = pins.find((p) => p.id === item.id);
+            const pinIdx = pins.findIndex((p) => p.id === item.id);
             return (
               <TouchableOpacity
                 key={`${item.id}-${index}`}
@@ -252,7 +267,7 @@ export function Banner({
                 onPress={isPinned ? () => handlePinnedPress(item.id) : () => {}}
               >
                 {isPinned && pin ? (
-                  pin.render(itemW, finalHeight)
+                  pin.render(itemW, finalHeight, pinIdx >= 0 ? pinBgUris[pinIdx] : undefined)
                 ) : (
                   <BannerItem id={item.id} title={item.title} author={item.author} width={itemW} height={finalHeight} />
                 )}
@@ -299,9 +314,36 @@ export function Banner({
   );
 }
 
-/** 欢迎加群卡片:logo + 欢迎文案 + QQ 号,无 title#id 文字 */
-function WelcomeCard({ width, height }: { width: number; height: number }) {
+/** 欢迎加群卡片:logo + 欢迎文案 + QQ 号。大屏时用抽取的 banner 图做背景、信息放左半部分 */
+function WelcomeCard({ width, height, bgUri }: { width: number; height: number; bgUri?: string }) {
   const { colors } = useTheme();
+  const isWide = width >= 1024;
+  if (isWide && bgUri) {
+    return (
+      <View style={{ width, height, backgroundColor: colors.surfaceBorder }}>
+        <Image source={{ uri: bgUri }} style={{ width, height }} resizeMode="cover" />
+        <View
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: width * 0.5,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.35)",
+          }}
+        >
+          <Image
+            source={require("../assets/icon.png")}
+            style={[styles.welcomeLogo, { width: 96, height: 96, borderRadius: 20, marginBottom: Spacing.lg }]}
+          />
+          <Text style={[styles.welcomeTitle, { fontSize: 32 }]}>欢迎加入QQ群</Text>
+          <Text style={[styles.welcomeGroup, { fontSize: 30, marginTop: Spacing.sm }]}>{QQ_GROUP}</Text>
+        </View>
+      </View>
+    );
+  }
   return (
     <View style={[styles.welcomeCard, { width, height, backgroundColor: colors.primary }]}>
       <Image source={require("../assets/icon.png")} style={styles.welcomeLogo} />

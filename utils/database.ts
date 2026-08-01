@@ -1,6 +1,6 @@
 import * as SQLite from "expo-sqlite";
 import { Asset } from "expo-asset";
-import { Platform } from "react-native";
+import { Platform, InteractionManager } from "react-native";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pako = require("pako");
 
@@ -25,7 +25,23 @@ function setInitProgress(p: string | null) {
   initProgressListeners.forEach((cb) => cb(p));
 }
 
-export const dbLogs: string[] = [];
+// 数据库就绪事件:cold 合并完成(全量库就位)后通知,供页面刷新数据
+const dbReadyListeners = new Set<() => void>();
+
+export function subscribeDbReady(cb: () => void): () => void {
+  dbReadyListeners.add(cb);
+  return () => {
+    dbReadyListeners.delete(cb);
+  };
+}
+
+function emitDbReady() {
+  dbReadyListeners.forEach((cb) => cb());
+}
+
+export let dbLogs: string[] = [];
+// 本次进程是否发生了首次初始化(需解压 hot+warm);快速路径(库已就绪)为 false
+export let isFirstInit = false;
 export function dbLog(message: string) {
   dbLogs.push(message);
   if (dbLogs.length > 30) dbLogs.shift();
@@ -309,6 +325,7 @@ async function initDatabaseInternal(): Promise<SQLite.SQLiteDatabase> {
       const db = await SQLite.openDatabaseAsync("hot_chunk.sqlite");
       await db.getFirstAsync("SELECT 1");
       currentDb = db;
+      isFirstInit = false;
       return db;
     } catch (e) {
       dbLog(`hot db corrupted, rebuilding: ${String(e)}`);
@@ -318,6 +335,7 @@ async function initDatabaseInternal(): Promise<SQLite.SQLiteDatabase> {
   }
 
   dbLog("First launch: decompressing hot+warm...");
+  isFirstInit = true;
   const warmPath = `${dbDir}/warm_chunk.sqlite`;
   const coldPath = `${dbDir}/cold_chunk.sqlite`;
 
@@ -344,17 +362,24 @@ async function initDatabaseInternal(): Promise<SQLite.SQLiteDatabase> {
 
   dbLog("Hot+warm ready. Page can render now.");
   currentDb = db;
+  // 热数据已就绪、页面即将渲染:清除"准备热数据"文案,避免进度条显示过时内容
+  setInitProgress(null);
 
   // 始终执行 cold 合并(dev 与 release 一致,便于真机观测性能);
-  // 延迟 3s 再启动,优先保证首屏渲染与交互顺畅
+  // 渲染后延迟启动,且等首屏交互空闲(InteractionManager)再开始,
+  // 避免 cold 解压抢占 JS 线程导致"页面已渲染但无法交互"的窗口。
+  // 延迟 8s:让欢迎弹窗(渲染后 2s)有充足时间被用户关闭后再启动,
+  // 否则 cold 合并会阻塞 JS 线程导致弹窗点击无响应。
   setTimeout(() => {
-    mergeColdInBackground(db, docDir, coldPath, hotPath, markerPath)
-      .then(() => setInitProgress(null))
-      .catch((e) => {
-        dbLog(`Background cold merge failed: ${String(e)}`);
-        setInitProgress(null);
-      });
-  }, 3000);
+    InteractionManager.runAfterInteractions(() => {
+      mergeColdInBackground(db, docDir, coldPath, hotPath, markerPath)
+        .then(() => setInitProgress(null))
+        .catch((e) => {
+          dbLog(`Background cold merge failed: ${String(e)}`);
+          setInitProgress(null);
+        });
+    });
+  }, 8000);
 
   return db;
 }
@@ -403,6 +428,8 @@ async function mergeColdInBackground(
 
   currentDb = coldDb;
   dbLog("Full database ready with cold data.");
+  // 全量库就位,通知订阅者刷新数据(如首页 nav 统计)
+  emitDbReady();
 }
 
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {

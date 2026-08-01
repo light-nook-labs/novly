@@ -1,8 +1,8 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Linking } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Linking, Platform, useWindowDimensions, Image } from "react-native";
 import { Link, router } from "expo-router";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { getDatabase } from "../../utils/database";
+import { getDatabase, subscribeDbReady } from "../../utils/database";
 import { formatNumber, genreMapping, statusMapping, ptypeMapping } from "../../utils/mappings";
 import { Colors, FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { Banner, DEFAULT_PINNED, type PinnedBanner } from "../../components/Banner";
@@ -51,15 +51,45 @@ const SURVEY_URL = "https://forms.cloud.microsoft/r/JfeiiwEYaA";
 /** 第二个固定 banner:用户反馈问卷,点击打开 MS Form */
 const SURVEY_PIN: PinnedBanner = {
   id: -2,
-  render: (width, height) => <SurveyCard width={width} height={height} />,
+  render: (width, height, bgUri) => <SurveyCard width={width} height={height} bgUri={bgUri} />,
   onPress: () => {
     Linking.openURL(SURVEY_URL).catch(() => {});
   },
 };
 
-/** 问卷卡片:图标 + 文案,无 title#id 文字 */
-function SurveyCard({ width, height }: { width: number; height: number }) {
+/** 问卷卡片:图标 + 文案。大屏时用抽取的 banner 图做背景、信息放左半部分 */
+function SurveyCard({ width, height, bgUri }: { width: number; height: number; bgUri?: string }) {
   const { colors } = useTheme();
+  const isWide = width >= 1024;
+  if (isWide && bgUri) {
+    return (
+      <View style={{ width, height, backgroundColor: colors.surfaceBorder }}>
+        <Image source={{ uri: bgUri }} style={{ width, height }} resizeMode="cover" />
+        <View
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: width * 0.5,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.35)",
+          }}
+        >
+          <View style={[styles.surveyIconWrap, { backgroundColor: "rgba(255,255,255,0.2)", width: 96, height: 96, borderRadius: 48 }]}>
+            <Ionicons name="clipboard-outline" size={48} color="#fff" />
+          </View>
+          <Text style={[styles.surveyTitle, { fontSize: 30 }]}>用户反馈问卷</Text>
+          <Text style={[styles.surveyHint, { fontSize: 18 }]}>点此填写,帮助我们做得更好</Text>
+          <View style={styles.surveyProviderRow}>
+            <Ionicons name="shield-checkmark-outline" size={16} color="rgba(255,255,255,0.85)" />
+            <Text style={[styles.surveyProvider, { fontSize: 14 }]}>由 Microsoft Forms 提供</Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
   return (
     <View style={[styles.surveyCard, { width, height, backgroundColor: colors.primary }]}>
       <View style={[styles.surveyIconWrap, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
@@ -77,6 +107,10 @@ function SurveyCard({ width, height }: { width: number; height: number }) {
 
 export default function HomeScreen() {
   const { colors } = useTheme();
+  const { width: winWidth } = useWindowDimensions();
+  // web 按窗口宽度动态列数(与 novels 等列表一致);手机单列
+  const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
+  const isWide = winWidth >= 1024;
   const [bannerNovels, setBannerNovels] = useState<BannerNovel[]>([]);
   const [topNovels, setTopNovels] = useState<NovelRowData[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -95,6 +129,13 @@ export default function HomeScreen() {
     loadData();
   }, []);
 
+  // cold 合并完成(全量库就位)后,重新加载首页数据(nav 统计/排行/banner)
+  useEffect(() => {
+    return subscribeDbReady(() => {
+      loadData();
+    });
+  }, []);
+
   async function loadData() {
     try {
       const db = await getDatabase();
@@ -103,7 +144,7 @@ export default function HomeScreen() {
       setBannerNovels(banners);
 
       const top = await db.getAllAsync<NovelRowData>(
-        "SELECT id, title, author, cover, click_num, status, genre, ptype FROM novels ORDER BY click_num DESC LIMIT 10"
+        "SELECT id, title, author, cover, click_num, status, genre, ptype FROM novels ORDER BY click_num DESC LIMIT 12"
       );
       setTopNovels(top);
 
@@ -201,21 +242,61 @@ export default function HomeScreen() {
 
       <Banner data={bannerNovels} pinned={[DEFAULT_PINNED, SURVEY_PIN]} maxItems={BANNER_COUNT} />
 
-      <View style={[styles.navGrid, { backgroundColor: colors.surface }]}>
+      <View
+        style={[
+          styles.navGrid,
+          { backgroundColor: colors.surface },
+          isWide && { paddingHorizontal: Spacing.xl, paddingVertical: Spacing.xl },
+        ]}
+      >
         {NAV_ITEMS.map((item) => (
           <TouchableOpacity
             key={item.key}
-            style={styles.navItem}
+            style={[
+              styles.navItem,
+              isWide && {
+                width: "20%",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: Spacing.sm,
+                paddingHorizontal: Spacing.sm,
+                paddingVertical: Spacing.xs,
+              },
+            ]}
             onPress={() => router.push(NAV_ROUTES[item.key])}
           >
-            <View style={[styles.navIconWrap, { backgroundColor: item.color + "15" }]}>
-              <Ionicons name={item.icon} size={22} color={item.color} />
+            <View
+              style={[
+                styles.navIconWrap,
+                { backgroundColor: item.color + "15" },
+                isWide && { width: 64, height: 64, borderRadius: 18 },
+              ]}
+            >
+              <Ionicons name={item.icon} size={isWide ? 32 : 22} color={item.color} />
             </View>
-            <Text style={[styles.navLabel, { color: colors.text }]}>{item.label}</Text>
-            {stats && (
-              <Text style={[styles.navCount, { color: colors.textTertiary }]}>
-                {formatNumber(stats[item.key as keyof Stats] ?? 0)}
-              </Text>
+            {isWide ? (
+              <View style={styles.navTextWrap}>
+                <Text style={[styles.navLabel, { color: colors.text }, isWide && { fontSize: 16, textAlign: "left", marginTop: 0 }]}>
+                  {item.label}
+                </Text>
+                {stats && (
+                  <Text
+                    style={[styles.navCount, { color: colors.textTertiary }, isWide && { fontSize: 15, textAlign: "left", marginTop: 1 }]}
+                  >
+                    {formatNumber(stats[item.key as keyof Stats] ?? 0)}
+                  </Text>
+                )}
+              </View>
+            ) : (
+              <>
+                <Text style={[styles.navLabel, { color: colors.text }]}>{item.label}</Text>
+                {stats && (
+                  <Text style={[styles.navCount, { color: colors.textTertiary }]}>
+                    {formatNumber(stats[item.key as keyof Stats] ?? 0)}
+                  </Text>
+                )}
+              </>
             )}
           </TouchableOpacity>
         ))}
@@ -231,15 +312,34 @@ export default function HomeScreen() {
         </Link>
       </View>
 
-      {topNovels.map((novel, index) => (
-        <NovelRow
-          key={novel.id}
-          novel={novel}
-          rank={index + 1}
-          value={novel.click_num}
-          valueLabel="点击"
-        />
-      ))}
+      <View
+        style={{
+          flexDirection: numColumns > 1 ? "row" : "column",
+          flexWrap: numColumns > 1 ? "wrap" : undefined,
+        }}
+      >
+        {topNovels.map((novel, index) => (
+          <View
+            key={novel.id}
+            style={
+              numColumns > 1
+                ? {
+                    width: `${100 / numColumns}%`, // 百分比均分,基于容器实际宽度(含滚动条自适应)
+                    paddingRight: (index + 1) % numColumns !== 0 ? 16 : 0,
+                    paddingBottom: 16,
+                  }
+                : undefined
+            }
+          >
+            <NovelRow
+              novel={novel}
+              rank={index + 1}
+              value={novel.click_num}
+              valueLabel="点击"
+            />
+          </View>
+        ))}
+      </View>
 
       <View style={{ height: 32 }} />
     </ScrollView>
@@ -248,7 +348,8 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flex: 1,    ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
+
     backgroundColor: Colors.background,
   },
   surveyCard: {
@@ -301,7 +402,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     marginBottom: Spacing.xl,
     backgroundColor: Colors.surface,
-    marginHorizontal: Spacing.lg,
+    // 仅 web 保留外边距(避免与容器 padding 叠加浪费空间);手机端占满容器宽度
+    marginHorizontal: Platform.OS === "web" ? Spacing.lg : 0,
     borderRadius: BorderRadius.lg,
     paddingVertical: Spacing.lg,
     boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
@@ -332,6 +434,10 @@ const styles = StyleSheet.create({
     marginTop: 1,
     alignSelf: "stretch",
     textAlign: "center",
+  },
+  navTextWrap: {
+    flex: 1,
+    alignItems: "flex-start",
   },
   sectionHeader: {
     flexDirection: "row",

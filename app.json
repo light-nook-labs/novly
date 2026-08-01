@@ -25,7 +25,24 @@
       "backgroundColor": "#FFFFFF"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "name": "Novly",
+      "shortName": "Novly",
+      "description": "离线优先的轻小说元数据浏览器",
+      "favicon": "./assets/favicon.png",
+      "themeColor": "#5B5FE9",
+      "backgroundColor": "#FFFFFF"
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "abiFilters": [
+              "arm64-v8a"
+            ]
+          }
+        }
+      ]
+    ]
   }
 }

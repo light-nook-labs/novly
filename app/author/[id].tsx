@@ -1,4 +1,4 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator , Platform} from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import { getDatabase } from "../../utils/database";
@@ -121,7 +121,7 @@ export default function AuthorDetailScreen() {
                 <View style={styles.statDivider} />
                 <StatItem icon="heart-outline" label="总收藏" value={author.total_likes} />
                 <View style={styles.statDivider} />
-                <StatItem icon="flame-outline" label="总点赞" value={author.total_praise} />
+                <StatItem icon="thumbs-up-outline" label="总点赞" value={author.total_praise} />
               </View>
             </View>
 
@@ -168,7 +168,8 @@ function StatItem({ icon, label, value }: { icon: string; label: string; value: 
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
   container: {
-    flex: 1,
+    flex: 1,    ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
+
     backgroundColor: colors.background,
   },
   loading: {

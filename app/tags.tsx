@@ -1,4 +1,4 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator , useWindowDimensions, Platform} from "react-native";
 import { Link } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -25,6 +25,11 @@ interface CacheEntry {
 
 export default function TagsScreen() {
   const { colors } = useTheme();
+  const { width: winWidth } = useWindowDimensions();
+  // web 宽屏按宽度递增列数(标签块较窄,最多 6 列);手机保持 3 列
+  const numColumns = Platform.OS === "web"
+    ? (winWidth >= 2400 ? 6 : winWidth >= 2000 ? 5 : winWidth >= 1600 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1)
+    : 3;
   const [tags, setTags] = useState<Tag[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -32,7 +37,11 @@ export default function TagsScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: {
+          gridRow: {
+    gap: 16,
+    marginBottom: 16,
+  },
+container: {
           flex: 1,
           backgroundColor: colors.background,
         },
@@ -45,12 +54,14 @@ export default function TagsScreen() {
         },
         tagItem: {
           flex: 1,
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 4,
           paddingVertical: Spacing.md,
           paddingHorizontal: Spacing.sm,
           backgroundColor: colors.surface,
           borderRadius: BorderRadius.md,
-          alignItems: "center",
-          gap: 2,
         },
         tagName: {
           fontSize: FontSize.sm,
@@ -147,9 +158,10 @@ export default function TagsScreen() {
         <FlatList
           data={filtered}
           keyExtractor={(item) => item.id.toString()}
-          numColumns={3}
+          numColumns={numColumns}
+        key={`grid-${numColumns}`}
+        columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
           contentContainerStyle={styles.list}
-          columnWrapperStyle={styles.row}
           keyboardShouldPersistTaps="handled"
           ListEmptyComponent={
             <View style={styles.empty}>

@@ -1,12 +1,15 @@
 import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, Linking, Modal, Pressable } from "react-native";
 import { useMemo, useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import * as Clipboard from "expo-clipboard";
+import Toast from "react-native-toast-message";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { PageHeader } from "../components/Header";
 import { useTheme, type ThemeColors } from "../components/ThemeProvider";
 
 const REPO_URL = "https://github.com/light-nook-labs/novly";
 const ISSUES_URL = "https://github.com/light-nook-labs/novly/issues";
+const EMAIL = "intersetwq@gmail.com";
 
 const FEATURES = [
   { icon: "cloud-offline-outline" as const, title: "Offline-first", desc: "All novel metadata is bundled and browsable without network" },
@@ -155,6 +158,19 @@ function createStyles(colors: ThemeColors) {
       textAlign: "center",
       marginTop: Spacing.sm,
       color: colors.textTertiary,
+    },
+    emailRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: Spacing.xs,
+      marginTop: Spacing.md,
+      paddingVertical: Spacing.xs,
+    },
+    emailText: {
+      fontSize: FontSize.sm,
+      fontWeight: "600",
+      color: colors.primary,
     },
     contributeBackdrop: {
       flex: 1,
@@ -310,9 +326,23 @@ export default function AboutScreen() {
               <Text style={styles.supportText}>Submit PR</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.supportHint}>
-            If you like Novly, give it a star and feel free to contribute via pull requests
-          </Text>
+          <TouchableOpacity
+            style={styles.emailRow}
+            onPress={() => Linking.openURL(`mailto:${EMAIL}`)}
+            onLongPress={() => {
+              Clipboard.setStringAsync(EMAIL);
+              Toast.show({
+                type: "success",
+                text1: "已复制Email",
+                text2: EMAIL,
+                position: "top",
+              });
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="mail-outline" size={18} color={colors.primary} />
+            <Text textBreakStrategy="simple" style={styles.emailText}>{EMAIL}</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -330,7 +360,10 @@ export default function AboutScreen() {
             <View style={styles.contributeActions}>
               <TouchableOpacity
                 style={[styles.contributeAction, { backgroundColor: colors.primary }]}
-                onPress={() => Linking.openURL(REPO_URL)}
+                onPress={() => {
+                  Linking.openURL(REPO_URL);
+                  setShowContribute(false);
+                }}
                 activeOpacity={0.8}
               >
                 <Ionicons name="star-outline" size={16} color="#fff" />
@@ -338,7 +371,10 @@ export default function AboutScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.contributeAction, { backgroundColor: colors.surfaceBorder }]}
-                onPress={() => Linking.openURL(ISSUES_URL)}
+                onPress={() => {
+                  Linking.openURL(ISSUES_URL);
+                  setShowContribute(false);
+                }}
                 activeOpacity={0.8}
               >
                 <Ionicons name="bug-outline" size={16} color={colors.danger} />

@@ -235,7 +235,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   container: {
-    flex: 1,
+    flex: 1,    ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
+
   },
   filterBtn: {
     width: 40,

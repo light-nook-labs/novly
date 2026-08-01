@@ -3,6 +3,8 @@ import { Text, Image, TouchableOpacity, StyleSheet, View, useWindowDimensions, A
 import { router } from "expo-router";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { useTheme } from "./ThemeProvider";
+import { ImageShimmer } from "./ImageShimmer";
+import { delayImageLoad } from "../utils/imageDelay";
 
 export interface BannerNovel {
   id: number;
@@ -101,58 +103,37 @@ function formatBannerText(title: string, id: number): string {
 }
 
 function LoadingPlaceholder({ width, height }: { width: number; height: number }) {
-  const { colors } = useTheme();
-  const opacity = useRef(new Animated.Value(0.3)).current;
-
-  useEffect(() => {
-    const anim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacity, {
-          toValue: 0.3,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    anim.start();
-    return () => anim.stop();
-  }, []);
-
-  return (
-    <Animated.View
-      style={[
-        styles.placeholder,
-        { width, height, opacity, backgroundColor: colors.surfaceBorder },
-      ]}
-    />
-  );
+  return <ImageShimmer width={width} height={height} borderRadius={BorderRadius.lg} />;
 }
 
 export function BannerItem({ id, title, author, width, height }: BannerItemProps) {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
   const containerWidth = width ?? winWidth;
-  const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [ready, setReady] = useState(false);
+  const imgOpacity = useRef(new Animated.Value(0)).current;
 
   const uri = BANNER_PREFIX + id + ".jpg";
 
+  // 人为延迟加载(便于测试加载动画);上线置 0 后立即 ready
   useEffect(() => {
-    setLoaded(false);
+    let cancelled = false;
     setLoadError(false);
-    Image.getSize(
-      uri,
-      () => setLoaded(true),
-      () => { setLoadError(true); setLoaded(true); }
-    );
+    setReady(false);
+    imgOpacity.setValue(0);
+    delayImageLoad().then(() => {
+      if (!cancelled) setReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [uri]);
 
   const fixedHeight = height ?? containerWidth * 0.45;
+  // 大屏(桌面/平板,宽度 ≥1024)时容器足够宽,cover 即可显示核心画面,无需负偏移裁剪;
+  // 小屏(手机)保持偏移,把 4.47:1 超宽图的 35%~95% 核心带对准容器
+  const isWide = containerWidth >= 1024;
 
   return (
     <TouchableOpacity
@@ -164,24 +145,33 @@ export function BannerItem({ id, title, author, width, height }: BannerItemProps
         <View style={[styles.fallback, { width: containerWidth, height: fixedHeight, backgroundColor: colors.primaryLight }]}>
           <Text style={[styles.fallbackText, { color: colors.primary }]}>{title}</Text>
         </View>
-      ) : !loaded ? (
+      ) : !ready ? (
         <LoadingPlaceholder width={containerWidth} height={fixedHeight} />
       ) : (
         <View style={{ width: containerWidth, height: fixedHeight, overflow: "hidden" }}>
-          <Image
+          {/* 图片加载中显示呼吸占位,onLoad 后淡入,避免露出黑/白容器 */}
+          <LoadingPlaceholder width={containerWidth} height={fixedHeight} />
+          <Animated.Image
             source={{ uri }}
             style={{
               position: "absolute",
-              left: -containerWidth * 0.45,
-              width: containerWidth * 1.45,
+              left: isWide ? 0 : -containerWidth * 0.45,
+              width: isWide ? containerWidth : containerWidth * 1.45,
               height: fixedHeight,
+              opacity: imgOpacity,
             }}
             resizeMode="cover"
+            onLoad={() => {
+              Animated.timing(imgOpacity, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+            }}
+            onError={() => setLoadError(true)}
           />
         </View>
       )}
       <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={MAX_LINES}>{formatBannerText(title, id)}</Text>
+        <Text style={styles.title} numberOfLines={isWide ? 0 : MAX_LINES}>
+          {isWide ? `${title} #${id}` : formatBannerText(title, id)}
+        </Text>
         {author && <Text style={[styles.title, styles.author]} numberOfLines={1}>{author}</Text>}
       </View>
     </TouchableOpacity>

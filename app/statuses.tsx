@@ -1,4 +1,4 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator , Platform, useWindowDimensions} from "react-native";
 import { router } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -25,14 +25,21 @@ interface CacheEntry {
 
 export default function StatusesScreen() {
   const { colors } = useTheme();
+  const { width: winWidth } = useWindowDimensions();
+  const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const [statuses, setStatuses] = useState<StatusCount[]>([]);
   const [loading, setLoading] = useState(true);
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: {
-          flex: 1,
+          gridRow: {
+    gap: 16,
+    marginBottom: 16,
+  },
+container: {
+          flex: 1,          ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
+
           backgroundColor: colors.background,
         },
         noteCard: {
@@ -59,6 +66,7 @@ export default function StatusesScreen() {
           padding: Spacing.lg,
         },
         statusItem: {
+    flex: 1,
           flexDirection: "row",
           alignItems: "center",
           paddingHorizontal: Spacing.lg,
@@ -185,6 +193,9 @@ export default function StatusesScreen() {
         <Loading />
       ) : (
         <FlatList
+        numColumns={numColumns}
+        key={`grid-${numColumns}`}
+        columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
           data={statuses}
           keyExtractor={(item) => item.status.toString()}
           contentContainerStyle={styles.list}

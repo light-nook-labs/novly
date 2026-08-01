@@ -1,4 +1,4 @@
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
+import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Dimensions , Platform} from "react-native";
 import { useState, useCallback, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
@@ -14,7 +14,8 @@ const PAGE_SIZE = 10;
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     container: {
-      flex: 1,
+      flex: 1,      ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
+
       backgroundColor: colors.background,
     },
     searchBar: {
