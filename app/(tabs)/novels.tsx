@@ -7,7 +7,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { TabHeader } from "../../components/TabHeader";
 import { useNovels } from "../../hooks/useNovels";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
-import { getDatabase } from "../../utils/database";
+import { getDatabase, subscribeDbReady } from "../../utils/database";
 import { Colors, FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { NovelFilterSheet } from "../../components/NovelFilterSheet";
 import { useTheme } from "../../components/ThemeProvider";
@@ -81,14 +81,29 @@ export default function NovelsScreen() {
 
   useEffect(() => {
     loadCounts();
+  }, [filters]);
+
+  // 初始化(冷合并)完成、全量库就位后,重新加载 head tab 的 ptype 计数
+  useEffect(() => {
+    return subscribeDbReady(() => {
+      loadCounts();
+    });
   }, []);
 
   async function loadCounts() {
     try {
       const db = await getDatabase();
-      const total = await db.getFirstAsync<{ v: number }>("SELECT COUNT(*) as v FROM novels");
+      // 按当前筛选条件(除 ptype 外)计算各 tab 的计数,筛选后 count 同步更新
+      const conds: string[] = [];
+      if (filters.genre !== null) conds.push(`genre = ${filters.genre}`);
+      if (filters.status !== null) conds.push(`status = ${filters.status}`);
+      if (filters.year !== null) conds.push(`last_update LIKE '${filters.year}%'`);
+      if (filters.minWordNum !== null) conds.push(`word_num >= ${filters.minWordNum}`);
+      if (filters.maxWordNum !== null) conds.push(`word_num < ${filters.maxWordNum}`);
+      const where = conds.length > 0 ? ` WHERE ${conds.join(" AND ")}` : "";
+      const total = await db.getFirstAsync<{ v: number }>(`SELECT COUNT(*) as v FROM novels${where}`);
       const rows = await db.getAllAsync<{ ptype: number; v: number }>(
-        "SELECT ptype, COUNT(*) as v FROM novels GROUP BY ptype"
+        `SELECT ptype, COUNT(*) as v FROM novels${where} GROUP BY ptype`
       );
       const map: Record<string, number> = { all: total?.v ?? 0 };
       rows.forEach((r) => { map[String(r.ptype)] = r.v; });
