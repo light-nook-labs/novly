@@ -1,11 +1,15 @@
 import * as SQLite from "expo-sqlite";
 import { Asset } from "expo-asset";
-import { Platform, InteractionManager } from "react-native";
+import { Platform } from "react-native";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pako = require("pako");
 
 let currentDb: SQLite.SQLiteDatabase | null = null;
+// 初始化 promise 缓存:防止多个页面并发 getDatabase() 导致重复初始化(重复解压/合并)
+let initPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 const DB_NAME = "novel_hub.sqlite";
+// 冷合并并发锁:自动触发与手动触发共用,防止 hotwarm 被重复 ATTACH
+let coldMergeRunning = false;
 const MERGED_MARKER = ".db_merged_v5";
 const SQLITE_SUBDIR = "SQLite";
 
@@ -45,7 +49,10 @@ export let isFirstInit = false;
 export function dbLog(message: string) {
   dbLogs.push(message);
   if (dbLogs.length > 30) dbLogs.shift();
-  console.log(`[db] ${message}`);
+  // 日志带毫秒时间戳,便于精确定位各阶段耗时与性能瓶颈
+  const now = new Date();
+  const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}.${String(now.getMilliseconds()).padStart(3, "0")}`;
+  console.log(`[db ${ts}] ${message}`);
 }
 
 function toFsPath(uri: string): string {
@@ -136,6 +143,9 @@ async function decompressAndWriteChunkStreaming(
   const FS = await getFS();
   const name = targetPath.split("/").pop();
   dbLog(`Streaming decompress to ${name}...`);
+  // 预处理(加载 asset/读取 base64/转 Uint8Array)可能耗时较长,
+  // 立即显示进度,避免进度条长时间空白
+  setInitProgress("正在准备冷数据...");
 
   const assets = await Asset.loadAsync(module);
   const asset = assets[0];
@@ -152,7 +162,7 @@ async function decompressAndWriteChunkStreaming(
   const inf = new pako.Inflate({ chunkSize: 256 * 1024 });
 
   // 分片喂给 pako:每片之间 await 让出 JS 线程,避免一次性同步解压大文件冻结 UI
-  const SLICE = 512 * 1024; // 512KB 压缩数据/片
+  const SLICE = 1024 * 1024; // 1MB 压缩数据/片:频繁让出线程,初始化期间交互响应及时、避免点击堆积
   let lastReportedPct = -1;
   for (let i = 0; i < compressed.length; i += SLICE) {
     const slice = compressed.subarray(i, Math.min(i + SLICE, compressed.length));
@@ -177,7 +187,7 @@ async function decompressAndWriteChunkStreaming(
   // 分块写入文件(每次 1MB),避免一次性转出超大 base64 字符串
   setInitProgress("正在写入冷数据...");
   lastReportedPct = -1;
-  const WRITE_CHUNK = 1024 * 1024;
+  const WRITE_CHUNK = 2 * 1024 * 1024; // 2MB 写入分块:频繁让出,保持交互流畅
   let isFirst = true;
   let written = 0;
   for (let off = 0; off < decompressed.length; off += WRITE_CHUNK) {
@@ -213,9 +223,20 @@ async function mergeChunkIntoDb(
   await targetDb.execAsync(`ATTACH '${fsPath}' AS ${alias}`);
 
   dbLog(`Merging novels from ${alias}...`);
-  await targetDb.execAsync(
-    `INSERT OR REPLACE INTO novels SELECT * FROM ${alias}.novels`
+  // 分批合并(每批 5000 行 + 让出线程),避免 24.6 万行大 INSERT 阻塞 JS 线程导致交互卡死
+  const { maxId } = await targetDb.getFirstAsync<{ maxId: number }>(
+    `SELECT COALESCE(MAX(id), 0) as maxId FROM ${alias}.novels`
   );
+  const BATCH = 5000;
+  for (let start = 0; start <= maxId; start += BATCH) {
+    await targetDb.execAsync(
+      `INSERT OR REPLACE INTO novels SELECT * FROM ${alias}.novels WHERE id > ${start} AND id <= ${start + BATCH}`
+    );
+    if (maxId > 0) {
+      setInitProgress(`正在合并数据 ${Math.min(Math.floor((start / maxId) * 100), 99)}%...`);
+    }
+    await new Promise((r) => setTimeout(r, 0)); // 让出线程,保持 UI 响应
+  }
 
   dbLog(`Merging contests from ${alias}...`);
   await targetDb.execAsync(
@@ -282,7 +303,13 @@ export function initDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (currentDb) {
     return Promise.resolve(currentDb);
   }
-  return initDatabaseInternal();
+  // 并发调用共享同一个初始化 promise,避免重复执行(重复解压 hot+warm / cold 合并)
+  if (!initPromise) {
+    initPromise = initDatabaseInternal().finally(() => {
+      initPromise = null;
+    });
+  }
+  return initPromise;
 }
 
 async function initDatabaseInternal(): Promise<SQLite.SQLiteDatabase> {
@@ -370,16 +397,16 @@ async function initDatabaseInternal(): Promise<SQLite.SQLiteDatabase> {
   // 避免 cold 解压抢占 JS 线程导致"页面已渲染但无法交互"的窗口。
   // 延迟 8s:让欢迎弹窗(渲染后 2s)有充足时间被用户关闭后再启动,
   // 否则 cold 合并会阻塞 JS 线程导致弹窗点击无响应。
+  // cold 合并已分批让出线程,不再阻塞 JS 线程;
+  // 缩短延迟(1.5s)尽快启动,避免浪费等待时间(InteractionManager 已弃用且可能迟迟不触发)
   setTimeout(() => {
-    InteractionManager.runAfterInteractions(() => {
-      mergeColdInBackground(db, docDir, coldPath, hotPath, markerPath)
-        .then(() => setInitProgress(null))
-        .catch((e) => {
-          dbLog(`Background cold merge failed: ${String(e)}`);
-          setInitProgress(null);
-        });
-    });
-  }, 8000);
+    mergeColdInBackground(db, docDir, coldPath, hotPath, markerPath)
+      .then(() => setInitProgress(null))
+      .catch((e) => {
+        dbLog(`Background cold merge failed: ${String(e)}`);
+        setInitProgress(null);
+      });
+  }, 100);
 
   return db;
 }
@@ -403,7 +430,17 @@ async function mergeColdInBackground(
   hotPath: string,
   markerPath: string
 ): Promise<void> {
+  // 防并发:自动触发与手动触发不能同时合并(hotwarm 只能被一个进程 ATTACH)
+  if (coldMergeRunning) {
+    dbLog("Cold merge already running, skip.");
+    return;
+  }
+  coldMergeRunning = true;
+  try {
   const FS = await getFS();
+
+  // 清理上次失败可能残留的损坏/半成品文件,从干净状态重新解压,避免 malformed
+  await FS.deleteAsync(coldPath, { idempotent: true });
 
   await decompressAndWriteChunkStreaming(
     require("../assets/chunks/cold_chunk.sqlite.gz"),
@@ -412,7 +449,7 @@ async function mergeColdInBackground(
 
   dbLog("Opening cold DB and merging hot+warm into it...");
   setInitProgress("正在合并数据库...");
-  const coldDb = await SQLite.openDatabaseAsync("cold_chunk.sqlite");
+  const coldDb = await SQLite.openDatabaseAsync(coldPath, { readOnly: false });
 
   await mergeChunkIntoDb(coldDb, "hotwarm", hotPath);
 
@@ -430,6 +467,9 @@ async function mergeColdInBackground(
   dbLog("Full database ready with cold data.");
   // 全量库就位,通知订阅者刷新数据(如首页 nav 统计)
   emitDbReady();
+  } finally {
+    coldMergeRunning = false;
+  }
 }
 
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {

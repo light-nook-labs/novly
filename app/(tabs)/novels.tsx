@@ -1,5 +1,5 @@
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, useWindowDimensions } from "react-native";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { NovelRow } from "../../components/NovelRow";
@@ -43,6 +43,8 @@ const DEFAULT_FILTER: FilterState = {
 
 export default function NovelsScreen() {
   const { colors } = useTheme();
+  // head tab 点击防抖:激活 tab 点击忽略 + 500ms 内重复点击节流
+  const lastTabTapRef = useRef(0);
   const { width: winWidth } = useWindowDimensions();
   // web 按窗口宽度动态列数:≥1400 三列,≥900 两列,否则单列;手机恒为单列
   const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
@@ -143,7 +145,14 @@ export default function NovelsScreen() {
                 { backgroundColor: colors.surfaceBorder },
                 active && { backgroundColor: colors.primary },
               ]}
-              onPress={() => setSelectedPtype(ptype.key)}
+              onPress={() => {
+                // 防抖:激活 tab 点击忽略;500ms 内重复点击同一 tab 忽略
+                if (selectedPtype === ptype.key) return;
+                const now = Date.now();
+                if (now - lastTabTapRef.current < 1000) return;
+                lastTabTapRef.current = now;
+                setSelectedPtype(ptype.key);
+              }}
             >
               <Ionicons
                 name={ptype.icon}

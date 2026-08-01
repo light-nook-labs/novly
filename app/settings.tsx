@@ -215,6 +215,8 @@ export default function SettingsScreen() {
               color={colors.textMuted}
             />
           </TouchableOpacity>
+
+
         </View>
       </View>
 
@@ -414,6 +416,7 @@ export default function SettingsScreen() {
         onConfirm={() => {
           if (confirmTarget === "reset") {
             doResetData();
+
           } else {
             doClearBookshelf();
           }
