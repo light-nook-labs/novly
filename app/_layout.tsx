@@ -1,7 +1,18 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState, useRef } from "react";
-import { View, Text, DevSettings, Platform, ActivityIndicator, StyleSheet, Modal, Pressable, TouchableOpacity, Animated } from "react-native";
+import {
+  View,
+  Text,
+  DevSettings,
+  Platform,
+  ActivityIndicator,
+  StyleSheet,
+  Modal,
+  Pressable,
+  TouchableOpacity,
+  Animated,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import Constants from "expo-constants";
@@ -26,7 +37,7 @@ const TIPS = [
 ];
 
 function LoadingScreen() {
-  const { colors } = useTheme();
+  const { colors, mode } = useTheme();
   const version = Constants.expoConfig?.version ?? "1.0.2";
   const platformLabel = Platform.OS === "ios" ? "iOS" : Platform.OS === "web" ? "Web" : "Android";
   // logo 呼吸动画
@@ -71,35 +82,74 @@ function LoadingScreen() {
 
   return (
     <View style={[styles.loading, { backgroundColor: colors.background }]}>
+      <StatusBar style={mode === "dark" ? "light" : "dark"} />
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Animated.Image
-        source={require("../assets/icon.png")}
-        style={[styles.logo, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}
-      />
-      <Text style={[styles.appName, { color: colors.text }]}>Novly</Text>
-      <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 8, alignSelf: "stretch", textAlign: "center", paddingHorizontal: 4 }}>
-        v{version} · {platformLabel}
-      </Text>
-      <Text style={{ fontSize: 12, color: colors.textTertiary, marginBottom: 12, alignSelf: "stretch", textAlign: "center", fontWeight: "600", paddingHorizontal: 2 }}>
-        By Light Nook Labs
-      </Text>
-      <Text style={[styles.tagline, { color: colors.textSecondary }]}>离线优先的轻小说元数据浏览器</Text>
-
-      <View style={styles.tipBox}>
-        <Animated.Text
-          style={[styles.tipText, { color: colors.textTertiary, opacity: tipOpacity, textAlign: "center", paddingHorizontal: 24 }]}
-          numberOfLines={3}
+        <Animated.Image
+          source={require("../assets/icon.png")}
+          style={[styles.logo, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}
+        />
+        <Text style={[styles.appName, { color: colors.text }]}>Novly</Text>
+        <Text
+          style={{
+            fontSize: 13,
+            color: colors.textSecondary,
+            marginBottom: 8,
+            alignSelf: "stretch",
+            textAlign: "center",
+            paddingHorizontal: 4,
+          }}
         >
-          💡 {TIPS[tipIndex]}
-        </Animated.Text>
-      </View>
-      <ActivityIndicator size="small" color={colors.primary} style={[styles.spinner, { marginTop: 16 }]} />
+          v{version} · {platformLabel}
+        </Text>
+        <Text
+          style={{
+            fontSize: 12,
+            color: colors.textTertiary,
+            marginBottom: 12,
+            alignSelf: "stretch",
+            textAlign: "center",
+            fontWeight: "600",
+            paddingHorizontal: 2,
+          }}
+        >
+          By Light Nook Labs
+        </Text>
+        <Text style={[styles.tagline, { color: colors.textSecondary }]}>离线优先的轻小说元数据浏览器</Text>
+
+        <View style={styles.tipBox}>
+          <Animated.Text
+            style={[
+              styles.tipText,
+              { color: colors.textTertiary, opacity: tipOpacity, textAlign: "center", paddingHorizontal: 24 },
+            ]}
+            numberOfLines={3}
+          >
+            💡 {TIPS[tipIndex]}
+          </Animated.Text>
+        </View>
+        <ActivityIndicator size="small" color={colors.primary} style={[styles.spinner, { marginTop: 16 }]} />
       </View>
       <View style={{ marginTop: "auto", alignItems: "center", paddingBottom: 16, gap: 4 }}>
-        <Text style={{ fontSize: 12, color: colors.textTertiary, textAlign: "center", fontWeight: "600", paddingHorizontal: 2 }}>
+        <Text
+          style={{
+            fontSize: 12,
+            color: colors.textTertiary,
+            textAlign: "center",
+            fontWeight: "600",
+            paddingHorizontal: 2,
+          }}
+        >
           MIT License · © 2026 Light Nook Labs
         </Text>
-        <Text style={{ fontSize: 12, color: colors.textTertiary, textAlign: "center", fontWeight: "600", paddingHorizontal: 2 }}>
+        <Text
+          style={{
+            fontSize: 12,
+            color: colors.textTertiary,
+            textAlign: "center",
+            fontWeight: "600",
+            paddingHorizontal: 2,
+          }}
+        >
           https://github.com/light-nook-labs/novly
         </Text>
       </View>
@@ -116,7 +166,7 @@ function BackButton() {
   );
 }
 
-function AppContent({ ready, error }: { ready: boolean; error: string | null }) {
+function AppContent({ ready, error, onRestart }: { ready: boolean; error: string | null; onRestart: () => void }) {
   const [coldMerged, setColdMerged] = useState(false);
   // 冷合并完成(全量库就位)后,弹窗提示重启应用,防页面未及时更新
   useEffect(() => {
@@ -127,6 +177,7 @@ function AppContent({ ready, error }: { ready: boolean; error: string | null }) 
   if (error) {
     return (
       <View style={[styles.loading, { backgroundColor: colors.background }]}>
+        <StatusBar style={mode === "dark" ? "light" : "dark"} />
         <Text style={[styles.errorText, { color: colors.danger }]}>Failed to initialize database</Text>
         <Text style={[styles.errorDetail, { color: colors.textTertiary }]}>{error}</Text>
       </View>
@@ -172,7 +223,7 @@ function AppContent({ ready, error }: { ready: boolean; error: string | null }) 
               style={{ backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 12, alignItems: "center" }}
               onPress={() => {
                 setColdMerged(false);
-                DevSettings.reload();
+                onRestart();
               }}
             >
               <Text style={{ color: "#fff", fontWeight: "600" }}>重启应用</Text>
@@ -188,6 +239,7 @@ export default function RootLayout() {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [appKey, setAppKey] = useState(0);
 
   useEffect(() => {
     // 仅首次初始化(需解压 hot+warm)时 LoadingScreen 至少展示 3s;
@@ -236,7 +288,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <AppContent ready={ready} error={error} />
+      <AppContent key={appKey} ready={ready} error={error} onRestart={() => setAppKey((k) => k + 1)} />
       <WelcomeModal visible={showWelcome} onCopyQQ={handleJoinQQ} onClose={handleCloseWelcome} />
     </ThemeProvider>
   );

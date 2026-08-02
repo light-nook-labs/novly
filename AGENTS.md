@@ -149,6 +149,21 @@ On each `vX.Y.Z` release, do ALL of:
 5. Format code:`pnpm format`(Prettier),then `npx tsc --noEmit`
 6. Commit & publish the release
 
+## Bug Severity Levels
+
+Report & fix bugs with 5 severity levels:
+
+| Level    | 含义                                          | 示例                       |
+| -------- | --------------------------------------------- | -------------------------- |
+| BLOCKER  | 阻断发布:崩溃 / 数据丢失 / 核心功能完全不可用 | App 启动崩溃               |
+| CRITICAL | 严重:核心功能异常,需尽快修复                  | 数据库合并后路由查不到数据 |
+| MAJOR    | 主要:功能可用但有明显缺陷                     | 重启弹窗无法重启应用       |
+| NORMAL   | 一般:功能受影响但不严重                       | 初始化页无状态栏           |
+| MINOR    | 轻微:体验 / 样式小问题,可延后                 | 文案 / 样式细节            |
+
+- 报告 bug 时标注严重级别;修复按 BLOCKER → CRITICAL → MAJOR → NORMAL → MINOR 优先级
+- BLOCKER / CRITICAL 需立即处理,不得带着发布
+
 ## Contributing
 
 - Report bugs / suggest features via Issues; PRs welcome (fork → branch → PR).

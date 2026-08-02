@@ -2,6 +2,14 @@
 
 All notable changes to Novly are documented here.
 
+## [1.0.3] - 2026-08-02
+
+### Fixed
+
+- 修复冷合并后 tag 路由查不到数据(CRITICAL:useNovels 每次取最新 currentDb,重启后正常)
+- 修复重启弹窗无法重启应用(MAJOR:DevSettings.reload release 无效 → 重新挂载组件树)
+- 修复初始化页面无状态栏(NORMAL:wifi/蓝牙/消息图标不显示)
+
 ## [1.0.2] - 2026-08-02
 
 ### Added
@@ -24,10 +32,12 @@ All notable changes to Novly are documented here.
 - 配置 Prettier 代码格式化工具
 
 ### Added(补充)
+
 - 冷合并完成后弹窗提示重启应用(防页面数据未及时更新)
 - LoadingScreen:版本号/平台、By Light Nook Labs 组织信息、页脚许可/版权/GitHub URL、logo/tip 居中、转圈位置
 
 ### Fixed(补充)
+
 - 修复 LoadingScreen 裸文本错误(`</View>` 与 `<View>` 同行空格被 React 当作文本)
 - 修复 LoadingScreen 文字截断(安卓 CJK 修法)、版本行/页脚截断
 - 修复 head tab 高度异常(占 1/3 屏幕)与列表重叠(FlatList flex 1)

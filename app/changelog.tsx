@@ -4,6 +4,12 @@ import { PageHeader } from "../components/Header";
 import { Spacing, FontSize } from "../constants/theme";
 
 const CHANGELOG_TEXT = [
+  "[1.0.3] - 2026-08-02",
+  "### Fixed",
+  "- 修复冷合并后 tag 路由查不到数据(CRITICAL)",
+  "- 修复重启弹窗无法重启应用(MAJOR:改为重新挂载)",
+  "- 修复初始化页面无状态栏(NORMAL)",
+  "",
   "[1.0.2] - 2026-08-02",
   "### Added",
   "- 详情页(tag/contest/genre/status)完全对标 novels:复用 useNovels,列表/分页/过滤/count 统一",
