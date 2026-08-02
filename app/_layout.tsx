@@ -28,15 +28,23 @@ function LoadingScreen() {
   const { colors } = useTheme();
   // logo 呼吸动画
   const logoOpacity = useRef(new Animated.Value(0.6)).current;
-  // 小技巧轮换
-  const [tipIndex, setTipIndex] = useState(0);
+  // logo 缩放动画(呼吸 + 缩放,更生动,吸引用户停留)
+  const logoScale = useRef(new Animated.Value(1)).current;
+  // 小技巧轮换(随机起点:每次进入不再固定从第一条开始)
+  const [tipIndex, setTipIndex] = useState(() => Math.floor(Math.random() * TIPS.length));
   const tipOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const anim = Animated.loop(
       Animated.sequence([
-        Animated.timing(logoOpacity, { toValue: 1, duration: 900, useNativeDriver: true }),
-        Animated.timing(logoOpacity, { toValue: 0.5, duration: 900, useNativeDriver: true }),
+        Animated.parallel([
+          Animated.timing(logoOpacity, { toValue: 1, duration: 900, useNativeDriver: true }),
+          Animated.timing(logoScale, { toValue: 1.06, duration: 900, useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(logoOpacity, { toValue: 0.5, duration: 900, useNativeDriver: true }),
+          Animated.timing(logoScale, { toValue: 0.95, duration: 900, useNativeDriver: true }),
+        ]),
       ])
     );
     anim.start();
@@ -62,7 +70,7 @@ function LoadingScreen() {
     <View style={[styles.loading, { backgroundColor: colors.background }]}>
       <Animated.Image
         source={require("../assets/icon.png")}
-        style={[styles.logo, { opacity: logoOpacity }]}
+        style={[styles.logo, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}
       />
       <Text style={[styles.appName, { color: colors.text }]}>Novly</Text>
       <Text style={[styles.tagline, { color: colors.textSecondary }]}>
