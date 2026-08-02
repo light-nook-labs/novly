@@ -17,6 +17,7 @@ import Toast from "react-native-toast-message";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { PageHeader } from "../components/Header";
 import { useTheme, type ThemeColors } from "../components/ThemeProvider";
+import { APP_VERSION } from "../constants/version";
 
 const REPO_URL = "https://github.com/light-nook-labs/novly";
 const ISSUES_URL = "https://github.com/light-nook-labs/novly/issues";

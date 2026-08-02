@@ -10,6 +10,7 @@ import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { PageHeader } from "../components/Header";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useTheme, type ThemeColors, type ThemeMode } from "../components/ThemeProvider";
+import { APP_VERSION } from "../constants/version";
 
 const THEME_OPTIONS: { key: ThemeMode; label: string; icon: string }[] = [
   { key: "system", label: "跟随系统", icon: "phone-portrait-outline" },
@@ -183,7 +184,7 @@ export default function SettingsScreen() {
             >
               <View style={styles.aboutInfo}>
                 <Text style={styles.aboutAppName}>Novly</Text>
-                <Text style={styles.aboutVersion}>v1.0.2 · Offline-first browser for novel metadata</Text>
+                <Text style={styles.aboutVersion}>v{APP_VERSION} · Offline-first browser for novel metadata</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>

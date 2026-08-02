@@ -132,7 +132,8 @@ Version lives in MANY places — bump them ALL together, or Settings/About pages
 - `src-tauri/tauri.conf.json` → `version`
 - `src-tauri/Cargo.toml` → `version`
 - `android/app/build.gradle` → `versionCode` (+1) & `versionName`
-- **`app/settings.tsx`** — footer text `vX.Y.Z` (easy to forget!)
+- **`constants/version.ts`** — `APP_VERSION` (single source for Settings/About display; update once)
+- **`app/settings.tsx`** — footer text `vX.Y.Z` (uses APP_VERSION, easy to forget!)
 - **`app/about.tsx`** — logo section `<Text>vX.Y.Z</Text>` (easy to forget!)
 
 Checklist before release: `grep -rn "v1\.0\.0\|1\.0\.0" app/ src-tauri/ package.json` to catch leftovers.
