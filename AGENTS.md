@@ -174,6 +174,13 @@ Type consolidation is planned — see `TYPE_MIGRATION.md` for the migration guid
 - Keep the `TYPE_MIGRATION.md` progress table in sync after each migration
 - Centralize icon names in `constants/icons.ts` (single source — prevents inconsistent icons across pages)
 
+## Icon Usage
+
+- ALWAYS check `constants/icons.ts` first before using an icon
+- If the icon you need is missing, ADD it there: use a business-semantic key (e.g. `back`, `like`, `click`) and comment its usage semantics
+- Never hardcode icon names in pages/components — always import from `ICONS`
+- This keeps icons consistent across the app (single source of truth)
+
 ## Contributing
 
 - Report bugs / suggest features via Issues; PRs welcome (fork → branch → PR).
