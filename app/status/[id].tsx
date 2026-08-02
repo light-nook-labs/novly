@@ -1,6 +1,6 @@
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity , Platform, useWindowDimensions} from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef} from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
 import { statusMapping, normalizeStatus } from "../../utils/mappings";
@@ -9,6 +9,8 @@ import { useTheme } from "../../components/ThemeProvider";
 import { BackToTop } from "../../components/BackToTop";
 import { Loading } from "../../components/Loading";
 import { PageHeader } from "../../components/Header";
+import { PtypeTabs } from "../../components/PtypeTabs";
+import { NovelFilterSheet } from "../../components/NovelFilterSheet";
 import { NovelRow, type NovelRowData } from "../../components/NovelRow";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
 
@@ -19,6 +21,26 @@ const PTYPES = [
   { key: 4, label: "VIP", icon: "diamond-outline" as const },
 ];
 
+interface FilterState {
+  genre: number | null;
+  status: number | null;
+  year: number | null;
+  minWordNum: number | null;
+  maxWordNum: number | null;
+  sortBy: string;
+  descending: boolean;
+}
+
+const DEFAULT_FILTER: FilterState = {
+  genre: null,
+  status: null,
+  year: null,
+  minWordNum: null,
+  maxWordNum: null,
+  sortBy: "click_num",
+  descending: true,
+};
+
 export default function StatusDetailScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
@@ -28,6 +50,9 @@ export default function StatusDetailScreen() {
   const statusId = Number(id);
   const normStatus = normalizeStatus(statusId);
   const [selectedPtype, setSelectedPtype] = useState<number | null>(null);
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTER);
+  const [filterVisible, setFilterVisible] = useState(false);
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const [novels, setNovels] = useState<NovelRowData[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -100,7 +125,46 @@ export default function StatusDetailScreen() {
     loadNovels(true);
   }, [id, selectedPtype]);
 
-  async function loadNovels(reset = false) {
+  
+    // head tab 切换(selectedPtype)时重新加载,实现分类过滤
+  useEffect(() => {
+    loadNovels(true);
+  }, [selectedPtype]);
+
+  async function loadCounts() {
+    try {
+      const db = await getDatabase();
+      const conds: string[] = [];
+      if (filters.genre !== null) conds.push(`genre = ${filters.genre}`);
+      if (filters.status !== null) conds.push(`status = ${filters.status}`);
+      if (filters.year !== null) conds.push(`last_update LIKE '${filters.year}%'`);
+      if (filters.minWordNum !== null) conds.push(`word_num >= ${filters.minWordNum}`);
+      if (filters.maxWordNum !== null) conds.push(`word_num < ${filters.maxWordNum}`);
+      const filterSql = conds.length > 0 ? ` AND ${conds.join(" AND ")}` : "";
+      const statusIn = normStatus === 4 ? "IN (4, 5)" : normStatus === 2 ? "IN (2, 6)" : "= ?";
+      const p: any[] = normStatus === 4 || normStatus === 2 ? [] : [normStatus];
+      const total = await db.getFirstAsync<{ v: number }>(
+        `SELECT COUNT(*) as v FROM novels WHERE status ${statusIn}${selectedPtype !== null ? " AND n.ptype = ?" : ""}${filterSql}`,
+        p
+      );
+      const rows = await db.getAllAsync<{ ptype: number; v: number }>(
+        `SELECT ptype, COUNT(*) as v FROM novels WHERE status ${statusIn}${filterSql} GROUP BY ptype`,
+        p
+      );
+      const map: Record<string, number> = { all: total?.v ?? 0 };
+      rows.forEach((r) => { map[String(r.ptype)] = r.v; });
+      setCounts(map);
+    } catch (e) {}
+  }
+
+async function loadNovels(reset = false) {
+      const conds: string[] = [];
+      if (filters.genre !== null) conds.push(`n.genre = ${filters.genre}`);
+      if (filters.status !== null) conds.push(`n.status = ${filters.status}`);
+      if (filters.year !== null) conds.push(`n.last_update LIKE '${filters.year}%'`);
+      if (filters.minWordNum !== null) conds.push(`n.word_num >= ${filters.minWordNum}`);
+      if (filters.maxWordNum !== null) conds.push(`n.word_num < ${filters.maxWordNum}`);
+      const filterSql = conds.length > 0 ? ` AND ${conds.join(" AND ")}` : "";
     try {
       setLoading(true);
       const db = await getDatabase();
@@ -112,7 +176,7 @@ export default function StatusDetailScreen() {
 
       let sql = `SELECT id, title, author, cover, genre, status, ptype, click_num
                  FROM novels WHERE status ${statusIn}`;
-      const params: any[] = [...statusParams];
+      const params: any[] = [...statusParams, ...(selectedPtype !== null ? [selectedPtype] : [])];
       if (selectedPtype !== null) {
         sql += " AND ptype = ?";
         params.push(selectedPtype);
@@ -135,6 +199,7 @@ export default function StatusDetailScreen() {
       console.error("Failed to load novels:", error);
     } finally {
       setLoading(false);
+      loadCounts();
     }
   }
 
@@ -147,30 +212,14 @@ export default function StatusDetailScreen() {
       <PageHeader
         title="Status"
         titleAppend={statusMapping[normStatus]}
-        onSearchPress={() => router.push("/search")}
+        right={
+          <TouchableOpacity onPress={() => setFilterVisible(true)} hitSlop={8}>
+            <Ionicons name="options-outline" size={20} color={colors.text} />
+          </TouchableOpacity>
+        }
       />
 
-      <View style={styles.tabBar}>
-        {PTYPES.map((ptype) => {
-          const active = selectedPtype === ptype.key;
-          return (
-            <TouchableOpacity
-              key={ptype.key?.toString() ?? "all"}
-              style={[styles.tab, active && styles.tabActive]}
-              onPress={() => setSelectedPtype(ptype.key)}
-            >
-              <Ionicons
-                name={ptype.icon}
-                size={14}
-                color={active ? "#fff" : colors.textSecondary}
-              />
-              <Text style={[styles.tabText, active && styles.tabTextActive]}>
-                {ptype.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      <PtypeTabs selected={selectedPtype} onSelect={setSelectedPtype} counts={counts} />
 
       <FlatList
         ref={scrollRef}
@@ -183,7 +232,7 @@ export default function StatusDetailScreen() {
         scrollEventThrottle={16}
         onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}
         onContentSizeChange={(_, h) => {
-          if (h <= listHeight && hasMore) {
+          if (h <= listHeight && hasMore && !loading) {
             loadNovels(false);
           }
         }}
@@ -208,12 +257,23 @@ export default function StatusDetailScreen() {
           ) : null
         }
         onEndReached={() => {
-          if (hasMore) loadNovels(false);
+          if (hasMore && !loading) loadNovels(false);
         }}
         onEndReachedThreshold={0.5}
       />
 
       {showButton && <BackToTop onPress={scrollToTop} />}
+
+      <NovelFilterSheet
+        visible={filterVisible}
+        filters={filters}
+        onClose={() => setFilterVisible(false)}
+        onApply={(f) => {
+          setFilters(f);
+          setFilterVisible(false);
+          loadNovels(true);
+        }}
+      />
     </View>
   );
 }

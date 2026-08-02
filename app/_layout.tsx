@@ -177,6 +177,10 @@ function AppContent({ ready, error }: { ready: boolean; error: string | null }) 
           name="about"
           options={{ headerShown: false }}
         />
+        <Stack.Screen
+          name="changelog"
+          options={{ headerShown: false }}
+        />
       </Stack>
       <Toast />
     </View>
@@ -255,28 +259,10 @@ function WelcomeModal({
   onClose: () => void;
 }) {
   const { colors } = useTheme();
-  // 倒计时 3s:期间禁止交互(按钮置灰),避免与后台 cold 合并竞争导致点击无响应
-  const [countdown, setCountdown] = useState(3);
-
-  useEffect(() => {
-    if (!visible) return;
-    setCountdown(3);
-    // 基于结束时间戳计算剩余:JS 线程被冷合并等占用导致 interval 延迟时,
-    // 回调按真实时间计算剩余秒数,倒计时不会"卡住不刷新"
-    const end = Date.now() + 3000;
-    const id = setInterval(() => {
-      const remain = Math.max(0, Math.ceil((end - Date.now()) / 1000));
-      setCountdown(remain);
-      if (remain <= 0) clearInterval(id);
-    }, 200);
-    return () => clearInterval(id);
-  }, [visible]);
-
-  const locked = countdown > 0;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={locked ? undefined : onClose}>
-      <Pressable style={styles.welcomeBackdrop} onPress={locked ? undefined : onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.welcomeBackdrop} onPress={onClose}>
         <Pressable style={[styles.welcomeCard, { backgroundColor: colors.surface }]} onPress={() => {}}>
           <View style={[styles.welcomeIconWrap, { backgroundColor: colors.primary + "15" }]}>
             <Ionicons name="chatbubbles-outline" size={30} color={colors.primary} />
@@ -290,8 +276,7 @@ function WelcomeModal({
             <Text style={[styles.welcomeGroupValue, { color: colors.text }]}>{QQ_GROUP}</Text>
           </View>
           <TouchableOpacity
-            style={[styles.welcomeBtn, { backgroundColor: colors.primary }, locked && styles.welcomeBtnLocked]}
-            disabled={locked}
+            style={[styles.welcomeBtn, { backgroundColor: colors.primary }]}
             onPress={() => {
               onCopyQQ();
               onClose();
@@ -299,17 +284,16 @@ function WelcomeModal({
             activeOpacity={0.8}
           >
             <Text style={styles.welcomeBtnText}>
-              {locked ? `复制群号加入 (${countdown}s)` : "复制群号加入"}
+              {"复制群号加入"}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.welcomeLater}
-            onPress={locked ? undefined : onClose}
-            disabled={locked}
+            onPress={onClose}
             activeOpacity={0.7}
           >
             <Text style={[styles.welcomeLaterText, { color: colors.textTertiary }]}>
-              {locked ? `${countdown}s 后可操作` : "以后再说"}
+              {"以后再说"}
             </Text>
           </TouchableOpacity>
         </Pressable>

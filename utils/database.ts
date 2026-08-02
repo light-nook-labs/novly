@@ -10,6 +10,8 @@ let initPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 const DB_NAME = "novel_hub.sqlite";
 // 冷合并并发锁:自动触发与手动触发共用,防止 hotwarm 被重复 ATTACH
 let coldMergeRunning = false;
+// cold 压缩数据预加载缓存(准备阶段在初始化 Loading 期间完成,避免渲染后卡死交互)
+let coldCompressed: Uint8Array | null = null;
 const MERGED_MARKER = ".db_merged_v5";
 const SQLITE_SUBDIR = "SQLite";
 
@@ -138,23 +140,27 @@ async function decompressAndWriteChunk(
 
 async function decompressAndWriteChunkStreaming(
   module: number,
-  targetPath: string
+  targetPath: string,
+  preloaded?: Uint8Array
 ): Promise<void> {
   const FS = await getFS();
   const name = targetPath.split("/").pop();
   dbLog(`Streaming decompress to ${name}...`);
-  // 预处理(加载 asset/读取 base64/转 Uint8Array)可能耗时较长,
-  // 立即显示进度,避免进度条长时间空白
-  setInitProgress("正在准备冷数据...");
 
-  const assets = await Asset.loadAsync(module);
-  const asset = assets[0];
-  if (!asset.localUri) throw new Error("Asset not downloaded");
-
-  const base64Data = await FS.readAsStringAsync(asset.localUri, {
-    encoding: FS.EncodingType.Base64,
-  });
-  const compressed = base64ToUint8Array(base64Data);
+  let compressed: Uint8Array;
+  if (preloaded) {
+    // 准备阶段已在初始化 Loading 期间完成,直接使用缓存,避免渲染后卡死交互
+    compressed = preloaded;
+  } else {
+    setInitProgress("正在准备冷数据...");
+    const assets = await Asset.loadAsync(module);
+    const asset = assets[0];
+    if (!asset.localUri) throw new Error("Asset not downloaded");
+    const base64Data = await FS.readAsStringAsync(asset.localUri, {
+      encoding: FS.EncodingType.Base64,
+    });
+    compressed = base64ToUint8Array(base64Data);
+  }
   dbLog(`Compressed size: ${(compressed.length / 1024 / 1024).toFixed(1)} MB`);
 
   // 注意:pako@3 的 onData/onEnd 回调不会触发,解压结果在全部 push 完成后存于 inf.result。
@@ -162,7 +168,7 @@ async function decompressAndWriteChunkStreaming(
   const inf = new pako.Inflate({ chunkSize: 256 * 1024 });
 
   // 分片喂给 pako:每片之间 await 让出 JS 线程,避免一次性同步解压大文件冻结 UI
-  const SLICE = 1024 * 1024; // 1MB 压缩数据/片:频繁让出线程,初始化期间交互响应及时、避免点击堆积
+  const SLICE = 1024 * 1024; // 1MB 压缩数据/片:每片处理快,配合 100ms 让出,React 渲染窗口更频繁,列表/详情能及时渲染
   let lastReportedPct = -1;
   for (let i = 0; i < compressed.length; i += SLICE) {
     const slice = compressed.subarray(i, Math.min(i + SLICE, compressed.length));
@@ -175,7 +181,7 @@ async function decompressAndWriteChunkStreaming(
       setInitProgress(`正在解压冷数据 ${Math.min(pct, 99)}%...`);
     }
 
-    await new Promise((r) => setTimeout(r, 0)); // 让出线程,保持 UI 响应
+    await new Promise((r) => setTimeout(r, 100)); // 让出 ~6 帧,给 React 完整渲染窗口(列表/详情可渲染,不再只有固定 UI)
   }
   inf.push(new Uint8Array(0), true); // flush 剩余数据
   const decompressed: Uint8Array = inf.result;
@@ -187,7 +193,7 @@ async function decompressAndWriteChunkStreaming(
   // 分块写入文件(每次 1MB),避免一次性转出超大 base64 字符串
   setInitProgress("正在写入冷数据...");
   lastReportedPct = -1;
-  const WRITE_CHUNK = 2 * 1024 * 1024; // 2MB 写入分块:频繁让出,保持交互流畅
+  const WRITE_CHUNK = 2 * 1024 * 1024; // 2MB 写入分块:让出频繁,列表渲染不被饿死
   let isFirst = true;
   let written = 0;
   for (let off = 0; off < decompressed.length; off += WRITE_CHUNK) {
@@ -206,7 +212,7 @@ async function decompressAndWriteChunkStreaming(
       lastReportedPct = pct;
       setInitProgress(`正在写入冷数据 ${pct}%...`);
     }
-    await new Promise((r) => setTimeout(r, 0)); // 让出线程,保持 UI 响应
+    await new Promise((r) => setTimeout(r, 100)); // 让出 ~6 帧,给 React 完整渲染窗口(列表/详情可渲染,不再只有固定 UI)
   }
 
   setInitProgress(null);
@@ -235,7 +241,7 @@ async function mergeChunkIntoDb(
     if (maxId > 0) {
       setInitProgress(`正在合并数据 ${Math.min(Math.floor((start / maxId) * 100), 99)}%...`);
     }
-    await new Promise((r) => setTimeout(r, 0)); // 让出线程,保持 UI 响应
+    await new Promise((r) => setTimeout(r, 100)); // 让出 ~6 帧,给 React 完整渲染窗口(列表/详情可渲染,不再只有固定 UI)
   }
 
   dbLog(`Merging contests from ${alias}...`);
@@ -394,6 +400,21 @@ async function initDatabaseInternal(): Promise<SQLite.SQLiteDatabase> {
   await FS.deleteAsync(warmPath, { idempotent: true });
 
   dbLog("Hot+warm ready. Page can render now.");
+  // cold 准备阶段(加载 asset/读 base64/转 Uint8Array)在初始化 Loading 期间完成,
+  // 避免渲染后无让出的 CPU 密集准备阶段卡死交互
+  setInitProgress("正在准备冷数据...");
+  try {
+    const coldAssets = await Asset.loadAsync(require("../assets/chunks/cold_chunk.sqlite.gz"));
+    const coldAsset = coldAssets[0];
+    if (coldAsset.localUri) {
+      const coldBase64 = await FS.readAsStringAsync(coldAsset.localUri, {
+        encoding: FS.EncodingType.Base64,
+      });
+      coldCompressed = base64ToUint8Array(coldBase64);
+    }
+  } catch (e) {
+    dbLog(`Cold preload failed: ${String(e)}`);
+  }
   currentDb = db;
   // 热数据已就绪、页面即将渲染:清除"准备热数据"文案,避免进度条显示过时内容
   setInitProgress(null);
@@ -450,7 +471,8 @@ async function mergeColdInBackground(
 
   await decompressAndWriteChunkStreaming(
     require("../assets/chunks/cold_chunk.sqlite.gz"),
-    coldPath
+    coldPath,
+    coldCompressed ?? undefined
   );
 
   dbLog("Opening cold DB and merging hot+warm into it...");

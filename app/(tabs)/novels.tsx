@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { NovelRow } from "../../components/NovelRow";
 import { EmptyState } from "../../components/EmptyState";
 import { TabHeader } from "../../components/TabHeader";
+import { PtypeTabs } from "../../components/PtypeTabs";
 import { useNovels } from "../../hooks/useNovels";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
 import { getDatabase, subscribeDbReady } from "../../utils/database";
@@ -132,45 +133,7 @@ export default function NovelsScreen() {
         }
       />
 
-      <View style={[styles.tabBar, { backgroundColor: colors.surface }]}>
-        {PTYPES.map((ptype) => {
-          const active = selectedPtype === ptype.key;
-          const countKey = ptype.key === null ? "all" : String(ptype.key);
-          const count = counts[countKey];
-          return (
-            <TouchableOpacity
-              key={ptype.key?.toString() ?? "all"}
-              style={[
-                styles.tab,
-                { backgroundColor: colors.surfaceBorder },
-                active && { backgroundColor: colors.primary },
-              ]}
-              onPress={() => {
-                // 防抖:激活 tab 点击忽略;500ms 内重复点击同一 tab 忽略
-                if (selectedPtype === ptype.key) return;
-                const now = Date.now();
-                if (now - lastTabTapRef.current < 1000) return;
-                lastTabTapRef.current = now;
-                setSelectedPtype(ptype.key);
-              }}
-            >
-              <Ionicons
-                name={ptype.icon}
-                size={14}
-                color={active ? "#fff" : colors.textSecondary}
-              />
-              <Text style={[styles.tabText, { color: colors.textSecondary }, active && { color: "#fff" }]}>
-                {ptype.label}
-              </Text>
-              {active && count !== undefined && (
-                <Text style={[styles.tabCount, styles.tabCountActive]}>
-                  {count}
-                </Text>
-              )}
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      <PtypeTabs selected={selectedPtype} onSelect={setSelectedPtype} counts={counts} />
 
       <FlatList
         ref={scrollRef}

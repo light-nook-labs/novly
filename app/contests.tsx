@@ -7,7 +7,7 @@ import { getDatabase } from "../utils/database";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { useTheme } from "../components/ThemeProvider";
 import { PageHeader } from "../components/Header";
-import { Loading } from "../components/Loading";
+import { Loading, LoadingFooter } from "../components/Loading";
 
 interface Contest {
   id: number;
@@ -154,10 +154,7 @@ container: {
         setSearch={setQuery}
       />
 
-      {loading && contests.length === 0 ? (
-        <Loading />
-      ) : (
-        <FlatList
+      <FlatList
         numColumns={numColumns}
         key={`grid-${numColumns}`}
         columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
@@ -165,11 +162,18 @@ container: {
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.list}
           keyboardShouldPersistTaps="handled"
+          ListFooterComponent={
+            loading && contests.length > 0 ? <LoadingFooter /> : null
+          }
           ListEmptyComponent={
+            loading ? (
+              <Loading />
+            ) : (
             <View style={styles.empty}>
               <Ionicons name="trophy-outline" size={36} color={colors.textMuted} />
               <Text style={styles.emptyText}>未找到匹配的赛事</Text>
             </View>
+            )
           }
           renderItem={({ item }) => (
             <Link href={`/contest/${item.id}`} asChild>
@@ -188,7 +192,6 @@ container: {
             </Link>
           )}
         />
-      )}
     </View>
   );
 }

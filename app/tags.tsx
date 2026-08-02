@@ -7,7 +7,7 @@ import { getDatabase } from "../utils/database";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { useTheme } from "../components/ThemeProvider";
 import { PageHeader } from "../components/Header";
-import { Loading } from "../components/Loading";
+import { Loading, LoadingFooter } from "../components/Loading";
 
 interface Tag {
   id: number;
@@ -152,10 +152,7 @@ container: {
         setSearch={setQuery}
       />
 
-      {loading && tags.length === 0 ? (
-        <Loading />
-      ) : (
-        <FlatList
+      <FlatList
           data={filtered}
           keyExtractor={(item) => item.id.toString()}
           numColumns={numColumns}
@@ -163,11 +160,18 @@ container: {
         columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
           contentContainerStyle={styles.list}
           keyboardShouldPersistTaps="handled"
+          ListFooterComponent={
+            loading && tags.length > 0 ? <LoadingFooter /> : null
+          }
           ListEmptyComponent={
+            loading ? (
+              <Loading />
+            ) : (
             <View style={styles.empty}>
               <Ionicons name="pricetag-outline" size={36} color={colors.textMuted} />
               <Text style={styles.emptyText}>未找到匹配的标签</Text>
             </View>
+            )
           }
           renderItem={({ item }) => (
             <Link href={`/tag/${item.id}`} asChild>
@@ -180,7 +184,6 @@ container: {
             </Link>
           )}
         />
-      )}
     </View>
   );
 }
