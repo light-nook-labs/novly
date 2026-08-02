@@ -183,7 +183,7 @@ export default function SettingsScreen() {
             >
               <View style={styles.aboutInfo}>
                 <Text style={styles.aboutAppName}>Novly</Text>
-                <Text style={styles.aboutVersion}>v1.0.1 · Offline-first browser for novel metadata</Text>
+                <Text style={styles.aboutVersion}>v1.0.2 · Offline-first browser for novel metadata</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>

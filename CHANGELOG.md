@@ -23,6 +23,16 @@ All notable changes to Novly are documented here.
 - 初始化:cold 准备阶段移到 Loading 期间、分块平衡、100ms 让出,交互流畅
 - 配置 Prettier 代码格式化工具
 
+### Added(补充)
+- 冷合并完成后弹窗提示重启应用(防页面数据未及时更新)
+- LoadingScreen:版本号/平台、By Light Nook Labs 组织信息、页脚许可/版权/GitHub URL、logo/tip 居中、转圈位置
+
+### Fixed(补充)
+- 修复 LoadingScreen 裸文本错误(`</View>` 与 `<View>` 同行空格被 React 当作文本)
+- 修复 LoadingScreen 文字截断(安卓 CJK 修法)、版本行/页脚截断
+- 修复 head tab 高度异常(占 1/3 屏幕)与列表重叠(FlatList flex 1)
+- 修复 tag/contest loadXxx 参数误加、加载态混淆(误显示"不存在")
+
 ## [1.0.1] - 2026-08-01
 
 ### Fixed
