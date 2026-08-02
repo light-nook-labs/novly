@@ -297,7 +297,7 @@ export default function AboutScreen() {
             Novly
           </Text>
           <Text textBreakStrategy="simple" style={styles.version}>
-            v1.0.2
+            v{APP_VERSION}
           </Text>
           <Text textBreakStrategy="simple" style={styles.tagline}>
             Offline-first novel metadata browser

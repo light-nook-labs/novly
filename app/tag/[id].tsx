@@ -224,9 +224,7 @@ export default function TagDetailScreen() {
           <NovelRow novel={item} rank={index + 1} value={item.click_num} valueLabel="点击" />
         )}
         ListEmptyComponent={
-          loading ? (
-            <Loading />
-          ) : novels.length === 0 ? (
+          !loading && novels.length === 0 ? (
             <View style={styles.empty}>
               <Ionicons name="book-outline" size={36} color={colors.textMuted} />
               <Text style={styles.emptyText}>暂无作品</Text>

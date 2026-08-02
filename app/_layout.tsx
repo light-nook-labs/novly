@@ -16,7 +16,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import Constants from "expo-constants";
-import { initDatabase, isFirstInit, subscribeColdMerged } from "../utils/database";
+import { APP_NAME, APP_SLOGAN, APP_AUTHOR, APP_FOOTER, APP_GITHUB_URL } from "../constants/appInfo";
+import { initDatabase, isFirstInit, subscribeColdMerged, subscribeInitProgress } from "../utils/database";
 import Toast from "react-native-toast-message";
 import * as Clipboard from "expo-clipboard";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -38,6 +39,16 @@ const TIPS = [
 
 function LoadingScreen() {
   const { colors, mode } = useTheme();
+  const [initProgress, setInitProgressState] = useState<string | null>(null);
+  // 初始化进度订阅(显示阶段/百分比,避免用户误以为卡死)
+  useEffect(() => {
+    return subscribeInitProgress(setInitProgressState);
+  }, []);
+
+  // 从进度文本(如"正在解压冷数据 45%...")提取百分比,驱动进度条
+  const pctMatch = initProgress?.match(/(\d+)%/);
+  // 数字进度(0-100),进度条按 flex 比例显示,避免字符串百分比类型不匹配
+  const pctNum = Math.min(pctMatch ? parseInt(pctMatch[1], 10) : 0, 100);
   const version = Constants.expoConfig?.version ?? "1.0.2";
   const platformLabel = Platform.OS === "ios" ? "iOS" : Platform.OS === "web" ? "Web" : "Android";
   // logo 呼吸动画
@@ -65,7 +76,7 @@ function LoadingScreen() {
     return () => anim.stop();
   }, []);
 
-  // 每 6s 淡出切换一条小技巧
+  // 每 4s 淡出切换一条小技巧
   useEffect(() => {
     const id = setInterval(() => {
       Animated.timing(tipOpacity, {
@@ -76,7 +87,7 @@ function LoadingScreen() {
         setTipIndex((i) => (i + 1) % TIPS.length);
         Animated.timing(tipOpacity, { toValue: 1, duration: 250, useNativeDriver: true }).start();
       });
-    }, 6000);
+    }, 4000);
     return () => clearInterval(id);
   }, []);
 
@@ -88,7 +99,7 @@ function LoadingScreen() {
           source={require("../assets/icon.png")}
           style={[styles.logo, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}
         />
-        <Text style={[styles.appName, { color: colors.text }]}>Novly</Text>
+        <Text style={[styles.appName, { color: colors.text }]}>{APP_NAME}</Text>
         <Text
           style={{
             fontSize: 13,
@@ -112,9 +123,9 @@ function LoadingScreen() {
             paddingHorizontal: 2,
           }}
         >
-          By Light Nook Labs
+          {APP_AUTHOR}
         </Text>
-        <Text style={[styles.tagline, { color: colors.textSecondary }]}>离线优先的轻小说元数据浏览器</Text>
+        <Text style={[styles.tagline, { color: colors.textSecondary }]}>{APP_SLOGAN}</Text>
 
         <View style={styles.tipBox}>
           <Animated.Text
@@ -128,6 +139,20 @@ function LoadingScreen() {
           </Animated.Text>
         </View>
         <ActivityIndicator size="small" color={colors.primary} style={[styles.spinner, { marginTop: 16 }]} />
+      {initProgress ? (
+        <View style={{ alignItems: "center", marginTop: 12 }}>
+          <Text style={{ fontSize: 13, color: colors.textSecondary, textAlign: "center", paddingHorizontal: 24, fontWeight: "600" }}>
+            {initProgress}
+          </Text>
+          <View style={{ height: 4, width: "55%", backgroundColor: colors.surfaceBorder, borderRadius: 2, marginTop: 8, overflow: "hidden" }}>
+            <View style={{ height: 4, flex: pctNum / 100, backgroundColor: colors.primary, borderRadius: 2 }} />
+          </View>
+          <Text style={{ fontSize: 12, color: colors.textTertiary, marginTop: 8, textAlign: "center", paddingHorizontal: 24, fontWeight: "600" }}>
+            请耐心等待,首次启动需要初始化数据
+          </Text>
+        </View>
+      ) : null}
+
       </View>
       <View style={{ marginTop: "auto", alignItems: "center", paddingBottom: 16, gap: 4 }}>
         <Text
@@ -139,7 +164,7 @@ function LoadingScreen() {
             paddingHorizontal: 2,
           }}
         >
-          MIT License · © 2026 Light Nook Labs
+          {APP_FOOTER}
         </Text>
         <Text
           style={{
@@ -150,7 +175,7 @@ function LoadingScreen() {
             paddingHorizontal: 2,
           }}
         >
-          https://github.com/light-nook-labs/novly
+          {APP_GITHUB_URL}
         </Text>
       </View>
     </View>

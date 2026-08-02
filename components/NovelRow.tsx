@@ -187,6 +187,8 @@ const styles = StyleSheet.create({
   },
   extStatText: {
     fontSize: FontSize.xs,
+    fontWeight: "600",
+    paddingHorizontal: 2,
   },
   tagRow: {
     flexDirection: "row",
@@ -213,6 +215,7 @@ const styles = StyleSheet.create({
   value: {
     fontSize: FontSize.md,
     fontWeight: "700",
+    paddingHorizontal: 2,
   },
   valueLabel: {
     fontSize: FontSize.xs,

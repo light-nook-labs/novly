@@ -176,9 +176,6 @@ export default function GenreDetailScreen() {
     }
   }
 
-  if (loading && novels.length === 0) {
-    return <Loading />;
-  }
 
   return (
     <View style={styles.container}>
