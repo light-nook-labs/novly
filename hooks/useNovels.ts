@@ -12,6 +12,12 @@ interface UseNovelsOptions {
   sortBy?: string;
   descending?: boolean;
   pageSize?: number;
+  /** 自定义 FROM/JOIN 子句(详情页复用,如 tag 的 INNER JOIN) */
+  fromClause?: string;
+  /** 额外固定条件(如 ["nt.tag_id = ?"]) */
+  extraWhere?: string[];
+  /** 额外条件参数 */
+  extraParams?: any[];
 }
 
 const SORT_WHITELIST = new Set([
@@ -32,6 +38,9 @@ export function useNovels({
   sortBy = "click_num",
   descending = true,
   pageSize = 10,
+  fromClause,
+  extraWhere,
+  extraParams,
 }: UseNovelsOptions = {}) {
   const [novels, setNovels] = useState<NovelRowData[]>([]);
   const [page, setPage] = useState(0);
@@ -41,10 +50,9 @@ export function useNovels({
 
   const buildQuery = useCallback(
     (pageNum: number) => {
-      let query =
-        "SELECT id, title, author, cover, click_num, word_num, status, genre, ptype FROM novels";
-      const conditions: string[] = [];
-      const params: any[] = [];
+      let query = `SELECT id, title, author, cover, click_num, word_num, status, genre, ptype ${fromClause ?? "FROM novels"}`;
+      const conditions: string[] = [...(extraWhere ?? [])];
+      const params: any[] = [...(extraParams ?? [])];
 
       if (ptype !== null) {
         conditions.push("ptype = ?");

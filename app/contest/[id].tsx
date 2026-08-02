@@ -10,6 +10,7 @@ import { Loading, LoadingFooter } from "../../components/Loading";
 import { PageHeader } from "../../components/Header";
 import { PtypeTabs } from "../../components/PtypeTabs";
 import { NovelFilterSheet } from "../../components/NovelFilterSheet";
+import { useNovels } from "../../hooks/useNovels";
 import { NovelRow, type NovelRowData } from "../../components/NovelRow";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
 
@@ -57,11 +58,18 @@ export default function ContestDetailScreen() {
   const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const { id } = useLocalSearchParams();
   const [contest, setContest] = useState<Contest | null>(null);
-  const [novels, setNovels] = useState<NovelRowData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const PAGE_SIZE = 10;
+  // 列表数据由 useNovels 统一管理(与 novels 页完全一致)
+  const { novels, loading, hasMore, loadMore } = useNovels({
+    ptype: selectedPtype,
+    fromClause: "FROM novels",
+    extraWhere: ["contest_id = ?"],
+    extraParams: [Number(id)],
+    genre: filters.genre,
+    status: filters.status,
+    year: filters.year,
+    minWordNum: filters.minWordNum,
+    maxWordNum: filters.maxWordNum,
+  });
   const [listHeight, setListHeight] = useState(0);
   const { scrollRef, showButton, onScroll, scrollToTop } = useScrollToTop();
 
@@ -115,12 +123,10 @@ export default function ContestDetailScreen() {
       setContest(contestResult);
 
       if (contestResult) {
-        await loadNovels(true);
       }
     } catch (error) {
       console.error("Failed to load contest:", error);
     } finally {
-      setLoading(false);
       loadCounts();
     }
   }
@@ -128,8 +134,8 @@ export default function ContestDetailScreen() {
   
     // head tab 切换(selectedPtype)时重新加载,实现分类过滤
   useEffect(() => {
-    loadNovels(true);
-  }, [selectedPtype]);
+    loadCounts();
+  }, [selectedPtype, filters]);
 
   async function loadCounts() {
     try {
@@ -146,50 +152,15 @@ export default function ContestDetailScreen() {
         [Number(id)]
       );
       const rows = await db.getAllAsync<{ ptype: number; v: number }>(
-        `SELECT n.ptype, COUNT(*) as v SELECT id, title, author, cover, genre, status, ptype, click_num
-         FROM novels WHERE contest_id = ?${filterSql} GROUP BY n.ptype`,
+        `SELECT ptype, COUNT(*) as v FROM novels WHERE contest_id = ?${filterSql} GROUP BY ptype`,
         [Number(id)]
       );
       const map: Record<string, number> = { all: total?.v ?? 0 };
       rows.forEach((r) => { map[String(r.ptype)] = r.v; });
       setCounts(map);
-    } catch (e) {}
-  }
-
-async function loadNovels(reset = false) {
-      const conds: string[] = [];
-      if (filters.genre !== null) conds.push(`n.genre = ${filters.genre}`);
-      if (filters.status !== null) conds.push(`n.status = ${filters.status}`);
-      if (filters.year !== null) conds.push(`n.last_update LIKE '${filters.year}%'`);
-      if (filters.minWordNum !== null) conds.push(`n.word_num >= ${filters.minWordNum}`);
-      if (filters.maxWordNum !== null) conds.push(`n.word_num < ${filters.maxWordNum}`);
-      const filterSql = conds.length > 0 ? ` AND ${conds.join(" AND ")}` : "";
-    try {
-      setLoading(true);
-      const db = await getDatabase();
-      const offset = reset ? 0 : page * PAGE_SIZE;
-
-      const results = await db.getAllAsync<NovelRowData>(
-        `SELECT id, title, author, cover, genre, status, ptype, click_num
-         FROM novels WHERE contest_id = ?${selectedPtype !== null ? " AND n.ptype = ?" : ""}
-         ORDER BY click_num DESC
-         LIMIT ? OFFSET ?`,
-        [Number(id), ...(selectedPtype !== null ? [selectedPtype] : []), PAGE_SIZE, offset]
-      );
-
-      if (reset) {
-        setNovels(results);
-        setPage(1);
-      } else {
-        setNovels((prev) => [...prev, ...results]);
-        setPage((prev) => prev + 1);
-      }
-
-      setHasMore(results.length === PAGE_SIZE);
-    } catch (error) {
-      console.error("Failed to load novels:", error);
-    } finally {
-      setLoading(false);
+      console.log("[db] counts:", map);
+    } catch (e) {
+      console.error("[db] loadCounts failed:", e);
     }
   }
 
@@ -230,7 +201,7 @@ async function loadNovels(reset = false) {
         onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}
         onContentSizeChange={(_, h) => {
           if (h <= listHeight && hasMore && !loading) {
-            loadNovels(false);
+            loadMore();
           }
         }}
         initialNumToRender={10}
@@ -259,7 +230,7 @@ async function loadNovels(reset = false) {
           loading && novels.length > 0 ? <LoadingFooter /> : null
         }
         onEndReached={() => {
-          if (hasMore && !loading) loadNovels(false);
+          loadMore();
         }}
         onEndReachedThreshold={0.5}
       />
@@ -273,7 +244,7 @@ async function loadNovels(reset = false) {
         onApply={(f) => {
           setFilters(f);
           setFilterVisible(false);
-          loadNovels(true);
+          loadCounts();
         }}
       />
     </View>
