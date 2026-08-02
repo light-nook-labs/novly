@@ -153,16 +153,16 @@ On each `vX.Y.Z` release, do ALL of:
 
 Report & fix bugs with 5 severity levels:
 
-| Level    | 含义                                          | 示例                       |
-| -------- | --------------------------------------------- | -------------------------- |
-| BLOCKER  | 阻断发布:崩溃 / 数据丢失 / 核心功能完全不可用 | App 启动崩溃               |
-| CRITICAL | 严重:核心功能异常,需尽快修复                  | 数据库合并后路由查不到数据 |
-| MAJOR    | 主要:功能可用但有明显缺陷                     | 重启弹窗无法重启应用       |
-| NORMAL   | 一般:功能受影响但不严重                       | 初始化页无状态栏           |
-| MINOR    | 轻微:体验 / 样式小问题,可延后                 | 文案 / 样式细节            |
+| Level    | Meaning                                    | Example                          |
+| -------- | ------------------------------------------ | -------------------------------- |
+| BLOCKER  | Blocks release: crash / data loss / core feature completely unusable | App crashes on launch |
+| CRITICAL | Severe: core feature broken, fix ASAP      | Data not found after DB merge    |
+| MAJOR    | Main: feature usable but clearly broken    | Restart dialog cannot restart the app |
+| NORMAL   | General: feature affected but not severe   | Loading screen has no StatusBar  |
+| MINOR    | Minor: UX / style nit, can be deferred     | Wording / style details          |
 
-- 报告 bug 时标注严重级别;修复按 BLOCKER → CRITICAL → MAJOR → NORMAL → MINOR 优先级
-- BLOCKER / CRITICAL 需立即处理,不得带着发布
+- Tag bugs with a severity level; fix in priority order BLOCKER -> CRITICAL -> MAJOR -> NORMAL -> MINOR
+- BLOCKER / CRITICAL must be fixed immediately and never shipped with
 
 ## Contributing
 
