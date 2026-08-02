@@ -34,6 +34,18 @@ function setInitProgress(p: string | null) {
 // 数据库就绪事件:cold 合并完成(全量库就位)后通知,供页面刷新数据
 const dbReadyListeners = new Set<() => void>();
 
+// cold 合并完成(全量库就位)后通知,提示重启应用
+const coldMergedListeners = new Set<() => void>();
+export function subscribeColdMerged(cb: () => void): () => void {
+  coldMergedListeners.add(cb);
+  return () => {
+    coldMergedListeners.delete(cb);
+  };
+}
+function emitColdMerged() {
+  coldMergedListeners.forEach((cb) => cb());
+}
+
 export function subscribeDbReady(cb: () => void): () => void {
   dbReadyListeners.add(cb);
   return () => {
@@ -474,6 +486,7 @@ async function mergeColdInBackground(
     dbLog("Full database ready with cold data.");
     // 全量库就位,通知订阅者刷新数据(如首页 nav 统计)
     emitDbReady();
+    emitColdMerged();
   } finally {
     coldMergeRunning = false;
   }

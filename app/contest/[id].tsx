@@ -197,6 +197,7 @@ export default function ContestDetailScreen() {
       <PtypeTabs selected={selectedPtype} onSelect={setSelectedPtype} counts={counts} />
 
       <FlatList
+        style={{ flex: 1 }}
         ref={scrollRef}
         data={novels}
         keyExtractor={(item) => item.id.toString()}

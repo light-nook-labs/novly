@@ -29,7 +29,7 @@ export function PtypeTabs({ selected, onSelect, counts }: PtypeTabsProps) {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={{ backgroundColor: colors.surface }}
+      style={{ flexGrow: 0, backgroundColor: colors.surface }}
       contentContainerStyle={styles.tabBar}
     >
       {PTYPES.map((ptype) => {

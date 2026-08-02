@@ -1,10 +1,11 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState, useRef } from "react";
-import { View, Text, ActivityIndicator, StyleSheet, Modal, Pressable, TouchableOpacity, Animated } from "react-native";
+import { View, Text, DevSettings, Platform, ActivityIndicator, StyleSheet, Modal, Pressable, TouchableOpacity, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { initDatabase, isFirstInit } from "../utils/database";
+import Constants from "expo-constants";
+import { initDatabase, isFirstInit, subscribeColdMerged } from "../utils/database";
 import Toast from "react-native-toast-message";
 import * as Clipboard from "expo-clipboard";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -26,6 +27,8 @@ const TIPS = [
 
 function LoadingScreen() {
   const { colors } = useTheme();
+  const version = Constants.expoConfig?.version ?? "1.0.2";
+  const platformLabel = Platform.OS === "ios" ? "iOS" : Platform.OS === "web" ? "Web" : "Android";
   // logo 呼吸动画
   const logoOpacity = useRef(new Animated.Value(0.6)).current;
   // logo 缩放动画(呼吸 + 缩放,更生动,吸引用户停留)
@@ -68,20 +71,38 @@ function LoadingScreen() {
 
   return (
     <View style={[styles.loading, { backgroundColor: colors.background }]}>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <Animated.Image
         source={require("../assets/icon.png")}
         style={[styles.logo, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}
       />
       <Text style={[styles.appName, { color: colors.text }]}>Novly</Text>
+      <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 8, alignSelf: "stretch", textAlign: "center", paddingHorizontal: 4 }}>
+        v{version} · {platformLabel}
+      </Text>
+      <Text style={{ fontSize: 12, color: colors.textTertiary, marginBottom: 12, alignSelf: "stretch", textAlign: "center", fontWeight: "600", paddingHorizontal: 2 }}>
+        By Light Nook Labs
+      </Text>
       <Text style={[styles.tagline, { color: colors.textSecondary }]}>离线优先的轻小说元数据浏览器</Text>
 
       <View style={styles.tipBox}>
-        <Animated.Text style={[styles.tipText, { color: colors.textTertiary, opacity: tipOpacity }]} numberOfLines={3}>
+        <Animated.Text
+          style={[styles.tipText, { color: colors.textTertiary, opacity: tipOpacity, textAlign: "center", paddingHorizontal: 24 }]}
+          numberOfLines={3}
+        >
           💡 {TIPS[tipIndex]}
         </Animated.Text>
       </View>
-
-      <ActivityIndicator size="small" color={colors.primary} style={styles.spinner} />
+      <ActivityIndicator size="small" color={colors.primary} style={[styles.spinner, { marginTop: 16 }]} />
+      </View>
+      <View style={{ marginTop: "auto", alignItems: "center", paddingBottom: 16, gap: 4 }}>
+        <Text style={{ fontSize: 12, color: colors.textTertiary, textAlign: "center", fontWeight: "600", paddingHorizontal: 2 }}>
+          MIT License · © 2026 Light Nook Labs
+        </Text>
+        <Text style={{ fontSize: 12, color: colors.textTertiary, textAlign: "center", fontWeight: "600", paddingHorizontal: 2 }}>
+          https://github.com/light-nook-labs/novly
+        </Text>
+      </View>
     </View>
   );
 }
@@ -96,6 +117,11 @@ function BackButton() {
 }
 
 function AppContent({ ready, error }: { ready: boolean; error: string | null }) {
+  const [coldMerged, setColdMerged] = useState(false);
+  // 冷合并完成(全量库就位)后,弹窗提示重启应用,防页面未及时更新
+  useEffect(() => {
+    return subscribeColdMerged(() => setColdMerged(true));
+  }, []);
   const { colors, mode } = useTheme();
 
   if (error) {
@@ -134,6 +160,26 @@ function AppContent({ ready, error }: { ready: boolean; error: string | null }) 
         <Stack.Screen name="changelog" options={{ headerShown: false }} />
       </Stack>
       <Toast />
+
+      <Modal visible={coldMerged} transparent animationType="fade" onRequestClose={() => {}}>
+        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" }}>
+          <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 24, width: "80%", maxWidth: 360 }}>
+            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text, marginBottom: 12 }}>数据已更新</Text>
+            <Text style={{ fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginBottom: 20 }}>
+              数据库已加载完整数据,请重启应用以查看最新内容。
+            </Text>
+            <TouchableOpacity
+              style={{ backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 12, alignItems: "center" }}
+              onPress={() => {
+                setColdMerged(false);
+                DevSettings.reload();
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "600" }}>重启应用</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
