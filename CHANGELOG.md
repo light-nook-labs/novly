@@ -10,6 +10,20 @@ All notable changes to Novly are documented here.
 - 修复重启弹窗无法重启应用(MAJOR:DevSettings.reload release 无效 → 重新挂载组件树)
 - 修复初始化页面无状态栏(NORMAL:wifi/蓝牙/消息图标不显示)
 
+### Added
+- 类型统一管理:types/models.ts(Author/Contest/Novel),渐进式迁移(见 TYPE_MIGRATION.md)
+- app 元信息统一常量 constants/appInfo.ts(名称/作者/GH/QQ/邮箱/版本/标语/许可证)
+- LoadingScreen 初始化进度条 + 耐心等待提示
+
+### Fixed
+- 修复详情页 head tab 切换整页替换(对齐 novels:只更新内容区)
+- 修复 NovelRow 点赞数字截断(安卓 CJK 修法)
+- 修复 settings Linking 命名冲突(统一 expo-linking)
+
+### Refactored
+- Changelog 改为跳转 GitHub CHANGELOG.md(删除 app 内 changelog 页面/路由,零维护)
+- 统一版本号与元信息管理(version.ts 并入 appInfo.ts)
+
 ## [1.0.2] - 2026-08-02
 
 ### Added
