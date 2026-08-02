@@ -1,3 +1,4 @@
+import { AuthorStats } from "../../types/models";
 import {
   View,
   Text,
@@ -19,16 +20,6 @@ import { PageHeader } from "../../components/Header";
 import { NovelRow, type NovelRowData } from "../../components/NovelRow";
 import { DetailSkeleton } from "../../components/Skeleton";
 
-interface AuthorStats {
-  id: number;
-  name: string;
-  top_novel_title: string | null;
-  top_novel_clicks: number;
-  novel_count: number;
-  total_clicks: number;
-  total_likes: number;
-  total_praise: number;
-}
 
 export default function AuthorDetailScreen() {
   const { colors } = useTheme();

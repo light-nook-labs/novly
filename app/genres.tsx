@@ -1,3 +1,4 @@
+import { GenreCount } from "../types/models";
 import {
   View,
   Text,
@@ -19,18 +20,10 @@ import { useTheme } from "../components/ThemeProvider";
 import { PageHeader } from "../components/Header";
 import { Loading } from "../components/Loading";
 
-interface GenreCount {
-  genre: number;
-  count: number;
-}
 
 const CACHE_KEY = "genres_cache_v1";
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24h
 
-interface CacheEntry {
-  timestamp: number;
-  genres: GenreCount[];
-}
 
 export default function GenresScreen() {
   const { colors } = useTheme();

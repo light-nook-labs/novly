@@ -1,3 +1,4 @@
+import { FilterState } from "../../types/models";
 import {
   View,
   Text,
@@ -23,15 +24,7 @@ import { NovelFilterSheet } from "../../components/NovelFilterSheet";
 import { Colors, FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { useTheme } from "../../components/ThemeProvider";
 
-interface FilterState {
-  genre: number | null;
-  status: number | null;
-  year: number | null;
-  minWordNum: number | null;
-  maxWordNum: number | null;
-  sortBy: string;
-  descending: boolean;
-}
+
 
 const DEFAULT_FILTER: FilterState = {
   genre: null,

@@ -44,3 +44,9 @@ For each type, follow these steps:
 
 - Always run `npx tsc --noEmit` after each migration — it must pass with zero project errors
 - Update this document's progress table after each migration
+
+## Shared Resources
+
+- Icons: centralized in `constants/icons.ts` (`ICONS` object) — always import from there instead of hardcoding icon names, to keep icon style consistent
+- App meta info: centralized in `constants/appInfo.ts`
+- App version: `APP_VERSION` in `constants/appInfo.ts`

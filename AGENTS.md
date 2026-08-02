@@ -172,6 +172,7 @@ Type consolidation is planned — see `TYPE_MIGRATION.md` for the migration guid
 - Pages/components import types from the central files instead of local definitions
 - Migrate types incrementally (per `TYPE_MIGRATION.md`), verify with `npx tsc --noEmit` after each
 - Keep the `TYPE_MIGRATION.md` progress table in sync after each migration
+- Centralize icon names in `constants/icons.ts` (single source — prevents inconsistent icons across pages)
 
 ## Contributing
 

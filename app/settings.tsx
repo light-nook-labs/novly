@@ -202,7 +202,7 @@ export default function SettingsScreen() {
                 <Text style={styles.actionLabel}>Changelog</Text>
                 <Text style={styles.actionSubtitle}>View version changes and bug fixes</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              <Ionicons name="open-outline" size={18} color={colors.textMuted} />
             </TouchableOpacity>
 
             {Platform.OS !== "web" && <View style={styles.divider} />}

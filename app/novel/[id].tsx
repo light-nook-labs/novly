@@ -1,3 +1,4 @@
+import { Novel, Tag } from "../types/models";
 import {
   View,
   Text,
@@ -27,29 +28,7 @@ import { ID } from "../../components/ID";
 import { ImageLightbox } from "../../components/ImageLightbox";
 import { DetailSkeleton } from "../../components/Skeleton";
 
-interface Novel {
-  id: number;
-  title: string;
-  author: string | null;
-  genre: number;
-  status: number;
-  ptype: number;
-  contest_id: number | null;
-  has_banner: number;
-  word_num: number | null;
-  click_num: number | null;
-  like_num: number | null;
-  praise_num: number | null;
-  comment_num: number | null;
-  review_num: number | null;
-  cover: string | null;
-  last_update: string | null;
-}
 
-interface Tag {
-  id: number;
-  name: string;
-}
 
 interface Contest {
   id: number;

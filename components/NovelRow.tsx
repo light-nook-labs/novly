@@ -1,3 +1,4 @@
+import { ICONS } from "../constants/icons";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { memo } from "react";
 import { router } from "expo-router";
@@ -70,26 +71,26 @@ export const NovelRow = memo(function NovelRow({ novel, rank, value, valueLabel,
         </View>
         {extended && (
           <View style={styles.extendedStats}>
-            {novel.like_num != null && novel.like_num > 0 && (
-              <View style={styles.extStat}>
-                <Ionicons name="heart-outline" size={12} color={colors.textTertiary} />
-                <Text style={[styles.extStatText, { color: colors.textTertiary }]}>{formatNumber(novel.like_num)}</Text>
-              </View>
-            )}
             {novel.word_num != null && novel.word_num > 0 && (
               <View style={styles.extStat}>
-                <Ionicons name="document-text-outline" size={12} color={colors.textTertiary} />
+                <Ionicons name={ICONS.wordNum} size={12} color={colors.textTertiary} />
                 <Text style={[styles.extStatText, { color: colors.textTertiary }]}>
-                  {formatNumber(novel.word_num)}字
+                  {formatNumber(novel.word_num)}
                 </Text>
               </View>
             )}
-            {novel.comment_num != null && novel.comment_num > 0 && (
+{novel.comment_num != null && novel.comment_num > 0 && (
               <View style={styles.extStat}>
-                <Ionicons name="chatbubble-outline" size={12} color={colors.textTertiary} />
+                <Ionicons name={ICONS.like} size={12} color={colors.textTertiary} />
                 <Text style={[styles.extStatText, { color: colors.textTertiary }]}>
                   {formatNumber(novel.comment_num)}
                 </Text>
+              </View>
+            )}
+{novel.like_num != null && novel.like_num > 0 && (
+              <View style={styles.extStat}>
+                <Ionicons name={ICONS.click} size={12} color={colors.textTertiary} />
+                <Text style={[styles.extStatText, { color: colors.textTertiary }]}>{formatNumber(novel.like_num)}</Text>
               </View>
             )}
           </View>
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
   extendedStats: {
     flexDirection: "row",
     marginTop: Spacing.sm,
-    gap: Spacing.md,
+    gap: 8,
     flexWrap: "wrap",
   },
   extStat: {

@@ -1,3 +1,4 @@
+import { FilterState } from "../../types/models";
 import {
   View,
   Text,
@@ -31,15 +32,7 @@ const PTYPES = [
   { key: 4, label: "VIP", icon: "diamond-outline" as const },
 ];
 
-interface FilterState {
-  genre: number | null;
-  status: number | null;
-  year: number | null;
-  minWordNum: number | null;
-  maxWordNum: number | null;
-  sortBy: string;
-  descending: boolean;
-}
+
 
 const DEFAULT_FILTER: FilterState = {
   genre: null,

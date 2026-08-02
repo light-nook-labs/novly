@@ -1,3 +1,4 @@
+import { Contest, FilterState } from "../types/models";
 import {
   View,
   Text,
@@ -23,10 +24,6 @@ import { useNovels } from "../../hooks/useNovels";
 import { NovelRow, type NovelRowData } from "../../components/NovelRow";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
 
-interface Contest {
-  id: number;
-  name: string;
-}
 
 const PTYPES = [
   { key: null, label: "全部", icon: "list-outline" as const },
@@ -35,15 +32,7 @@ const PTYPES = [
   { key: 4, label: "VIP", icon: "diamond-outline" as const },
 ];
 
-interface FilterState {
-  genre: number | null;
-  status: number | null;
-  year: number | null;
-  minWordNum: number | null;
-  maxWordNum: number | null;
-  sortBy: string;
-  descending: boolean;
-}
+
 
 const DEFAULT_FILTER: FilterState = {
   genre: null,

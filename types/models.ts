@@ -12,6 +12,7 @@ export interface Author {
 export interface Contest {
   id: number;
   name: string;
+  novel_count?: number;
 }
 
 export interface Novel {
@@ -31,4 +32,40 @@ export interface Novel {
   review_num: number | null;
   cover: string | null;
   last_update: string | null;
+}
+
+export interface Tag {
+  id: number;
+  name: string;
+}
+
+export interface FilterState {
+  genre: number | null;
+  status: number | null;
+  year: number | null;
+  minWordNum: number | null;
+  maxWordNum: number | null;
+  sortBy: string;
+  descending: boolean;
+}
+
+export interface GenreCount {
+  genre: number;
+  count: number;
+}
+
+export interface AuthorStats {
+  id: number;
+  name: string;
+  top_novel_title: string | null;
+  top_novel_clicks: number;
+  total_novels: number;
+  total_clicks: number;
+  total_likes: number;
+  total_praise: number;
+}
+
+export interface CacheEntry<T> {
+  timestamp: number;
+  data: T;
 }

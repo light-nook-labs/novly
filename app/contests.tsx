@@ -1,3 +1,4 @@
+import { Contest } from "../types/models";
 import {
   View,
   Text,
@@ -18,19 +19,10 @@ import { useTheme } from "../components/ThemeProvider";
 import { PageHeader } from "../components/Header";
 import { Loading, LoadingFooter } from "../components/Loading";
 
-interface Contest {
-  id: number;
-  name: string;
-  novel_count: number;
-}
 
 const CACHE_KEY = "contests_cache_v1";
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24h
 
-interface CacheEntry {
-  timestamp: number;
-  contests: Contest[];
-}
 
 export default function ContestsScreen() {
   const { colors } = useTheme();
