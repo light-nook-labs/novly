@@ -1,3 +1,4 @@
+import { Author } from "../types/models";
 import {
   View,
   Text,
@@ -22,12 +23,7 @@ import { LoadingFooter } from "../components/Loading";
 import { PageHeader } from "../components/Header";
 import { Ionicons } from "@expo/vector-icons";
 
-interface Author {
-  id: number;
-  name: string;
-  top_novel_title: string | null;
-  top_novel_clicks: number;
-}
+
 
 export default function AuthorsScreen() {
   const { colors } = useTheme();

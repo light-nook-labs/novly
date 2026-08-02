@@ -233,7 +233,6 @@ function AppContent({ ready, error, onRestart }: { ready: boolean; error: string
         <Stack.Screen name="status/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ headerShown: false }} />
         <Stack.Screen name="about" options={{ headerShown: false }} />
-        <Stack.Screen name="changelog" options={{ headerShown: false }} />
       </Stack>
       <Toast />
 

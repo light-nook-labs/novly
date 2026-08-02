@@ -144,7 +144,7 @@ On each `vX.Y.Z` release, do ALL of:
 
 1. Bump version everywhere(see Version Bump above)
 2. Update `CHANGELOG.md` — record the version's features & fixes
-3. Sync `app/changelog.tsx`'s `CHANGELOG_TEXT` with `CHANGELOG.md`(keep them consistent)
+3. Changelog: Settings → Changelog opens the repo's `CHANGELOG.md` on GitHub — no in-app page/sync anymore (do NOT re-add a changelog route or page)
 4. Update `README.md` AND `README_EN.md`(both languages)
 5. Format code:`pnpm format`(Prettier),then `npx tsc --noEmit`
 6. Commit & publish the release
@@ -163,6 +163,15 @@ Report & fix bugs with 5 severity levels:
 
 - Tag bugs with a severity level; fix in priority order BLOCKER -> CRITICAL -> MAJOR -> NORMAL -> MINOR
 - BLOCKER / CRITICAL must be fixed immediately and never shipped with
+
+## Planned Refactoring
+
+Type consolidation is planned — see `TYPE_MIGRATION.md` for the migration guide & progress:
+
+- Centralize shared data-model types (Author, Novel, Contest, ...) into `types/models.ts`
+- Pages/components import types from the central files instead of local definitions
+- Migrate types incrementally (per `TYPE_MIGRATION.md`), verify with `npx tsc --noEmit` after each
+- Keep the `TYPE_MIGRATION.md` progress table in sync after each migration
 
 ## Contributing
 

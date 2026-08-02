@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, Modal, Pressable } from "react-native";
+import {View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, Modal, Pressable} from "react-native";
+
 import { useState, useEffect, useMemo } from "react";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -10,7 +11,7 @@ import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { PageHeader } from "../components/Header";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useTheme, type ThemeColors, type ThemeMode } from "../components/ThemeProvider";
-import { APP_VERSION } from "../constants/version";
+import { APP_VERSION, APP_GITHUB_URL } from "../constants/appInfo";
 
 const THEME_OPTIONS: { key: ThemeMode; label: string; icon: string }[] = [
   { key: "system", label: "跟随系统", icon: "phone-portrait-outline" },
@@ -193,7 +194,7 @@ export default function SettingsScreen() {
 
             <TouchableOpacity
               style={[styles.linkRow, Platform.OS === "web" ? { width: "50%", paddingRight: 16 } : null]}
-              onPress={() => router.push("/changelog")}
+              onPress={() => Linking.openURL(`${APP_GITHUB_URL}/blob/main/CHANGELOG.md`)}
               activeOpacity={0.6}
             >
               <Ionicons name="document-text-outline" size={22} color={colors.primary} style={styles.actionIcon} />
