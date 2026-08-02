@@ -44,29 +44,29 @@ export const NovelRow = memo(function NovelRow({ novel, rank, value, valueLabel,
       style={[styles.row, { backgroundColor: colors.surface }]}
       onPress={() => router.push(`/novel/${novel.id}`)}
     >
-      {rank !== undefined && (
-        isTop3 ? (
+      {rank !== undefined &&
+        (isTop3 ? (
           <View style={[styles.medal, { backgroundColor: RANK_COLORS[rank - 1] }]}>
             <Text style={styles.medalText}>{rank}</Text>
           </View>
         ) : (
           <Text style={[styles.rank, { color: colors.textTertiary }]}>{rank}</Text>
-        )
-      )}
+        ))}
       <Cover cover={novel.cover} width={68} height={90} />
       <View style={styles.info}>
-        <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>{novel.title}<ID id={novel.id} weight="600" /></Text>
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
+          {novel.title}
+          <ID id={novel.id} weight="600" />
+        </Text>
         {novel.author && (
-          <Text style={[styles.author, { color: colors.textSecondary }]} numberOfLines={1}>{novel.author}</Text>
+          <Text style={[styles.author, { color: colors.textSecondary }]} numberOfLines={1}>
+            {novel.author}
+          </Text>
         )}
         <View style={styles.badges}>
           <StatusBadge statusId={novel.status} label={statusMapping[novel.status] ?? "其他"} />
-          {genreMapping[novel.genre] && (
-            <Badge label={genreMapping[novel.genre]} variant="genre" />
-          )}
-          {ptypeMapping[novel.ptype] && (
-            <Badge label={ptypeMapping[novel.ptype]} variant="ptype" />
-          )}
+          {genreMapping[novel.genre] && <Badge label={genreMapping[novel.genre]} variant="genre" />}
+          {ptypeMapping[novel.ptype] && <Badge label={ptypeMapping[novel.ptype]} variant="ptype" />}
         </View>
         {extended && (
           <View style={styles.extendedStats}>
@@ -79,13 +79,17 @@ export const NovelRow = memo(function NovelRow({ novel, rank, value, valueLabel,
             {novel.word_num != null && novel.word_num > 0 && (
               <View style={styles.extStat}>
                 <Ionicons name="document-text-outline" size={12} color={colors.textTertiary} />
-                <Text style={[styles.extStatText, { color: colors.textTertiary }]}>{formatNumber(novel.word_num)}字</Text>
+                <Text style={[styles.extStatText, { color: colors.textTertiary }]}>
+                  {formatNumber(novel.word_num)}字
+                </Text>
               </View>
             )}
             {novel.comment_num != null && novel.comment_num > 0 && (
               <View style={styles.extStat}>
                 <Ionicons name="chatbubble-outline" size={12} color={colors.textTertiary} />
-                <Text style={[styles.extStatText, { color: colors.textTertiary }]}>{formatNumber(novel.comment_num)}</Text>
+                <Text style={[styles.extStatText, { color: colors.textTertiary }]}>
+                  {formatNumber(novel.comment_num)}
+                </Text>
               </View>
             )}
           </View>

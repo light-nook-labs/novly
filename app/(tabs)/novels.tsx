@@ -1,4 +1,13 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, useWindowDimensions } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Platform,
+  useWindowDimensions,
+} from "react-native";
 import { useState, useEffect, useRef } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -50,9 +59,7 @@ export default function NovelsScreen() {
   // web 按窗口宽度动态列数:≥1400 三列,≥900 两列,否则单列;手机恒为单列
   const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const { genre, status, ptype } = useLocalSearchParams<{ genre?: string; status?: string; ptype?: string }>();
-  const [selectedPtype, setSelectedPtype] = useState<number | null>(
-    ptype ? Number(ptype) : null
-  );
+  const [selectedPtype, setSelectedPtype] = useState<number | null>(ptype ? Number(ptype) : null);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [filters, setFilters] = useState<FilterState>({
     ...DEFAULT_FILTER,
@@ -106,10 +113,12 @@ export default function NovelsScreen() {
       const where = conds.length > 0 ? ` WHERE ${conds.join(" AND ")}` : "";
       const total = await db.getFirstAsync<{ v: number }>(`SELECT COUNT(*) as v FROM novels${where}`);
       const rows = await db.getAllAsync<{ ptype: number; v: number }>(
-        `SELECT ptype, COUNT(*) as v FROM novels${where} GROUP BY ptype`
+        `SELECT ptype, COUNT(*) as v FROM novels${where} GROUP BY ptype`,
       );
       const map: Record<string, number> = { all: total?.v ?? 0 };
-      rows.forEach((r) => { map[String(r.ptype)] = r.v; });
+      rows.forEach((r) => {
+        map[String(r.ptype)] = r.v;
+      });
       setCounts(map);
     } catch (e) {
       console.error("Failed to load ptype counts:", e);
@@ -120,10 +129,7 @@ export default function NovelsScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TabHeader
         right={
-          <TouchableOpacity
-            style={styles.filterBtn}
-            onPress={() => setFilterVisible(true)}
-          >
+          <TouchableOpacity style={styles.filterBtn} onPress={() => setFilterVisible(true)}>
             <Ionicons
               name="options-outline"
               size={22}

@@ -53,10 +53,7 @@ export function PtypeTabs({ selected, onSelect, counts }: PtypeTabsProps) {
           >
             <View style={styles.tabContent}>
               <Ionicons name={ptype.icon} size={15} color={active ? "#fff" : colors.textSecondary} />
-              <Text
-                style={[styles.tabText, { color: active ? "#fff" : colors.textSecondary }]}
-                numberOfLines={1}
-              >
+              <Text style={[styles.tabText, { color: active ? "#fff" : colors.textSecondary }]} numberOfLines={1}>
                 {ptype.label}
                 {active && count != null ? ` ${count}` : ""}
               </Text>

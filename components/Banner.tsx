@@ -1,4 +1,16 @@
-import { View, StyleSheet, TouchableOpacity, Animated, ScrollView, NativeScrollEvent, NativeSyntheticEvent, useWindowDimensions, Dimensions, Image, Text } from "react-native";
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+  ScrollView,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  useWindowDimensions,
+  Dimensions,
+  Image,
+  Text,
+} from "react-native";
 import { useState, useEffect, useRef, useCallback, type ReactNode } from "react";
 import * as Clipboard from "expo-clipboard";
 import Toast from "react-native-toast-message";
@@ -204,14 +216,11 @@ export function Banner({
         setExtIndex(rawIdx);
       }
     },
-    [items.length, extendedCount, itemW]
+    [items.length, extendedCount, itemW],
   );
 
   // Handle manual scroll (drag)
-  const handleScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-    { useNativeDriver: false }
-  );
+  const handleScroll = Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: false });
 
   const handlePinnedPress = (id: number) => {
     const pin = pins.find((p) => p.id === id);
@@ -230,7 +239,9 @@ export function Banner({
             activeOpacity={0.9}
             onPress={onlyPin ? () => onlyPin.onPress?.() : () => {}}
           >
-            {onlyPin ? onlyPin.render(itemW, finalHeight, pinBgUris[0]) : (
+            {onlyPin ? (
+              onlyPin.render(itemW, finalHeight, pinBgUris[0])
+            ) : (
               <BannerItem id={only.id} title={only.title} author={only.author} width={itemW} height={finalHeight} />
             )}
           </TouchableOpacity>
@@ -284,11 +295,7 @@ export function Banner({
             {items.map((_, i) => {
               // Map real index to extended scroll position
               const extOffset = (i + 1) * itemW;
-              const inputRange = [
-                extOffset - itemW,
-                extOffset,
-                extOffset + itemW,
-              ];
+              const inputRange = [extOffset - itemW, extOffset, extOffset + itemW];
               const dotWidth = scrollX.interpolate({
                 inputRange,
                 outputRange: [8, 24, 8],

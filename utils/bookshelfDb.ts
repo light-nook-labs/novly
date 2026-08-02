@@ -58,10 +58,7 @@ export async function getBookshelfDb(): Promise<SQLite.SQLiteDatabase> {
 
 export async function isInBookshelf(id: number): Promise<boolean> {
   const db = await getBookshelfDb();
-  const row = await db.getFirstAsync<{ c: number }>(
-    "SELECT COUNT(*) as c FROM bookshelf WHERE id = ?",
-    [id]
-  );
+  const row = await db.getFirstAsync<{ c: number }>("SELECT COUNT(*) as c FROM bookshelf WHERE id = ?", [id]);
   return (row?.c ?? 0) > 0;
 }
 
@@ -83,7 +80,7 @@ export async function addToBookshelf(novel: Omit<BookshelfNovel, "added_at">): P
       novel.word_num,
       novel.like_num,
       novel.last_update,
-    ]
+    ],
   );
 }
 
@@ -97,7 +94,7 @@ export async function getBookshelf(): Promise<BookshelfNovel[]> {
   return db.getAllAsync<BookshelfNovel>(
     `SELECT id, title, author, cover, genre, status, ptype,
             click_num, word_num, like_num, last_update, added_at
-     FROM bookshelf ORDER BY added_at DESC, id DESC`
+     FROM bookshelf ORDER BY added_at DESC, id DESC`,
   );
 }
 

@@ -1,4 +1,13 @@
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet , Platform, useWindowDimensions} from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+  useWindowDimensions,
+} from "react-native";
 import { Link } from "expo-router";
 import { useState, useEffect, useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -29,47 +38,50 @@ export default function SearchScreen() {
   const [listHeight, setListHeight] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const search = useCallback(async (searchQuery: string, reset = false) => {
-    const trimmed = searchQuery.trim();
+  const search = useCallback(
+    async (searchQuery: string, reset = false) => {
+      const trimmed = searchQuery.trim();
 
-    if (!trimmed) {
-      setResults([]);
-      setPage(0);
-      setHasMore(true);
-      return;
-    }
+      if (!trimmed) {
+        setResults([]);
+        setPage(0);
+        setHasMore(true);
+        return;
+      }
 
-    try {
-      setLoading(true);
-      const db = await getDatabase();
-      const offset = reset ? 0 : page * PAGE_SIZE;
-      const numericId = Number.parseInt(trimmed, 10);
-      const idQuery = Number.isNaN(numericId) ? -1 : numericId;
+      try {
+        setLoading(true);
+        const db = await getDatabase();
+        const offset = reset ? 0 : page * PAGE_SIZE;
+        const numericId = Number.parseInt(trimmed, 10);
+        const idQuery = Number.isNaN(numericId) ? -1 : numericId;
 
-      const results = await db.getAllAsync<Novel>(
-        `SELECT id, title, author, click_num
+        const results = await db.getAllAsync<Novel>(
+          `SELECT id, title, author, click_num
          FROM novels
          WHERE title LIKE ?
             OR author LIKE ?
             OR id = ?
          ORDER BY click_num DESC
          LIMIT ? OFFSET ?`,
-        [`%${trimmed}%`, `%${trimmed}%`, idQuery, PAGE_SIZE, offset]
-      );
+          [`%${trimmed}%`, `%${trimmed}%`, idQuery, PAGE_SIZE, offset],
+        );
 
-      if (reset) {
-        setResults(results);
-        setPage(1);
-      } else {
-        setResults((prev) => [...prev, ...results]);
-        setPage((prev) => prev + 1);
+        if (reset) {
+          setResults(results);
+          setPage(1);
+        } else {
+          setResults((prev) => [...prev, ...results]);
+          setPage((prev) => prev + 1);
+        }
+
+        setHasMore(results.length === PAGE_SIZE);
+      } catch (error) {
+        console.error("Search failed:", error);
       }
-
-      setHasMore(results.length === PAGE_SIZE);
-    } catch (error) {
-      console.error("Search failed:", error);
-    }
-  }, [page]);
+    },
+    [page],
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -84,7 +96,10 @@ export default function SearchScreen() {
       <PageHeader title="Search" />
       <View style={[styles.searchBar, { backgroundColor: colors.surface, borderBottomColor: colors.surfaceBorder }]}>
         <TextInput
-          style={[styles.input, { color: colors.text, backgroundColor: colors.surfaceBorder, borderColor: colors.surfaceBorder }]}
+          style={[
+            styles.input,
+            { color: colors.text, backgroundColor: colors.surfaceBorder, borderColor: colors.surfaceBorder },
+          ]}
           placeholder="搜索标题、作者或小说 ID..."
           placeholderTextColor={colors.textTertiary}
           value={query}
@@ -107,14 +122,18 @@ export default function SearchScreen() {
         }}
         renderItem={({ item }) => (
           <Link href={`/novel/${item.id}`} asChild>
-            <TouchableOpacity style={StyleSheet.flatten([styles.resultItem, { borderBottomColor: colors.surfaceBorder }])}>
+            <TouchableOpacity
+              style={StyleSheet.flatten([styles.resultItem, { borderBottomColor: colors.surfaceBorder }])}
+            >
               <View style={styles.resultInfo}>
                 <Text style={[styles.resultTitle, { color: colors.text }]} numberOfLines={2}>
                   {item.title} #{item.id}
                 </Text>
                 <Text style={[styles.resultAuthor, { color: colors.textSecondary }]}>{item.author}</Text>
               </View>
-              <Text style={StyleSheet.flatten([styles.resultClicks, { color: colors.textTertiary }])}>{formatNumber(item.click_num)}</Text>
+              <Text style={StyleSheet.flatten([styles.resultClicks, { color: colors.textTertiary }])}>
+                {formatNumber(item.click_num)}
+              </Text>
             </TouchableOpacity>
           </Link>
         )}
@@ -122,9 +141,7 @@ export default function SearchScreen() {
           if (hasMore) search(query, false);
         }}
         onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          loading && results.length > 0 ? <LoadingFooter /> : null
-        }
+        ListFooterComponent={loading && results.length > 0 ? <LoadingFooter /> : null}
         ListEmptyComponent={
           query ? (
             <View style={styles.empty}>

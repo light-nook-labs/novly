@@ -62,7 +62,8 @@ export default function RankingsScreen() {
     () =>
       StyleSheet.create({
         container: {
-          flex: 1,          ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
+          flex: 1,
+          ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
 
           backgroundColor: colors.background,
         },
@@ -109,7 +110,7 @@ export default function RankingsScreen() {
           textAlign: "center",
         },
       }),
-    [colors]
+    [colors],
   );
 
   useEffect(() => {
@@ -128,7 +129,7 @@ export default function RankingsScreen() {
        WHERE ${selectedTab} > 0
        ORDER BY ${selectedTab} DESC
        LIMIT ? OFFSET ?`,
-      [limit, offset]
+      [limit, offset],
     );
   }
 
@@ -171,14 +172,8 @@ export default function RankingsScreen() {
                 style={[styles.tab, active && styles.tabActive]}
                 onPress={() => setSelectedTab(tab.key)}
               >
-                <Ionicons
-                  name={tab.icon}
-                  size={14}
-                  color={active ? "#fff" : colors.textSecondary}
-                />
-                <Text style={[styles.tabText, active && styles.tabTextActive]}>
-                  {tab.label}
-                </Text>
+                <Ionicons name={tab.icon} size={14} color={active ? "#fff" : colors.textSecondary} />
+                <Text style={[styles.tabText, active && styles.tabTextActive]}>{tab.label}</Text>
               </TouchableOpacity>
             );
           })}
@@ -211,9 +206,7 @@ export default function RankingsScreen() {
             valueLabel={currentTab?.label}
           />
         )}
-        ListEmptyComponent={
-          loading ? <Loading /> : null
-        }
+        ListEmptyComponent={loading ? <Loading /> : null}
         ListFooterComponent={
           loading && novels.length > 0 ? (
             <LoadingFooter />

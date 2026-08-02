@@ -1,4 +1,15 @@
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Dimensions , Platform, useWindowDimensions} from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Dimensions,
+  Platform,
+  useWindowDimensions,
+} from "react-native";
 import { useState, useCallback, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
@@ -18,7 +29,8 @@ function createStyles(colors: ThemeColors) {
       marginBottom: 16,
     },
     container: {
-      flex: 1,      ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
+      flex: 1,
+      ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
 
       backgroundColor: colors.background,
     },
@@ -111,7 +123,7 @@ export default function BannerSearchScreen() {
            AND (title LIKE ? OR author LIKE ?)
          ORDER BY click_num DESC
          LIMIT ? OFFSET ?`,
-        [`%${trimmed}%`, `%${trimmed}%`, PAGE_SIZE, offset]
+        [`%${trimmed}%`, `%${trimmed}%`, PAGE_SIZE, offset],
       );
 
       if (reset) {
@@ -180,7 +192,13 @@ export default function BannerSearchScreen() {
         }}
         contentContainerStyle={styles.list}
         renderItem={({ item, index }) => (
-          <View style={{ width: `${100 / numColumns}%`, paddingRight: (index + 1) % numColumns !== 0 ? 16 : 0, paddingBottom: 16 }}>
+          <View
+            style={{
+              width: `${100 / numColumns}%`,
+              paddingRight: (index + 1) % numColumns !== 0 ? 16 : 0,
+              paddingBottom: 16,
+            }}
+          >
             <BannerListItem id={item.id} title={item.title} author={item.author} />
           </View>
         )}
@@ -197,11 +215,7 @@ export default function BannerSearchScreen() {
             </View>
           ) : null
         }
-        ListFooterComponent={
-          loading ? (
-            <LoadingFooter />
-          ) : null
-        }
+        ListFooterComponent={loading ? <LoadingFooter /> : null}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
       />

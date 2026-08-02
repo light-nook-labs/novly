@@ -10,11 +10,7 @@ interface BackToTopProps {
 export function BackToTop({ onPress }: BackToTopProps) {
   const { colors } = useTheme();
   return (
-    <TouchableOpacity
-      style={[styles.btn, { backgroundColor: colors.surface }]}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
+    <TouchableOpacity style={[styles.btn, { backgroundColor: colors.surface }]} onPress={onPress} activeOpacity={0.7}>
       <Ionicons name="arrow-up" size={20} color={colors.primary} />
     </TouchableOpacity>
   );

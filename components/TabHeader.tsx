@@ -18,13 +18,7 @@ interface TabHeaderProps {
   right?: React.ReactNode;
 }
 
-export function TabHeader({
-  search,
-  setSearch,
-  placeholder,
-  onSearchPress,
-  right,
-}: TabHeaderProps) {
+export function TabHeader({ search, setSearch, placeholder, onSearchPress, right }: TabHeaderProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const isInputMode = search !== undefined && setSearch !== undefined;
@@ -41,16 +35,9 @@ export function TabHeader({
       <View style={[styles.header, { backgroundColor: colors.surface, paddingTop: insets.top + Spacing.sm }]}>
         <Image source={require("../assets/icon.png")} style={styles.icon} />
         {isInputMode ? (
-          <SearchBar
-            value={search}
-            onChangeText={setSearch}
-            placeholder={placeholder}
-          />
+          <SearchBar value={search} onChangeText={setSearch} placeholder={placeholder} />
         ) : (
-          <SearchBar
-            onPress={onSearchPress ?? (() => router.push("/search"))}
-            placeholder={placeholder}
-          />
+          <SearchBar onPress={onSearchPress ?? (() => router.push("/search"))} placeholder={placeholder} />
         )}
         {right}
       </View>

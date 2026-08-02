@@ -1,8 +1,22 @@
-import { View, Text, ScrollView, FlatList, TouchableOpacity, StyleSheet, Alert, Platform, useWindowDimensions } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Platform,
+  useWindowDimensions,
+} from "react-native";
 import { Link, useFocusEffect } from "expo-router";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { getBookshelf, removeFromBookshelf as removeFromBookshelfDb, type BookshelfNovel } from "../../utils/bookshelfDb";
+import {
+  getBookshelf,
+  removeFromBookshelf as removeFromBookshelfDb,
+  type BookshelfNovel,
+} from "../../utils/bookshelfDb";
 import { TabHeader } from "../../components/TabHeader";
 import { Cover } from "../../components/Cover";
 import { NovelFilterSheet } from "../../components/NovelFilterSheet";
@@ -29,14 +43,7 @@ const DEFAULT_FILTER: FilterState = {
   descending: true,
 };
 
-const SORT_WHITELIST = new Set([
-  "added_at",
-  "click_num",
-  "word_num",
-  "like_num",
-  "praise_num",
-  "last_update",
-]);
+const SORT_WHITELIST = new Set(["added_at", "click_num", "word_num", "like_num", "praise_num", "last_update"]);
 
 const NUM_COLUMNS = 3;
 
@@ -52,7 +59,6 @@ export default function BookshelfScreen() {
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTER);
   const [filterVisible, setFilterVisible] = useState(false);
 
-    
   // 书架范围内的搜索 + 过滤 + 排序（内存操作，数据量小）
   const filteredNovels = useMemo(() => {
     let list = novels;
@@ -61,9 +67,7 @@ export default function BookshelfScreen() {
     const kw = query.trim().toLowerCase();
     if (kw) {
       list = list.filter(
-        (n) =>
-          n.title.toLowerCase().includes(kw) ||
-          (n.author && n.author.toLowerCase().includes(kw))
+        (n) => n.title.toLowerCase().includes(kw) || (n.author && n.author.toLowerCase().includes(kw)),
       );
     }
 
@@ -111,7 +115,7 @@ export default function BookshelfScreen() {
   useFocusEffect(
     useCallback(() => {
       loadBookshelf();
-    }, [])
+    }, []),
   );
 
   async function loadBookshelf() {
@@ -154,10 +158,7 @@ export default function BookshelfScreen() {
         search={query}
         setSearch={setQuery}
         right={
-          <TouchableOpacity
-            style={styles.filterBtn}
-            onPress={() => setFilterVisible(true)}
-          >
+          <TouchableOpacity style={styles.filterBtn} onPress={() => setFilterVisible(true)}>
             <Ionicons
               name="options-outline"
               size={22}
@@ -173,12 +174,7 @@ export default function BookshelfScreen() {
               <View>
                 <Link href={`/novel/${item.id}`} asChild>
                   <TouchableOpacity activeOpacity={0.7}>
-                    <Cover
-                      cover={item.cover}
-                      width={itemWidth}
-                      height={coverHeight}
-                      borderRadius={BorderRadius.md}
-                    />
+                    <Cover cover={item.cover} width={itemWidth} height={coverHeight} borderRadius={BorderRadius.md} />
                   </TouchableOpacity>
                 </Link>
                 <TouchableOpacity
@@ -227,8 +223,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   container: {
-    flex: 1,    ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
-
+    flex: 1,
+    ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
   },
   filterBtn: {
     width: 40,

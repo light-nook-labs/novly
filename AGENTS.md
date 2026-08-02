@@ -42,7 +42,7 @@ pnpm tauri build  # build Windows desktop installer (NSIS)
 
 ```tsx
 // 1) import (path depends on directory depth)
-import { useTheme } from "../components/ThemeProvider";   // pages under app/
+import { useTheme } from "../components/ThemeProvider"; // pages under app/
 // import { useTheme } from "./ThemeProvider";            // components/
 
 // 2) first line inside the component
@@ -50,10 +50,14 @@ const { colors } = useTheme();
 
 // 3) dynamic colors in JSX: colors.primary / colors.text / colors.textMuted ...
 // 4) styles that depend on theme MUST be created in-component:
-const styles = useMemo(() => StyleSheet.create({
-  container: { backgroundColor: colors.background },
-  // ...
-}), [colors]);
+const styles = useMemo(
+  () =>
+    StyleSheet.create({
+      container: { backgroundColor: colors.background },
+      // ...
+    }),
+  [colors],
+);
 // or, when a file has several components sharing styles (e.g. detail pages with a
 // StatItem helper), use a module-level factory + ThemeColors:
 //   function createStyles(colors: ThemeColors) { return StyleSheet.create({ ... }); }
@@ -61,6 +65,7 @@ const styles = useMemo(() => StyleSheet.create({
 ```
 
 Rules:
+
 - **Never** reference module-level `StyleSheet.create` with `Colors.xxx` for new code — put styles in the component via `useMemo([colors])` (or `createStyles(colors)`).
 - Any helper/sub-component that uses `colors` must call `useTheme()` itself (e.g. `StatItem` in `app/novel/[id].tsx` and `app/author/[id].tsx`).
 - Root container background must follow `colors.background` so the whole page flips with the theme.
@@ -100,23 +105,23 @@ Rules:
 
 ## Key Files Quick Reference
 
-| File | Purpose |
-|---|---|
-| `constants/theme.ts` | `lightColors`, `darkColors`, `Colors`(=light), `FontSize`/`Spacing`/`BorderRadius` |
-| `components/ThemeProvider.tsx` | `ThemeProvider`, `useTheme()`, `ThemeMode` / `ThemeColors` types |
-| `utils/database.ts` | `initDatabase()` / `getDatabase()` (promise-cached singleton) |
-| `utils/bookshelfDb.ts` | bookshelf local db: `getBookshelf/addToBookshelf/removeFromBookshelf/clearBookshelf/isInBookshelf` |
-| `utils/mappings.ts` | `genreMapping`, `statusMapping`, `ptypeMapping`, `statusColors`, `normalizeStatus`, `formatNumber` |
-| `utils/urls.ts` | `coverUrl()`, `bannerUrl()` |
-| `components/Header.tsx` | `PageHeader` |
-| `components/TabHeader.tsx` | tab-page header (logo + search + right) |
-| `components/NovelRow.tsx` | novel list row (cover, badges, rank, optional extended stats/tags) |
-| `components/NovelFilterSheet.tsx` | generic filter bottom sheet (`FilterState` interface; reuse for novels & bookshelf) |
-| `components/Banner.tsx` / `BannerListItem.tsx` / `IndexBannerItem.tsx` | home carousel & banner list items |
-| `components/ConfirmDialog.tsx` / `AppInfoSheet.tsx` / `ImageLightbox.tsx` | reusable dialogs / lightbox |
-| `hooks/useNovels.ts` | novel list query hook (filters + paging + whitelisted ORDER BY) |
-| `hooks/useScrollToTop.ts` | back-to-top button behavior |
-| `src-tauri/` | Tauri v2 desktop packaging (tauri.conf.json, nsis-hooks.nsh, icons) |
+| File                                                                      | Purpose                                                                                            |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `constants/theme.ts`                                                      | `lightColors`, `darkColors`, `Colors`(=light), `FontSize`/`Spacing`/`BorderRadius`                 |
+| `components/ThemeProvider.tsx`                                            | `ThemeProvider`, `useTheme()`, `ThemeMode` / `ThemeColors` types                                   |
+| `utils/database.ts`                                                       | `initDatabase()` / `getDatabase()` (promise-cached singleton)                                      |
+| `utils/bookshelfDb.ts`                                                    | bookshelf local db: `getBookshelf/addToBookshelf/removeFromBookshelf/clearBookshelf/isInBookshelf` |
+| `utils/mappings.ts`                                                       | `genreMapping`, `statusMapping`, `ptypeMapping`, `statusColors`, `normalizeStatus`, `formatNumber` |
+| `utils/urls.ts`                                                           | `coverUrl()`, `bannerUrl()`                                                                        |
+| `components/Header.tsx`                                                   | `PageHeader`                                                                                       |
+| `components/TabHeader.tsx`                                                | tab-page header (logo + search + right)                                                            |
+| `components/NovelRow.tsx`                                                 | novel list row (cover, badges, rank, optional extended stats/tags)                                 |
+| `components/NovelFilterSheet.tsx`                                         | generic filter bottom sheet (`FilterState` interface; reuse for novels & bookshelf)                |
+| `components/Banner.tsx` / `BannerListItem.tsx` / `IndexBannerItem.tsx`    | home carousel & banner list items                                                                  |
+| `components/ConfirmDialog.tsx` / `AppInfoSheet.tsx` / `ImageLightbox.tsx` | reusable dialogs / lightbox                                                                        |
+| `hooks/useNovels.ts`                                                      | novel list query hook (filters + paging + whitelisted ORDER BY)                                    |
+| `hooks/useScrollToTop.ts`                                                 | back-to-top button behavior                                                                        |
+| `src-tauri/`                                                              | Tauri v2 desktop packaging (tauri.conf.json, nsis-hooks.nsh, icons)                                |
 
 ## Version Bump
 
@@ -131,6 +136,17 @@ Version lives in MANY places — bump them ALL together, or Settings/About pages
 - **`app/about.tsx`** — logo section `<Text>vX.Y.Z</Text>` (easy to forget!)
 
 Checklist before release: `grep -rn "v1\.0\.0\|1\.0\.0" app/ src-tauri/ package.json` to catch leftovers.
+
+## Release Checklist(every version bump)
+
+On each `vX.Y.Z` release, do ALL of:
+
+1. Bump version everywhere(see Version Bump above)
+2. Update `CHANGELOG.md` — record the version's features & fixes
+3. Sync `app/changelog.tsx`'s `CHANGELOG_TEXT` with `CHANGELOG.md`(keep them consistent)
+4. Update `README.md` AND `README_EN.md`(both languages)
+5. Format code:`pnpm format`(Prettier),then `npx tsc --noEmit`
+6. Commit & publish the release
 
 ## Contributing
 

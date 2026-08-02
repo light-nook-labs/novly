@@ -1,4 +1,13 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator , useWindowDimensions, Platform} from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  useWindowDimensions,
+  Platform,
+} from "react-native";
 import { Link } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -34,11 +43,11 @@ export default function ContestsScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-          gridRow: {
-    gap: 16,
-    marginBottom: 16,
-  },
-container: {
+        gridRow: {
+          gap: 16,
+          marginBottom: 16,
+        },
+        container: {
           flex: 1,
           backgroundColor: colors.background,
         },
@@ -46,7 +55,7 @@ container: {
           padding: Spacing.lg,
         },
         contestItem: {
-    flex: 1,
+          flex: 1,
           flexDirection: "row",
           alignItems: "center",
           paddingHorizontal: Spacing.lg,
@@ -97,7 +106,7 @@ container: {
           color: colors.textTertiary,
         },
       }),
-    [colors]
+    [colors],
   );
 
   useEffect(() => {
@@ -124,7 +133,7 @@ container: {
          FROM contests c
          LEFT JOIN novels n ON c.id = n.contest_id
          GROUP BY c.id
-         ORDER BY novel_count DESC, c.name ASC`
+         ORDER BY novel_count DESC, c.name ASC`,
       );
       setContests(results);
 
@@ -158,40 +167,38 @@ container: {
         numColumns={numColumns}
         key={`grid-${numColumns}`}
         columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
-          data={filtered}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.list}
-          keyboardShouldPersistTaps="handled"
-          ListFooterComponent={
-            loading && contests.length > 0 ? <LoadingFooter /> : null
-          }
-          ListEmptyComponent={
-            loading ? (
-              <Loading />
-            ) : (
+        data={filtered}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={styles.list}
+        keyboardShouldPersistTaps="handled"
+        ListFooterComponent={loading && contests.length > 0 ? <LoadingFooter /> : null}
+        ListEmptyComponent={
+          loading ? (
+            <Loading />
+          ) : (
             <View style={styles.empty}>
               <Ionicons name="trophy-outline" size={36} color={colors.textMuted} />
               <Text style={styles.emptyText}>未找到匹配的赛事</Text>
             </View>
-            )
-          }
-          renderItem={({ item }) => (
-            <Link href={`/contest/${item.id}`} asChild>
-              <TouchableOpacity style={styles.contestItem} activeOpacity={0.7}>
-                <View style={styles.iconWrap}>
-                  <Ionicons name="trophy-outline" size={18} color={colors.primary} />
-                </View>
-                <View style={styles.contestInfo}>
-                  <Text style={styles.contestName} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  <Text style={styles.novelCount}>{item.novel_count} 部作品</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-              </TouchableOpacity>
-            </Link>
-          )}
-        />
+          )
+        }
+        renderItem={({ item }) => (
+          <Link href={`/contest/${item.id}`} asChild>
+            <TouchableOpacity style={styles.contestItem} activeOpacity={0.7}>
+              <View style={styles.iconWrap}>
+                <Ionicons name="trophy-outline" size={18} color={colors.primary} />
+              </View>
+              <View style={styles.contestInfo}>
+                <Text style={styles.contestName} numberOfLines={1}>
+                  {item.name}
+                </Text>
+                <Text style={styles.novelCount}>{item.novel_count} 部作品</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+          </Link>
+        )}
+      />
     </View>
   );
 }

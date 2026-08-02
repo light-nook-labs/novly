@@ -4,6 +4,17 @@ import { PageHeader } from "../components/Header";
 import { Spacing, FontSize } from "../constants/theme";
 
 const CHANGELOG_TEXT = [
+  "[1.0.2] - 2026-08-02",
+  "### Added",
+  "- 详情页(tag/contest/genre/status)完全对标 novels:复用 useNovels,列表/分页/过滤/count 统一",
+  "- PtypeTabs 组件(head tabs:icon+label+count、水平滑动、防抖)",
+  "- 详情页过滤功能(NovelFilterSheet)",
+  "- LoadingScreen 美化(随机 tip + logo 动画)",
+  "### Fixed",
+  "- 修复详情页误显示不存在(loadXxx 参数/加载态混淆/tag.name 崩溃)",
+  "- 修复 head tab count 不显示(loadCounts SQL)",
+  "- 修复 search 上滑无 footer loading",
+  "",
   "[1.0.1] - 2026-08-01",
   "### Fixed",
   "- 初始化:修复多页面并发 `getDatabase()` 导致重复初始化(重复解压/合并),initPromise 缓存",

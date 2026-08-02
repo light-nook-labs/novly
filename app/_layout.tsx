@@ -45,7 +45,7 @@ function LoadingScreen() {
           Animated.timing(logoOpacity, { toValue: 0.5, duration: 900, useNativeDriver: true }),
           Animated.timing(logoScale, { toValue: 0.95, duration: 900, useNativeDriver: true }),
         ]),
-      ])
+      ]),
     );
     anim.start();
     return () => anim.stop();
@@ -73,15 +73,10 @@ function LoadingScreen() {
         style={[styles.logo, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}
       />
       <Text style={[styles.appName, { color: colors.text }]}>Novly</Text>
-      <Text style={[styles.tagline, { color: colors.textSecondary }]}>
-        离线优先的轻小说元数据浏览器
-      </Text>
+      <Text style={[styles.tagline, { color: colors.textSecondary }]}>离线优先的轻小说元数据浏览器</Text>
 
       <View style={styles.tipBox}>
-        <Animated.Text
-          style={[styles.tipText, { color: colors.textTertiary, opacity: tipOpacity }]}
-          numberOfLines={3}
-        >
+        <Animated.Text style={[styles.tipText, { color: colors.textTertiary, opacity: tipOpacity }]} numberOfLines={3}>
           💡 {TIPS[tipIndex]}
         </Animated.Text>
       </View>
@@ -106,12 +101,8 @@ function AppContent({ ready, error }: { ready: boolean; error: string | null }) 
   if (error) {
     return (
       <View style={[styles.loading, { backgroundColor: colors.background }]}>
-        <Text style={[styles.errorText, { color: colors.danger }]}>
-          Failed to initialize database
-        </Text>
-        <Text style={[styles.errorDetail, { color: colors.textTertiary }]}>
-          {error}
-        </Text>
+        <Text style={[styles.errorText, { color: colors.danger }]}>Failed to initialize database</Text>
+        <Text style={[styles.errorDetail, { color: colors.textTertiary }]}>{error}</Text>
       </View>
     );
   }
@@ -125,70 +116,22 @@ function AppContent({ ready, error }: { ready: boolean; error: string | null }) 
       <StatusBar style={mode === "dark" ? "light" : "dark"} />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="novel/[id]"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="search"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="search/banners"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="authors"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="author/[id]"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="tags"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="tag/[id]"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="contests"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="contest/[id]"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="genres"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="genre/[id]"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="statuses"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="status/[id]"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="settings"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="about"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="changelog"
-          options={{ headerShown: false }}
-        />
+        <Stack.Screen name="novel/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="search" options={{ headerShown: false }} />
+        <Stack.Screen name="search/banners" options={{ headerShown: false }} />
+        <Stack.Screen name="authors" options={{ headerShown: false }} />
+        <Stack.Screen name="author/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="tags" options={{ headerShown: false }} />
+        <Stack.Screen name="tag/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="contests" options={{ headerShown: false }} />
+        <Stack.Screen name="contest/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="genres" options={{ headerShown: false }} />
+        <Stack.Screen name="genre/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="statuses" options={{ headerShown: false }} />
+        <Stack.Screen name="status/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="settings" options={{ headerShown: false }} />
+        <Stack.Screen name="about" options={{ headerShown: false }} />
+        <Stack.Screen name="changelog" options={{ headerShown: false }} />
       </Stack>
       <Toast />
     </View>
@@ -248,24 +191,12 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <AppContent ready={ready} error={error} />
-      <WelcomeModal
-        visible={showWelcome}
-        onCopyQQ={handleJoinQQ}
-        onClose={handleCloseWelcome}
-      />
+      <WelcomeModal visible={showWelcome} onCopyQQ={handleJoinQQ} onClose={handleCloseWelcome} />
     </ThemeProvider>
   );
 }
 
-function WelcomeModal({
-  visible,
-  onCopyQQ,
-  onClose,
-}: {
-  visible: boolean;
-  onCopyQQ: () => void;
-  onClose: () => void;
-}) {
+function WelcomeModal({ visible, onCopyQQ, onClose }: { visible: boolean; onCopyQQ: () => void; onClose: () => void }) {
   const { colors } = useTheme();
 
   return (
@@ -291,18 +222,10 @@ function WelcomeModal({
             }}
             activeOpacity={0.8}
           >
-            <Text style={styles.welcomeBtnText}>
-              {"复制群号加入"}
-            </Text>
+            <Text style={styles.welcomeBtnText}>{"复制群号加入"}</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.welcomeLater}
-            onPress={onClose}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.welcomeLaterText, { color: colors.textTertiary }]}>
-              {"以后再说"}
-            </Text>
+          <TouchableOpacity style={styles.welcomeLater} onPress={onClose} activeOpacity={0.7}>
+            <Text style={[styles.welcomeLaterText, { color: colors.textTertiary }]}>{"以后再说"}</Text>
           </TouchableOpacity>
         </Pressable>
       </Pressable>

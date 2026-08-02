@@ -32,9 +32,7 @@ export default function BannersScreen() {
   const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   // 列表项宽度:多列时按列数均分(含列间距),单列时占满容器
   const itemW =
-    numColumns > 1
-      ? (winWidth - Spacing.lg * 2 - 16 * (numColumns - 1)) / numColumns
-      : winWidth - Spacing.lg * 2;
+    numColumns > 1 ? (winWidth - Spacing.lg * 2 - 16 * (numColumns - 1)) / numColumns : winWidth - Spacing.lg * 2;
   const [allBanners, setAllBanners] = useState<BannerNovel[]>([]);
   const [loading, setLoading] = useState(true);
   const [reversed, setReversed] = useState(false);
@@ -64,9 +62,11 @@ export default function BannersScreen() {
       const order = reversed ? "ASC" : "DESC";
       const results = await db.getAllAsync<BannerNovel>(
         `SELECT id, title, author FROM novels WHERE has_banner = 1 ORDER BY click_num ${order} LIMIT ? OFFSET ?`,
-        [PAGE_SIZE, offset]
+        [PAGE_SIZE, offset],
       );
-      console.log(`[banners] 返回 ${results.length} 条, hasMore=${results.length === PAGE_SIZE}, 新累计=${reset ? results.length : allBanners.length + results.length}`);
+      console.log(
+        `[banners] 返回 ${results.length} 条, hasMore=${results.length === PAGE_SIZE}, 新累计=${reset ? results.length : allBanners.length + results.length}`,
+      );
       if (reset) {
         setAllBanners(results);
         setPage(1);
@@ -97,7 +97,9 @@ export default function BannersScreen() {
     const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
     const nearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 80;
     wasNearBottomRef.current = nearBottom;
-    console.log(`[banners] scroll y=${contentOffset.y.toFixed(0)} viewH=${layoutMeasurement.height.toFixed(0)} contentH=${contentSize.height.toFixed(0)} nearBottom=${nearBottom} hasMore=${hasMore} loading=${loading}`);
+    console.log(
+      `[banners] scroll y=${contentOffset.y.toFixed(0)} viewH=${layoutMeasurement.height.toFixed(0)} contentH=${contentSize.height.toFixed(0)} nearBottom=${nearBottom} hasMore=${hasMore} loading=${loading}`,
+    );
     if (nearBottom && hasMore && !loading) {
       loadBanners(false);
     }
@@ -121,11 +123,7 @@ export default function BannersScreen() {
               }, 50);
             }}
           >
-            <Ionicons
-              name="swap-vertical"
-              size={22}
-              color={reversed ? Colors.primary : Colors.textSecondary}
-            />
+            <Ionicons name="swap-vertical" size={22} color={reversed ? Colors.primary : Colors.textSecondary} />
           </TouchableOpacity>
         }
       />
@@ -155,30 +153,19 @@ export default function BannersScreen() {
           }
         }}
         contentContainerStyle={styles.list}
-renderItem={({ item, index }) => (
-  <View
-    style={{
-      width: `${100 / numColumns}%`,
-      paddingRight: (index + 1) % numColumns !== 0 ? 16 : 0,
-      paddingBottom: 16,
-    }}
-  >
-    <BannerListItem id={item.id} title={item.title} author={item.author} />
-  </View>
-)}
-        ListEmptyComponent={
-          !loading ? (
-            <EmptyState
-              icon="images-outline"
-              message="暂无背投数据"
-            />
-          ) : null
-        }
-        ListFooterComponent={
-          loading ? (
-            <LoadingFooter />
-          ) : null
-        }
+        renderItem={({ item, index }) => (
+          <View
+            style={{
+              width: `${100 / numColumns}%`,
+              paddingRight: (index + 1) % numColumns !== 0 ? 16 : 0,
+              paddingBottom: 16,
+            }}
+          >
+            <BannerListItem id={item.id} title={item.title} author={item.author} />
+          </View>
+        )}
+        ListEmptyComponent={!loading ? <EmptyState icon="images-outline" message="暂无背投数据" /> : null}
+        ListFooterComponent={loading ? <LoadingFooter /> : null}
       />
 
       {showButton && <BackToTop onPress={scrollToTop} />}

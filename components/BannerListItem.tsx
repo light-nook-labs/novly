@@ -1,15 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import {
-  Text,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-  View,
-  Platform,
-  Animated,
-  Modal,
-  Pressable,
-} from "react-native";
+import { Text, Image, TouchableOpacity, StyleSheet, View, Platform, Animated, Modal, Pressable } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ID } from "./ID";
@@ -55,7 +45,7 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
       Animated.sequence([
         Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
         Animated.timing(pulseAnim, { toValue: 0.3, duration: 800, useNativeDriver: true }),
-      ])
+      ]),
     );
     anim.start();
     return () => anim.stop();
@@ -98,18 +88,30 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
     >
       <TouchableOpacity
         activeOpacity={0.9}
-        style={[styles.imageCard, { width: containerWidth, height: fixedHeight, backgroundColor: colors.surfaceBorder }]}
+        style={[
+          styles.imageCard,
+          { width: containerWidth, height: fixedHeight, backgroundColor: colors.surfaceBorder },
+        ]}
         onPress={() => setShowLightbox(true)}
         onLongPress={handleLongPress}
       >
         {loadError ? (
-          <View style={[styles.fallback, { width: containerWidth, height: fixedHeight, backgroundColor: colors.surface }]}>
+          <View
+            style={[styles.fallback, { width: containerWidth, height: fixedHeight, backgroundColor: colors.surface }]}
+          >
             <Text style={[styles.fallbackText, { color: colors.primary }]}>{title}</Text>
           </View>
         ) : !ready ? (
           <ImageShimmer width={containerWidth} height={fixedHeight} borderRadius={BorderRadius.lg} />
         ) : (
-          <View style={{ width: containerWidth, height: fixedHeight, overflow: "hidden", backgroundColor: colors.surfaceBorder }}>
+          <View
+            style={{
+              width: containerWidth,
+              height: fixedHeight,
+              overflow: "hidden",
+              backgroundColor: colors.surfaceBorder,
+            }}
+          >
             {/* 图片加载中显示水波占位,onLoad 后淡入,避免露出黑/白容器 */}
             <ImageShimmer width={containerWidth} height={fixedHeight} borderRadius={BorderRadius.lg} />
             <Animated.Image
@@ -141,16 +143,18 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
         </Pressable>
       </Modal>
 
-      <TouchableOpacity
-        activeOpacity={0.7}
-        style={styles.textRow}
-        onPress={handleTitlePress}
-      >
+      <TouchableOpacity activeOpacity={0.7} style={styles.textRow} onPress={handleTitlePress}>
         <View style={styles.titleContainer}>
-          <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>{title}</Text>
+          <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+            {title}
+          </Text>
           <ID id={id} weight="700" />
         </View>
-        {author && <Text style={[styles.author, { color: colors.textSecondary }]} numberOfLines={1}>{author}</Text>}
+        {author && (
+          <Text style={[styles.author, { color: colors.textSecondary }]} numberOfLines={1}>
+            {author}
+          </Text>
+        )}
       </TouchableOpacity>
     </View>
   );

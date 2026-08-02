@@ -1,4 +1,14 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, useWindowDimensions, Platform, type NativeSyntheticEvent, type NativeScrollEvent } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  useWindowDimensions,
+  Platform,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
+} from "react-native";
 import { router } from "expo-router";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { getDatabase } from "../utils/database";
@@ -35,11 +45,11 @@ export default function AuthorsScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-          gridRow: {
-    gap: 16,
-    marginBottom: 16,
-  },
-container: {
+        gridRow: {
+          gap: 16,
+          marginBottom: 16,
+        },
+        container: {
           flex: 1,
           backgroundColor: colors.background,
         },
@@ -47,7 +57,7 @@ container: {
           paddingVertical: Spacing.sm,
         },
         authorItem: {
-    flex: 1,
+          flex: 1,
           flexDirection: "row",
           alignItems: "center",
           paddingHorizontal: Spacing.lg,
@@ -105,7 +115,7 @@ container: {
           paddingHorizontal: 2,
         },
       }),
-    [colors]
+    [colors],
   );
 
   useEffect(() => {
@@ -168,8 +178,8 @@ container: {
         setPage(1);
       } else {
         setAuthors((prev) => {
-          const existingIds = new Set(prev.map(a => a.id));
-          const newItems = results.filter(item => !existingIds.has(item.id));
+          const existingIds = new Set(prev.map((a) => a.id));
+          const newItems = results.filter((item) => !existingIds.has(item.id));
           return [...prev, ...newItems];
         });
         setPage((prev) => prev + 1);
@@ -218,10 +228,7 @@ container: {
           </NoteCard>
         }
         renderItem={({ item }) => (
-          <TouchableOpacity 
-            style={styles.authorItem}
-            onPress={() => router.push(`/author/${item.id}`)}
-          >
+          <TouchableOpacity style={styles.authorItem} onPress={() => router.push(`/author/${item.id}`)}>
             <View style={styles.authorInfo}>
               <Text style={styles.authorName}>{item.name}</Text>
               {item.top_novel_title && (
@@ -243,11 +250,7 @@ container: {
             </View>
           ) : null
         }
-        ListFooterComponent={
-          hasMore ? (
-            <LoadingFooter />
-          ) : null
-        }
+        ListFooterComponent={hasMore ? <LoadingFooter /> : null}
         onEndReached={() => {
           if (hasMore) loadAuthors(false);
         }}

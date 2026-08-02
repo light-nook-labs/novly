@@ -13,12 +13,7 @@ interface SearchBarProps {
   onChangeText?: (text: string) => void;
 }
 
-export function SearchBar({
-  placeholder = "搜索...",
-  onPress,
-  value,
-  onChangeText,
-}: SearchBarProps) {
+export function SearchBar({ placeholder = "搜索...", onPress, value, onChangeText }: SearchBarProps) {
   const { colors } = useTheme();
   const isInputMode = value !== undefined && onChangeText !== undefined;
 

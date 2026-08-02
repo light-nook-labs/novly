@@ -1,4 +1,13 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator , useWindowDimensions, Platform} from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  useWindowDimensions,
+  Platform,
+} from "react-native";
 import { Link } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -27,9 +36,20 @@ export default function TagsScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
   // web 宽屏按宽度递增列数(标签块较窄,最多 6 列);手机保持 3 列
-  const numColumns = Platform.OS === "web"
-    ? (winWidth >= 2400 ? 6 : winWidth >= 2000 ? 5 : winWidth >= 1600 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1)
-    : 3;
+  const numColumns =
+    Platform.OS === "web"
+      ? winWidth >= 2400
+        ? 6
+        : winWidth >= 2000
+          ? 5
+          : winWidth >= 1600
+            ? 4
+            : winWidth >= 1200
+              ? 3
+              : winWidth >= 800
+                ? 2
+                : 1
+      : 3;
   const [tags, setTags] = useState<Tag[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -37,11 +57,11 @@ export default function TagsScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-          gridRow: {
-    gap: 16,
-    marginBottom: 16,
-  },
-container: {
+        gridRow: {
+          gap: 16,
+          marginBottom: 16,
+        },
+        container: {
           flex: 1,
           backgroundColor: colors.background,
         },
@@ -93,7 +113,7 @@ container: {
           color: colors.textTertiary,
         },
       }),
-    [colors]
+    [colors],
   );
 
   useEffect(() => {
@@ -120,7 +140,7 @@ container: {
          FROM tags t
          LEFT JOIN novel_tags nt ON t.id = nt.tag_id
          GROUP BY t.id
-         ORDER BY novel_count DESC, t.name ASC`
+         ORDER BY novel_count DESC, t.name ASC`,
       );
       setTags(results);
 
@@ -138,9 +158,7 @@ container: {
   const filtered = useMemo(() => {
     const kw = query.trim().toLowerCase();
     if (!kw) return tags;
-    return tags.filter(
-      (t) => t.name.toLowerCase().includes(kw)
-    );
+    return tags.filter((t) => t.name.toLowerCase().includes(kw));
   }, [tags, query]);
 
   return (
@@ -153,37 +171,35 @@ container: {
       />
 
       <FlatList
-          data={filtered}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={numColumns}
+        data={filtered}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={numColumns}
         key={`grid-${numColumns}`}
         columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
-          contentContainerStyle={styles.list}
-          keyboardShouldPersistTaps="handled"
-          ListFooterComponent={
-            loading && tags.length > 0 ? <LoadingFooter /> : null
-          }
-          ListEmptyComponent={
-            loading ? (
-              <Loading />
-            ) : (
+        contentContainerStyle={styles.list}
+        keyboardShouldPersistTaps="handled"
+        ListFooterComponent={loading && tags.length > 0 ? <LoadingFooter /> : null}
+        ListEmptyComponent={
+          loading ? (
+            <Loading />
+          ) : (
             <View style={styles.empty}>
               <Ionicons name="pricetag-outline" size={36} color={colors.textMuted} />
               <Text style={styles.emptyText}>未找到匹配的标签</Text>
             </View>
-            )
-          }
-          renderItem={({ item }) => (
-            <Link href={`/tag/${item.id}`} asChild>
-              <TouchableOpacity style={styles.tagItem} activeOpacity={0.7}>
-                <Text style={styles.tagName} numberOfLines={1}>
-                  {item.name}
-                </Text>
-                <Text style={styles.tagCount}>{item.novel_count}</Text>
-              </TouchableOpacity>
-            </Link>
-          )}
-        />
+          )
+        }
+        renderItem={({ item }) => (
+          <Link href={`/tag/${item.id}`} asChild>
+            <TouchableOpacity style={styles.tagItem} activeOpacity={0.7}>
+              <Text style={styles.tagName} numberOfLines={1}>
+                {item.name}
+              </Text>
+              <Text style={styles.tagCount}>{item.novel_count}</Text>
+            </TouchableOpacity>
+          </Link>
+        )}
+      />
     </View>
   );
 }

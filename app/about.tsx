@@ -1,4 +1,15 @@
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, Linking, Modal, Pressable, Platform } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  Linking,
+  Modal,
+  Pressable,
+  Platform,
+} from "react-native";
 import { useMemo, useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
@@ -12,12 +23,36 @@ const ISSUES_URL = "https://github.com/light-nook-labs/novly/issues";
 const EMAIL = "intersetwq@gmail.com";
 
 const FEATURES = [
-  { icon: "cloud-offline-outline" as const, title: "Offline-first", desc: "All novel metadata is bundled and browsable without network" },
-  { icon: "library-outline" as const, title: "Full Library", desc: "Browse and filter by genre, status, contest and tags" },
-  { icon: "search-outline" as const, title: "Instant Search", desc: "Search globally by title, author or ID with instant response" },
-  { icon: "podium-outline" as const, title: "Multi Rankings", desc: "Clicks, words, favorites, praises, reviews and more" },
-  { icon: "bookmark-outline" as const, title: "Local Bookshelf", desc: "Bookshelf stored in a private local database, persistent" },
-  { icon: "link-outline" as const, title: "Open in SFACG", desc: "Jump to the SFACG app or website to read the original" },
+  {
+    icon: "cloud-offline-outline" as const,
+    title: "Offline-first",
+    desc: "All novel metadata is bundled and browsable without network",
+  },
+  {
+    icon: "library-outline" as const,
+    title: "Full Library",
+    desc: "Browse and filter by genre, status, contest and tags",
+  },
+  {
+    icon: "search-outline" as const,
+    title: "Instant Search",
+    desc: "Search globally by title, author or ID with instant response",
+  },
+  {
+    icon: "podium-outline" as const,
+    title: "Multi Rankings",
+    desc: "Clicks, words, favorites, praises, reviews and more",
+  },
+  {
+    icon: "bookmark-outline" as const,
+    title: "Local Bookshelf",
+    desc: "Bookshelf stored in a private local database, persistent",
+  },
+  {
+    icon: "link-outline" as const,
+    title: "Open in SFACG",
+    desc: "Jump to the SFACG app or website to read the original",
+  },
 ];
 
 const STACK = ["React Native", "Expo SDK 57", "TypeScript", "expo-sqlite"];
@@ -26,7 +61,7 @@ function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      
+
       backgroundColor: colors.background,
     },
     content: {
@@ -83,7 +118,6 @@ function createStyles(colors: ThemeColors) {
       backgroundColor: colors.surfaceBorder,
     },
     featureRow: {
-
       flexDirection: "row",
       alignItems: "center",
       paddingVertical: Spacing.md,
@@ -134,7 +168,6 @@ function createStyles(colors: ThemeColors) {
       color: colors.textTertiary,
     },
     supportRow: {
-
       flexDirection: "row",
       alignItems: "center",
     },
@@ -259,29 +292,40 @@ export default function AboutScreen() {
         {/* Logo & version */}
         <View style={styles.logoSection}>
           <Image source={require("../assets/icon.png")} style={styles.logo} />
-          <Text textBreakStrategy="simple" style={styles.appName}>Novly</Text>
-          <Text textBreakStrategy="simple" style={styles.version}>v1.0.1</Text>
-          <Text textBreakStrategy="simple" style={styles.tagline}>Offline-first novel metadata browser</Text>
+          <Text textBreakStrategy="simple" style={styles.appName}>
+            Novly
+          </Text>
+          <Text textBreakStrategy="simple" style={styles.version}>
+            v1.0.1
+          </Text>
+          <Text textBreakStrategy="simple" style={styles.tagline}>
+            Offline-first novel metadata browser
+          </Text>
         </View>
 
         {/* Features */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Features</Text>
           <View style={Platform.OS === "web" ? { flexDirection: "row", flexWrap: "wrap" } : undefined}>
-          {FEATURES.map((f, index) => (
-            <View key={f.title} style={Platform.OS === "web" ? { width: "50%", paddingRight: (index + 1) % 2 !== 0 ? 16 : 0 } : undefined}>
-              {index > 0 && Platform.OS !== "web" && <View style={styles.divider} />}
-              <View style={styles.featureRow}>
-                <View style={styles.featureIconWrap}>
-                  <Ionicons name={f.icon} size={20} color={colors.primary} />
-                </View>
-                <View style={styles.featureInfo}>
-                  <Text style={styles.featureTitle}>{f.title}</Text>
-                  <Text style={styles.featureDesc}>{f.desc}</Text>
+            {FEATURES.map((f, index) => (
+              <View
+                key={f.title}
+                style={
+                  Platform.OS === "web" ? { width: "50%", paddingRight: (index + 1) % 2 !== 0 ? 16 : 0 } : undefined
+                }
+              >
+                {index > 0 && Platform.OS !== "web" && <View style={styles.divider} />}
+                <View style={styles.featureRow}>
+                  <View style={styles.featureIconWrap}>
+                    <Ionicons name={f.icon} size={20} color={colors.primary} />
+                  </View>
+                  <View style={styles.featureInfo}>
+                    <Text style={styles.featureTitle}>{f.title}</Text>
+                    <Text style={styles.featureDesc}>{f.desc}</Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          ))}
+            ))}
           </View>
         </View>
 
@@ -295,9 +339,7 @@ export default function AboutScreen() {
               </View>
             ))}
           </View>
-          <Text style={styles.aiHint}>
-            Developed with the assistance of OpenCode & AtomCode AI
-          </Text>
+          <Text style={styles.aiHint}>Developed with the assistance of OpenCode & AtomCode AI</Text>
         </View>
 
         {/* Support */}
@@ -313,11 +355,7 @@ export default function AboutScreen() {
               <Text style={styles.supportText}>Report Bug</Text>
             </TouchableOpacity>
             <View style={styles.supportDivider} />
-            <TouchableOpacity
-              style={styles.supportItem}
-              onPress={() => Linking.openURL(REPO_URL)}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.supportItem} onPress={() => Linking.openURL(REPO_URL)} activeOpacity={0.7}>
               <Ionicons name="star-outline" size={18} color="#F5A623" />
               <Text style={styles.supportText}>Give a Star</Text>
             </TouchableOpacity>
@@ -346,7 +384,9 @@ export default function AboutScreen() {
             activeOpacity={0.7}
           >
             <Ionicons name="mail-outline" size={18} color={colors.primary} />
-            <Text textBreakStrategy="simple" style={styles.emailText}>{EMAIL}</Text>
+            <Text textBreakStrategy="simple" style={styles.emailText}>
+              {EMAIL}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -386,7 +426,11 @@ export default function AboutScreen() {
                 <Text style={[styles.contributeActionText, { color: colors.danger }]}>提 Issue</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.contributeLater} onPress={() => setShowContribute(false)} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.contributeLater}
+              onPress={() => setShowContribute(false)}
+              activeOpacity={0.7}
+            >
               <Text style={[styles.contributeLaterText, { color: colors.textTertiary }]}>以后再说</Text>
             </TouchableOpacity>
           </Pressable>

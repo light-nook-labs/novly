@@ -17,9 +17,7 @@ export function ImageLightbox({ uri, children }: ImageLightboxProps) {
       </TouchableOpacity>
       <Modal visible={visible} transparent animationType="fade">
         <Pressable style={styles.overlay} onPress={() => setVisible(false)}>
-          {uri ? (
-            <Image source={{ uri }} style={styles.image} resizeMode="contain" />
-          ) : null}
+          {uri ? <Image source={{ uri }} style={styles.image} resizeMode="contain" /> : null}
           <TouchableOpacity style={styles.closeBtn} onPress={() => setVisible(false)}>
             <Ionicons name="close" size={28} color="#fff" />
           </TouchableOpacity>

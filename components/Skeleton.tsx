@@ -23,7 +23,7 @@ export function SkeletonBlock({
       Animated.sequence([
         Animated.timing(opacity, { toValue: 0.9, duration: 700, useNativeDriver: true }),
         Animated.timing(opacity, { toValue: 0.4, duration: 700, useNativeDriver: true }),
-      ])
+      ]),
     );
     anim.start();
     return () => anim.stop();
@@ -31,10 +31,7 @@ export function SkeletonBlock({
 
   return (
     <Animated.View
-      style={[
-        { width, height, borderRadius: radius, opacity, backgroundColor: colors.surfaceBorder },
-        style,
-      ]}
+      style={[{ width, height, borderRadius: radius, opacity, backgroundColor: colors.surfaceBorder }, style]}
     />
   );
 }

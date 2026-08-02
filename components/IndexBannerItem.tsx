@@ -142,7 +142,12 @@ export function BannerItem({ id, title, author, width, height }: BannerItemProps
       onPress={() => router.push(`/novel/${id}`)}
     >
       {loadError ? (
-        <View style={[styles.fallback, { width: containerWidth, height: fixedHeight, backgroundColor: colors.primaryLight }]}>
+        <View
+          style={[
+            styles.fallback,
+            { width: containerWidth, height: fixedHeight, backgroundColor: colors.primaryLight },
+          ]}
+        >
           <Text style={[styles.fallbackText, { color: colors.primary }]}>{title}</Text>
         </View>
       ) : !ready ? (
@@ -172,7 +177,11 @@ export function BannerItem({ id, title, author, width, height }: BannerItemProps
         <Text style={styles.title} numberOfLines={isWide ? 0 : MAX_LINES}>
           {isWide ? `${title} #${id}` : formatBannerText(title, id)}
         </Text>
-        {author && <Text style={[styles.title, styles.author]} numberOfLines={1}>{author}</Text>}
+        {author && (
+          <Text style={[styles.title, styles.author]} numberOfLines={1}>
+            {author}
+          </Text>
+        )}
       </View>
     </TouchableOpacity>
   );

@@ -65,11 +65,7 @@ export function PageHeader({ title, titleAppend, search, setSearch, onSearchPres
           onLongPress={handleBackLongPress}
           delayLongPress={500}
         >
-          <Ionicons
-            name={searchVisible ? "close" : "chevron-back"}
-            size={24}
-            color={colors.text}
-          />
+          <Ionicons name={searchVisible ? "close" : "chevron-back"} size={24} color={colors.text} />
         </Pressable>
 
         {searchVisible && setSearch ? (
@@ -96,11 +92,7 @@ export function PageHeader({ title, titleAppend, search, setSearch, onSearchPres
         {!searchVisible && (
           <View style={styles.rightSection}>
             {(setSearch || onSearchPress) && (
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={handleSearchPress}
-                activeOpacity={0.7}
-              >
+              <TouchableOpacity style={styles.iconButton} onPress={handleSearchPress} activeOpacity={0.7}>
                 <Ionicons name="search-outline" size={24} color={colors.text} />
               </TouchableOpacity>
             )}

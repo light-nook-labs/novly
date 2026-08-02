@@ -1,6 +1,15 @@
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity , Platform, useWindowDimensions} from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+  Platform,
+  useWindowDimensions,
+} from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
-import { useState, useEffect, useMemo, useRef} from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
 import { FontSize, Spacing } from "../../constants/theme";
@@ -77,7 +86,8 @@ export default function TagDetailScreen() {
     () =>
       StyleSheet.create({
         container: {
-          flex: 1,          ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
+          flex: 1,
+          ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
 
           backgroundColor: colors.background,
         },
@@ -105,7 +115,7 @@ export default function TagDetailScreen() {
           color: colors.textTertiary,
         },
       }),
-    [colors]
+    [colors],
   );
 
   useEffect(() => {
@@ -116,10 +126,7 @@ export default function TagDetailScreen() {
     try {
       const db = await getDatabase();
 
-      const tagResult = await db.getFirstAsync<Tag>(
-        "SELECT id, name FROM tags WHERE id = ?",
-        [Number(id)]
-      );
+      const tagResult = await db.getFirstAsync<Tag>("SELECT id, name FROM tags WHERE id = ?", [Number(id)]);
       setTag(tagResult);
 
       if (tagResult) {
@@ -131,8 +138,7 @@ export default function TagDetailScreen() {
     }
   }
 
-  
-    // head tab 切换(selectedPtype)时重新加载,实现分类过滤
+  // head tab 切换(selectedPtype)时重新加载,实现分类过滤
   useEffect(() => {
     loadCounts();
   }, [selectedPtype, filters]);
@@ -151,24 +157,24 @@ export default function TagDetailScreen() {
         `SELECT COUNT(*) as v FROM novels n
          INNER JOIN novel_tags nt ON n.id = nt.novel_id
          WHERE nt.tag_id = ?${filterSql}`,
-        [Number(id)]
+        [Number(id)],
       );
       const rows = await db.getAllAsync<{ ptype: number; v: number }>(
         `SELECT ptype, COUNT(*) as v FROM novels n
          INNER JOIN novel_tags nt ON n.id = nt.novel_id
          WHERE nt.tag_id = ?${filterSql} GROUP BY ptype`,
-        [Number(id)]
+        [Number(id)],
       );
       const map: Record<string, number> = { all: total?.v ?? 0 };
-      rows.forEach((r) => { map[String(r.ptype)] = r.v; });
+      rows.forEach((r) => {
+        map[String(r.ptype)] = r.v;
+      });
       setCounts(map);
       console.log("[db] counts:", map);
     } catch (e) {
       console.error("[db] loadCounts failed:", e);
     }
   }
-
-  
 
   if (!tag) {
     if (loading) return <Loading />;
@@ -214,12 +220,7 @@ export default function TagDetailScreen() {
         windowSize={7}
         contentContainerStyle={styles.list}
         renderItem={({ item, index }) => (
-          <NovelRow
-            novel={item}
-            rank={index + 1}
-            value={item.click_num}
-            valueLabel="点击"
-          />
+          <NovelRow novel={item} rank={index + 1} value={item.click_num} valueLabel="点击" />
         )}
         ListEmptyComponent={
           loading ? (
@@ -231,9 +232,7 @@ export default function TagDetailScreen() {
             </View>
           ) : null
         }
-        ListFooterComponent={
-          loading && novels.length > 0 ? <LoadingFooter /> : null
-        }
+        ListFooterComponent={loading && novels.length > 0 ? <LoadingFooter /> : null}
         onEndReached={() => {
           loadMore();
         }}

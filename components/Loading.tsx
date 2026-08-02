@@ -8,9 +8,7 @@ export function Loading({ message }: { message?: string }) {
   return (
     <View style={styles.container}>
       <ActivityIndicator size="large" color={colors.primary} />
-      {message != null && (
-        <Text style={[styles.text, { color: colors.textTertiary }]}>{message}</Text>
-      )}
+      {message != null && <Text style={[styles.text, { color: colors.textTertiary }]}>{message}</Text>}
     </View>
   );
 }

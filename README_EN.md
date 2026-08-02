@@ -26,25 +26,25 @@ Novly is an offline-first light-novel metadata browsing app: all data is bundled
 
 > The following screenshots showcase Novly's core features: home carousel & navigation, banner gallery, multi-dimension rankings, novel detail, theme switching (dark/light) and the about page.
 
-| Page | Dark mode | Light mode |
-| --- | --- | --- |
-| Home | <img src="screenshots/home.png" width="220" /> | <img src="screenshots/home-light.png" width="220" /> |
-| Banners | <img src="screenshots/banners.png" width="220" /> | <img src="screenshots/banners-light.png" width="220" /> |
-| Rankings | <img src="screenshots/rank.png" width="220" /> | <img src="screenshots/rank-light.png" width="220" /> |
-| Novel detail | <img src="screenshots/detail.png" width="220" /> | <img src="screenshots/detail-light.png" width="220" /> |
-| Settings | <img src="screenshots/settings.png" width="220" /> | <img src="screenshots/settings-light.png" width="220" /> |
-| About | <img src="screenshots/about.png" width="220" /> | <img src="screenshots/about-light.png" width="220" /> |
+| Page         | Dark mode                                          | Light mode                                               |
+| ------------ | -------------------------------------------------- | -------------------------------------------------------- |
+| Home         | <img src="screenshots/home.png" width="220" />     | <img src="screenshots/home-light.png" width="220" />     |
+| Banners      | <img src="screenshots/banners.png" width="220" />  | <img src="screenshots/banners-light.png" width="220" />  |
+| Rankings     | <img src="screenshots/rank.png" width="220" />     | <img src="screenshots/rank-light.png" width="220" />     |
+| Novel detail | <img src="screenshots/detail.png" width="220" />   | <img src="screenshots/detail-light.png" width="220" />   |
+| Settings     | <img src="screenshots/settings.png" width="220" /> | <img src="screenshots/settings-light.png" width="220" /> |
+| About        | <img src="screenshots/about.png" width="220" />    | <img src="screenshots/about-light.png" width="220" />    |
 
 ## Tech Stack
 
-| Category        | Technology                                                                                     |
-| --------------- | ---------------------------------------------------------------------------------------------- |
+| Category        | Technology                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------ |
 | Framework       | [React Native](https://reactnative.dev) + [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/) |
-| Routing         | expo-router                                                                                    |
-| Language        | TypeScript                                                                                     |
-| Database        | expo-sqlite (global data + local bookshelf db)                                                 |
-| Persistence     | AsyncStorage (theme preference, list caches)                                                   |
-| Package manager | pnpm                                                                                           |
+| Routing         | expo-router                                                                                      |
+| Language        | TypeScript                                                                                       |
+| Database        | expo-sqlite (global data + local bookshelf db)                                                   |
+| Persistence     | AsyncStorage (theme preference, list caches)                                                     |
+| Package manager | pnpm                                                                                             |
 
 ## Desktop App (Windows)
 
@@ -56,7 +56,7 @@ Novly can be packaged as a Windows desktop app (Tauri v2), same source as the We
 pnpm tauri build
 ```
 
-Output: `src-tauri/target/release/bundle/nsis/Novly_1.0.0_x64-setup.exe`
+Output: `src-tauri/target/release/bundle/nsis/Novly_1.0.2_x64-setup.exe`
 
 ### Install behavior
 
@@ -147,4 +147,4 @@ The full development guide lives in **[AGENTS.md](./AGENTS.md)**, covering:
 
 ---
 
-*This project was developed with the assistance of OpenCode & AtomCode AI.*
+_This project was developed with the assistance of OpenCode & AtomCode AI._

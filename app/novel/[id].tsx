@@ -1,4 +1,15 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Platform, Alert, Share } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Linking,
+  Platform,
+  Alert,
+  Share,
+} from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -61,9 +72,21 @@ function formatUpdateTime(raw: string): string {
 
 // 根据 tag ID 生成稳定颜色
 const TAG_PALETTE = [
-  "#5B5FE9", "#FF6B6B", "#4ECDC4", "#FFB347", "#A78BFA",
-  "#34D399", "#F472B6", "#60A5FA", "#FBBF24", "#6EE7B7",
-  "#C084FC", "#FB923C", "#22D3EE", "#F87171", "#A3E635",
+  "#5B5FE9",
+  "#FF6B6B",
+  "#4ECDC4",
+  "#FFB347",
+  "#A78BFA",
+  "#34D399",
+  "#F472B6",
+  "#60A5FA",
+  "#FBBF24",
+  "#6EE7B7",
+  "#C084FC",
+  "#FB923C",
+  "#22D3EE",
+  "#F87171",
+  "#A3E635",
 ];
 function tagColor(id: number): string {
   return TAG_PALETTE[id % TAG_PALETTE.length];
@@ -120,9 +143,7 @@ export default function NovelDetailScreen() {
       ]);
     } else {
       // iOS: show single option
-      Alert.alert("打开方式", "选择打开方式", [
-        { text: "在浏览器中打开", onPress: () => Linking.openURL(webUrl) },
-      ]);
+      Alert.alert("打开方式", "选择打开方式", [{ text: "在浏览器中打开", onPress: () => Linking.openURL(webUrl) }]);
     }
   };
 
@@ -158,19 +179,15 @@ export default function NovelDetailScreen() {
     try {
       const db = await getDatabase();
 
-      const result = await db.getFirstAsync<Novel>(
-        "SELECT * FROM novels WHERE id = ?",
-        [Number(id)]
-      );
+      const result = await db.getFirstAsync<Novel>("SELECT * FROM novels WHERE id = ?", [Number(id)]);
       setNovel(result);
 
       if (result) {
         // Author id (for navigation to author detail)
         if (result.author) {
-          const authorRow = await db.getFirstAsync<{ id: number }>(
-            "SELECT id FROM authors WHERE name = ? LIMIT 1",
-            [result.author]
-          );
+          const authorRow = await db.getFirstAsync<{ id: number }>("SELECT id FROM authors WHERE name = ? LIMIT 1", [
+            result.author,
+          ]);
           setAuthorId(authorRow?.id ?? null);
         }
 
@@ -180,16 +197,13 @@ export default function NovelDetailScreen() {
            INNER JOIN novel_tags nt ON t.id = nt.tag_id
            WHERE nt.novel_id = ?
            ORDER BY t.name`,
-          [Number(id)]
+          [Number(id)],
         );
         setTags(tagRows);
 
         // Contest
         if (result.contest_id) {
-          const c = await db.getFirstAsync<Contest>(
-            "SELECT id, name FROM contests WHERE id = ?",
-            [result.contest_id]
-          );
+          const c = await db.getFirstAsync<Contest>("SELECT id, name FROM contests WHERE id = ?", [result.contest_id]);
           setContest(c);
         }
 
@@ -205,10 +219,9 @@ export default function NovelDetailScreen() {
         const rankMap: Record<string, number> = {};
         for (const [key, value] of rankFields) {
           if (value != null && value > 0) {
-            const r = await db.getFirstAsync<{ c: number }>(
-              `SELECT COUNT(*) as c FROM novels WHERE ${key}_num > ?`,
-              [value]
-            );
+            const r = await db.getFirstAsync<{ c: number }>(`SELECT COUNT(*) as c FROM novels WHERE ${key}_num > ?`, [
+              value,
+            ]);
             rankMap[key] = (r?.c ?? 0) + 1;
           }
         }
@@ -281,7 +294,10 @@ export default function NovelDetailScreen() {
           <View style={styles.heroInfo}>
             <View style={styles.titleRow}>
               <TouchableOpacity onPress={handleCopyTitle} style={styles.titleButton}>
-                <Text style={styles.title}>{novel.title}<ID id={novel.id} weight="700" /></Text>
+                <Text style={styles.title}>
+                  {novel.title}
+                  <ID id={novel.id} weight="700" />
+                </Text>
               </TouchableOpacity>
             </View>
             {novel.author && (
@@ -319,11 +335,7 @@ export default function NovelDetailScreen() {
             {tags.length > 0 && (
               <View style={styles.tagRow}>
                 {tags.map((tag) => (
-                  <TouchableOpacity
-                    key={tag.id}
-                    onPress={() => router.push(`/tag/${tag.id}`)}
-                    activeOpacity={0.7}
-                  >
+                  <TouchableOpacity key={tag.id} onPress={() => router.push(`/tag/${tag.id}`)} activeOpacity={0.7}>
                     <View style={[styles.badge, { backgroundColor: tagColor(tag.id) }]}>
                       <Text style={styles.badgeText}>{tag.name}</Text>
                     </View>
@@ -412,11 +424,7 @@ export default function NovelDetailScreen() {
                 {isInBookshelf ? "已在书架" : "加入书架"}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={handleShare}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity style={styles.actionBtn} onPress={handleShare} activeOpacity={0.8}>
               <Ionicons name="share-social-outline" size={20} color={colors.primary} />
               <Text style={styles.actionBtnText}>分享</Text>
             </TouchableOpacity>
@@ -438,9 +446,19 @@ export default function NovelDetailScreen() {
 }
 
 function StatItem({
-  icon, label, value, valueSuffix, textOverride, rank,
+  icon,
+  label,
+  value,
+  valueSuffix,
+  textOverride,
+  rank,
 }: {
-  icon: string; label: string; value: number | null; valueSuffix?: string; textOverride?: string; rank?: number;
+  icon: string;
+  label: string;
+  value: number | null;
+  valueSuffix?: string;
+  textOverride?: string;
+  rank?: number;
 }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -451,9 +469,7 @@ function StatItem({
         <Text style={styles.statValue}>
           {textOverride ?? (value != null ? formatNumber(value) + (valueSuffix ?? "") : "-")}
         </Text>
-        {rank !== undefined && (
-          <Text style={styles.statRank}>#{rank}</Text>
-        )}
+        {rank !== undefined && <Text style={styles.statRank}>#{rank}</Text>}
       </View>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
@@ -462,263 +478,263 @@ function StatItem({
 
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
-  container: {
-    flex: 1,
-    ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    paddingBottom: Spacing.xl * 2,
-  },
-  loading: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.background,
-    gap: Spacing.md,
-  },
-  loadingText: {
-    fontSize: FontSize.md,
-    color: colors.textTertiary,
-    alignSelf: "stretch",
-    textAlign: "center",
-  },
-  // Hero
-  heroSection: {
-    flexDirection: "row",
-    padding: Spacing.lg,
-    backgroundColor: colors.surface,
-    marginHorizontal: Spacing.lg,
-    marginTop: Spacing.lg,
-    borderRadius: BorderRadius.md,
-    gap: Spacing.lg,
-  },
-  heroInfo: {
-    flex: 1,
-    gap: Spacing.sm,
-  },
-  title: {
-    fontSize: FontSize.xl,
-    fontWeight: "700",
-    color: colors.text,
-  },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 4,
-  },
-  titleButton: {
-    flex: 1,
-    flexShrink: 1,
-  },
-  authorRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  author: {
-    fontSize: FontSize.md,
-    fontWeight: "600",
-    color: colors.primary,
-    paddingHorizontal: 2,
-  },
-  badgeRow: {
-    flexDirection: "row",
-    gap: Spacing.xs,
-    flexWrap: "wrap",
-  },
-  badge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-    borderRadius: BorderRadius.sm,
-  },
-  badgeText: {
-    fontSize: FontSize.xs,
-    fontWeight: "600",
-    color: "#fff",
-    paddingHorizontal: 2,
-  },
-  // Stats
-  statsCard: {
-    backgroundColor: colors.surface,
-    marginHorizontal: Spacing.lg,
-    marginTop: Spacing.lg,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.lg,
-  },
-  statsRow: {
-    flexDirection: "row",
-    paddingHorizontal: Spacing.sm,
-  },
-  statsDivider: {
-    height: 1,
-    backgroundColor: colors.surfaceBorder,
-    marginVertical: Spacing.md,
-    marginHorizontal: Spacing.lg,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-    gap: 4,
-  },
-  statValue: {
-    fontSize: FontSize.md,
-    fontWeight: "700",
-    color: colors.text,
-  },
-  statValueRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: 2,
-  },
-  statRank: {
-    fontSize: FontSize.xs,
-    fontWeight: "600",
-    color: colors.primary,
-  },
-  statLabel: {
-    fontSize: FontSize.xs,
-    color: colors.textTertiary,
-    alignSelf: "stretch",
-    textAlign: "center",
-  },
-  // Section
-  section: {
-    backgroundColor: colors.surface,
-    marginHorizontal: Spacing.lg,
-    marginTop: Spacing.lg,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: FontSize.sm,
-    fontWeight: "600",
-    color: colors.textSecondary,
-    marginBottom: Spacing.sm,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  // Tags
-  tagRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.xs,
-  },
-  tag: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.xl,
-    backgroundColor: colors.surfaceBorder,
-  },
-  tagText: {
-    fontSize: FontSize.sm,
-    color: colors.textSecondary,
-  },
-  // Contest
-  contestRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  contestName: {
-    flex: 1,
-    fontSize: FontSize.md,
-    color: colors.text,
-  },
-  // Rankings
-  rankingsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  rankingsInfo: {
-    flex: 1,
-  },
-  rankingsLabel: {
-    fontSize: FontSize.md,
-    color: colors.text,
-  },
-  rankingsDesc: {
-    fontSize: FontSize.xs,
-    color: colors.textTertiary,
-    marginTop: 1,
-  },
-  // Actions
-  actions: {
-    paddingHorizontal: Spacing.lg,
-    marginTop: Spacing.lg,
-  },
-  actionRow: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  actionBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    height: 48,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    gap: Spacing.sm,
-  },
-  actionBtnActive: {
-    backgroundColor: colors.primary,
-  },
-  actionBtnText: {
-    fontSize: FontSize.md,
-    fontWeight: "600",
-    color: colors.primary,
-  },
-  actionBtnTextActive: {
-    color: "#fff",
-  },
-  // Meta
-  metaSection: {
-    marginHorizontal: Spacing.lg,
-    marginTop: Spacing.lg,
-    backgroundColor: colors.surface,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.lg,
-    gap: Spacing.sm,
-  },
-  metaRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  metaLabel: {
-    fontSize: FontSize.sm,
-    color: colors.textSecondary,
-  },
-  metaValue: {
-    fontSize: FontSize.sm,
-    fontWeight: "600",
-    color: colors.text,
-    paddingHorizontal: 2,
-  },
-  metaLink: {
-    fontSize: FontSize.sm,
-    color: colors.primary,
-  },
-  bannerRow: {
-    marginTop: Spacing.xs,
-  },
-  bannerLink: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    gap: 4,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 3,
-    borderRadius: BorderRadius.xl,
-    backgroundColor: colors.surfaceBorder,
-  },
-  bannerLinkText: {
-    fontSize: FontSize.sm,
-    color: colors.primary,
-    fontWeight: "600",
-  },
+    container: {
+      flex: 1,
+      ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
+      backgroundColor: colors.background,
+    },
+    scrollContent: {
+      paddingBottom: Spacing.xl * 2,
+    },
+    loading: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: colors.background,
+      gap: Spacing.md,
+    },
+    loadingText: {
+      fontSize: FontSize.md,
+      color: colors.textTertiary,
+      alignSelf: "stretch",
+      textAlign: "center",
+    },
+    // Hero
+    heroSection: {
+      flexDirection: "row",
+      padding: Spacing.lg,
+      backgroundColor: colors.surface,
+      marginHorizontal: Spacing.lg,
+      marginTop: Spacing.lg,
+      borderRadius: BorderRadius.md,
+      gap: Spacing.lg,
+    },
+    heroInfo: {
+      flex: 1,
+      gap: Spacing.sm,
+    },
+    title: {
+      fontSize: FontSize.xl,
+      fontWeight: "700",
+      color: colors.text,
+    },
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 4,
+    },
+    titleButton: {
+      flex: 1,
+      flexShrink: 1,
+    },
+    authorRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+    },
+    author: {
+      fontSize: FontSize.md,
+      fontWeight: "600",
+      color: colors.primary,
+      paddingHorizontal: 2,
+    },
+    badgeRow: {
+      flexDirection: "row",
+      gap: Spacing.xs,
+      flexWrap: "wrap",
+    },
+    badge: {
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: 2,
+      borderRadius: BorderRadius.sm,
+    },
+    badgeText: {
+      fontSize: FontSize.xs,
+      fontWeight: "600",
+      color: "#fff",
+      paddingHorizontal: 2,
+    },
+    // Stats
+    statsCard: {
+      backgroundColor: colors.surface,
+      marginHorizontal: Spacing.lg,
+      marginTop: Spacing.lg,
+      borderRadius: BorderRadius.md,
+      paddingVertical: Spacing.lg,
+    },
+    statsRow: {
+      flexDirection: "row",
+      paddingHorizontal: Spacing.sm,
+    },
+    statsDivider: {
+      height: 1,
+      backgroundColor: colors.surfaceBorder,
+      marginVertical: Spacing.md,
+      marginHorizontal: Spacing.lg,
+    },
+    statItem: {
+      flex: 1,
+      alignItems: "center",
+      gap: 4,
+    },
+    statValue: {
+      fontSize: FontSize.md,
+      fontWeight: "700",
+      color: colors.text,
+    },
+    statValueRow: {
+      flexDirection: "row",
+      alignItems: "baseline",
+      gap: 2,
+    },
+    statRank: {
+      fontSize: FontSize.xs,
+      fontWeight: "600",
+      color: colors.primary,
+    },
+    statLabel: {
+      fontSize: FontSize.xs,
+      color: colors.textTertiary,
+      alignSelf: "stretch",
+      textAlign: "center",
+    },
+    // Section
+    section: {
+      backgroundColor: colors.surface,
+      marginHorizontal: Spacing.lg,
+      marginTop: Spacing.lg,
+      borderRadius: BorderRadius.md,
+      padding: Spacing.lg,
+    },
+    sectionTitle: {
+      fontSize: FontSize.sm,
+      fontWeight: "600",
+      color: colors.textSecondary,
+      marginBottom: Spacing.sm,
+      textTransform: "uppercase",
+      letterSpacing: 1,
+    },
+    // Tags
+    tagRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: Spacing.xs,
+    },
+    tag: {
+      paddingHorizontal: Spacing.md,
+      paddingVertical: 4,
+      borderRadius: BorderRadius.xl,
+      backgroundColor: colors.surfaceBorder,
+    },
+    tagText: {
+      fontSize: FontSize.sm,
+      color: colors.textSecondary,
+    },
+    // Contest
+    contestRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Spacing.sm,
+    },
+    contestName: {
+      flex: 1,
+      fontSize: FontSize.md,
+      color: colors.text,
+    },
+    // Rankings
+    rankingsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Spacing.sm,
+    },
+    rankingsInfo: {
+      flex: 1,
+    },
+    rankingsLabel: {
+      fontSize: FontSize.md,
+      color: colors.text,
+    },
+    rankingsDesc: {
+      fontSize: FontSize.xs,
+      color: colors.textTertiary,
+      marginTop: 1,
+    },
+    // Actions
+    actions: {
+      paddingHorizontal: Spacing.lg,
+      marginTop: Spacing.lg,
+    },
+    actionRow: {
+      flexDirection: "row",
+      gap: Spacing.md,
+    },
+    actionBtn: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      height: 48,
+      borderRadius: BorderRadius.md,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      gap: Spacing.sm,
+    },
+    actionBtnActive: {
+      backgroundColor: colors.primary,
+    },
+    actionBtnText: {
+      fontSize: FontSize.md,
+      fontWeight: "600",
+      color: colors.primary,
+    },
+    actionBtnTextActive: {
+      color: "#fff",
+    },
+    // Meta
+    metaSection: {
+      marginHorizontal: Spacing.lg,
+      marginTop: Spacing.lg,
+      backgroundColor: colors.surface,
+      borderRadius: BorderRadius.md,
+      padding: Spacing.lg,
+      gap: Spacing.sm,
+    },
+    metaRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    metaLabel: {
+      fontSize: FontSize.sm,
+      color: colors.textSecondary,
+    },
+    metaValue: {
+      fontSize: FontSize.sm,
+      fontWeight: "600",
+      color: colors.text,
+      paddingHorizontal: 2,
+    },
+    metaLink: {
+      fontSize: FontSize.sm,
+      color: colors.primary,
+    },
+    bannerRow: {
+      marginTop: Spacing.xs,
+    },
+    bannerLink: {
+      flexDirection: "row",
+      alignItems: "center",
+      alignSelf: "flex-start",
+      gap: 4,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: 3,
+      borderRadius: BorderRadius.xl,
+      backgroundColor: colors.surfaceBorder,
+    },
+    bannerLinkText: {
+      fontSize: FontSize.sm,
+      color: colors.primary,
+      fontWeight: "600",
+    },
   });
 }

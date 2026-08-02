@@ -23,7 +23,7 @@ export function ImageShimmer({ width, height, borderRadius = 8 }: ImageShimmerPr
         toValue: width,
         duration: 1200,
         useNativeDriver: true,
-      })
+      }),
     );
     loop.start();
     return () => loop.stop();

@@ -20,13 +20,7 @@ interface UseNovelsOptions {
   extraParams?: any[];
 }
 
-const SORT_WHITELIST = new Set([
-  "click_num",
-  "word_num",
-  "like_num",
-  "praise_num",
-  "last_update",
-]);
+const SORT_WHITELIST = new Set(["click_num", "word_num", "like_num", "praise_num", "last_update"]);
 
 export function useNovels({
   ptype = null,
@@ -89,7 +83,7 @@ export function useNovels({
 
       return { query, params };
     },
-    [ptype, status, genre, year, minWordNum, maxWordNum, sortBy, descending, pageSize]
+    [ptype, status, genre, year, minWordNum, maxWordNum, sortBy, descending, pageSize],
   );
 
   const loadPage = useCallback(
@@ -114,7 +108,7 @@ export function useNovels({
         setLoading(false);
       }
     },
-    [buildQuery, pageSize]
+    [buildQuery, pageSize],
   );
 
   useEffect(() => {

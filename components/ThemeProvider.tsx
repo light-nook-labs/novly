@@ -40,16 +40,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(STORAGE_KEY, m).catch(() => {});
   }, []);
 
-  const effective = mode === "system"
-    ? (systemScheme === "dark" ? "dark" : "light")
-    : mode;
+  const effective = mode === "system" ? (systemScheme === "dark" ? "dark" : "light") : mode;
   const colors = effective === "dark" ? darkColors : lightColors;
 
-  return (
-    <ThemeContext.Provider value={{ mode, colors, setMode }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ mode, colors, setMode }}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme(): ThemeContextValue {

@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  View, Text, Modal, Pressable, ScrollView, TouchableOpacity, StyleSheet,
-} from "react-native";
+import { View, Text, Modal, Pressable, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../utils/database";
 import { genreMapping, statusMapping } from "../utils/mappings";
@@ -45,26 +43,16 @@ const WORD_NUM_RANGES: { label: string; min: number | null; max: number | null }
   { label: ">500万", min: 5000000, max: null },
 ];
 
-function Chip({
-  label, selected, onPress,
-}: { label: string; selected: boolean; onPress: () => void }) {
+function Chip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
   const { colors } = useTheme();
   return (
     <TouchableOpacity
-      style={[
-        styles.chip,
-        { backgroundColor: colors.surfaceBorder },
-        selected && { backgroundColor: colors.primary },
-      ]}
+      style={[styles.chip, { backgroundColor: colors.surfaceBorder }, selected && { backgroundColor: colors.primary }]}
       onPress={onPress}
       activeOpacity={0.7}
     >
       <Text
-        style={[
-          styles.chipText,
-          { color: colors.textSecondary },
-          selected && { color: "#fff", fontWeight: "600" },
-        ]}
+        style={[styles.chipText, { color: colors.textSecondary }, selected && { color: "#fff", fontWeight: "600" }]}
       >
         {label}
       </Text>
@@ -113,7 +101,7 @@ export function NovelFilterSheet({ visible, filters, onApply, onClose }: NovelFi
     try {
       const db = await getDatabase();
       const rows = await db.getAllAsync<{ y: string }>(
-        "SELECT DISTINCT SUBSTR(last_update, 1, 4) as y FROM novels WHERE last_update IS NOT NULL ORDER BY y DESC"
+        "SELECT DISTINCT SUBSTR(last_update, 1, 4) as y FROM novels WHERE last_update IS NOT NULL ORDER BY y DESC",
       );
       setAvailableYears(rows.map((r) => Number(r.y)).filter((y) => !isNaN(y)));
     } catch (e) {
@@ -156,12 +144,7 @@ export function NovelFilterSheet({ visible, filters, onApply, onClose }: NovelFi
               {Object.entries(genreMapping)
                 .filter(([k]) => Number(k) !== 1) // 其他 数据已在生成 db 时删除
                 .map(([k, v]) => (
-                  <Chip
-                    key={k}
-                    label={v}
-                    selected={genre === Number(k)}
-                    onPress={() => setGenre(Number(k))}
-                  />
+                  <Chip key={k} label={v} selected={genre === Number(k)} onPress={() => setGenre(Number(k))} />
                 ))}
             </Section>
 
@@ -170,24 +153,14 @@ export function NovelFilterSheet({ visible, filters, onApply, onClose }: NovelFi
               {Object.entries(statusMapping)
                 .filter(([k]) => Number(k) !== 1) // 其他 数据已在生成 db 时删除
                 .map(([k, v]) => (
-                  <Chip
-                    key={k}
-                    label={v}
-                    selected={status === Number(k)}
-                    onPress={() => setStatus(Number(k))}
-                  />
+                  <Chip key={k} label={v} selected={status === Number(k)} onPress={() => setStatus(Number(k))} />
                 ))}
             </Section>
 
             <Section title="更新年份">
               <Chip label="全部" selected={year === null} onPress={() => setYear(null)} />
               {availableYears.map((y) => (
-                <Chip
-                  key={y}
-                  label={`${y}年`}
-                  selected={year === y}
-                  onPress={() => setYear(y)}
-                />
+                <Chip key={y} label={`${y}年`} selected={year === y} onPress={() => setYear(y)} />
               ))}
             </Section>
 
@@ -222,11 +195,7 @@ export function NovelFilterSheet({ visible, filters, onApply, onClose }: NovelFi
                   onPress={() => setDescending((d) => !d)}
                   activeOpacity={0.7}
                 >
-                  <Ionicons
-                    name={descending ? "arrow-down" : "arrow-up"}
-                    size={16}
-                    color={colors.primary}
-                  />
+                  <Ionicons name={descending ? "arrow-down" : "arrow-up"} size={16} color={colors.primary} />
                   <Text style={[styles.orderText, { color: colors.primary }]}>{descending ? "降序" : "升序"}</Text>
                 </TouchableOpacity>
               </View>
@@ -235,7 +204,11 @@ export function NovelFilterSheet({ visible, filters, onApply, onClose }: NovelFi
 
           {/* Apply */}
           <View style={[styles.footer, { borderTopColor: colors.surfaceBorder }]}>
-            <TouchableOpacity style={[styles.applyBtn, { backgroundColor: colors.primary }]} onPress={handleApply} activeOpacity={0.8}>
+            <TouchableOpacity
+              style={[styles.applyBtn, { backgroundColor: colors.primary }]}
+              onPress={handleApply}
+              activeOpacity={0.8}
+            >
               <Text style={styles.applyText}>应用</Text>
             </TouchableOpacity>
           </View>

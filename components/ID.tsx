@@ -32,11 +32,7 @@ export function ID({ id, onPress, weight }: IDProps) {
   return (
     <Text
       onPress={handlePress}
-      style={[
-        styles.id,
-        { color: colors.textTertiary },
-        weight != null && { fontWeight: weight },
-      ]}
+      style={[styles.id, { color: colors.textTertiary }, weight != null && { fontWeight: weight }]}
     >
       #{id}
     </Text>

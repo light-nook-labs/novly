@@ -1,4 +1,13 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator , Platform, useWindowDimensions} from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Platform,
+  useWindowDimensions,
+} from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import { getDatabase } from "../../utils/database";
@@ -49,7 +58,7 @@ export default function AuthorDetailScreen() {
          LEFT JOIN novels n ON a.name = n.author
          WHERE a.id = ?
          GROUP BY a.id`,
-        [Number(id)]
+        [Number(id)],
       );
       setAuthor(authorResult);
 
@@ -59,7 +68,7 @@ export default function AuthorDetailScreen() {
                   word_num, click_num, like_num, comment_num
            FROM novels WHERE author = ?
            ORDER BY click_num DESC`,
-          [authorResult.name]
+          [authorResult.name],
         );
 
         // Fetch tags for all novels
@@ -72,7 +81,7 @@ export default function AuthorDetailScreen() {
              JOIN tags t ON nt.tag_id = t.id
              WHERE nt.novel_id IN (${placeholders})
              ORDER BY t.name`,
-            ids
+            ids,
           );
           const tagMap: Record<number, string[]> = {};
           for (const row of tagRows) {
@@ -137,14 +146,7 @@ export default function AuthorDetailScreen() {
             </View>
           </View>
         }
-        renderItem={({ item }) => (
-          <NovelRow
-            novel={item}
-            value={item.click_num}
-            valueLabel="点击"
-            extended
-          />
-        )}
+        renderItem={({ item }) => <NovelRow novel={item} value={item.click_num} valueLabel="点击" extended />}
         ListFooterComponent={
           novels.length === 0 && !loading ? (
             <View style={styles.emptyState}>
@@ -176,88 +178,89 @@ function createStyles(colors: ThemeColors) {
       gap: 16,
       marginBottom: 16,
     },
-  container: {
-    flex: 1,    ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
+    container: {
+      flex: 1,
+      ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
 
-    backgroundColor: colors.background,
-  },
-  loading: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.background,
-    gap: Spacing.md,
-  },
-  loadingText: {
-    fontSize: FontSize.md,
-    color: colors.textTertiary,
-    alignSelf: "stretch",
-    textAlign: "center",
-  },
-  // Stats card
-  statsCard: {
-    backgroundColor: colors.surface,
-    marginHorizontal: Spacing.lg,
-    marginTop: Spacing.lg,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.md,
-  },
-  statsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-    gap: 4,
-  },
-  statDivider: {
-    width: 1,
-    height: 36,
-    backgroundColor: colors.surfaceBorder,
-  },
-  statValue: {
-    fontSize: FontSize.md,
-    fontWeight: "700",
-    color: colors.text,
-    alignSelf: "stretch",
-    textAlign: "center",
-  },
-  statLabel: {
-    fontSize: FontSize.xs,
-    color: colors.textTertiary,
-    alignSelf: "stretch",
-    textAlign: "center",
-  },
-  // Section
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.sm,
-    gap: Spacing.xs,
-  },
-  sectionTitle: {
-    fontSize: FontSize.lg,
-    fontWeight: "700",
-    color: colors.text,
-  },
-  sectionCount: {
-    fontSize: FontSize.sm,
-    color: colors.textTertiary,
-  },
-  emptyState: {
-    alignItems: "center",
-    paddingVertical: Spacing.xl * 2,
-    gap: Spacing.md,
-  },
-  emptyText: {
-    fontSize: FontSize.md,
-    color: colors.textTertiary,
-    alignSelf: "stretch",
-    textAlign: "center",
-  },
+      backgroundColor: colors.background,
+    },
+    loading: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: colors.background,
+      gap: Spacing.md,
+    },
+    loadingText: {
+      fontSize: FontSize.md,
+      color: colors.textTertiary,
+      alignSelf: "stretch",
+      textAlign: "center",
+    },
+    // Stats card
+    statsCard: {
+      backgroundColor: colors.surface,
+      marginHorizontal: Spacing.lg,
+      marginTop: Spacing.lg,
+      borderRadius: BorderRadius.md,
+      paddingVertical: Spacing.lg,
+      paddingHorizontal: Spacing.md,
+    },
+    statsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    statItem: {
+      flex: 1,
+      alignItems: "center",
+      gap: 4,
+    },
+    statDivider: {
+      width: 1,
+      height: 36,
+      backgroundColor: colors.surfaceBorder,
+    },
+    statValue: {
+      fontSize: FontSize.md,
+      fontWeight: "700",
+      color: colors.text,
+      alignSelf: "stretch",
+      textAlign: "center",
+    },
+    statLabel: {
+      fontSize: FontSize.xs,
+      color: colors.textTertiary,
+      alignSelf: "stretch",
+      textAlign: "center",
+    },
+    // Section
+    sectionHeader: {
+      flexDirection: "row",
+      alignItems: "baseline",
+      paddingHorizontal: Spacing.lg,
+      paddingTop: Spacing.xl,
+      paddingBottom: Spacing.sm,
+      gap: Spacing.xs,
+    },
+    sectionTitle: {
+      fontSize: FontSize.lg,
+      fontWeight: "700",
+      color: colors.text,
+    },
+    sectionCount: {
+      fontSize: FontSize.sm,
+      color: colors.textTertiary,
+    },
+    emptyState: {
+      alignItems: "center",
+      paddingVertical: Spacing.xl * 2,
+      gap: Spacing.md,
+    },
+    emptyText: {
+      fontSize: FontSize.md,
+      color: colors.textTertiary,
+      alignSelf: "stretch",
+      textAlign: "center",
+    },
   });
 }

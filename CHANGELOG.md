@@ -2,9 +2,31 @@
 
 All notable changes to Novly are documented here.
 
+## [1.0.2] - 2026-08-02
+
+### Added
+
+- 详情页(tag/contest/genre/status)完全对标 novels:复用 useNovels hook,列表/分页/过滤/count 统一
+- PtypeTabs 组件(head tabs:icon+label+count、水平滑动、防抖),novels 与详情页复用
+- 详情页过滤功能(NovelFilterSheet:genre/status/年份/字数)
+- LoadingScreen 美化(随机 tip 起点 + logo 缩放动画)
+
+### Fixed
+
+- 修复详情页"标签/赛事不存在"误显示(loadXxx 参数、加载态混淆、tag.name 崩溃)
+- 修复 head tab count 不显示(loadCounts GROUP BY SQL 语法错误)
+- 修复详情页/列表页 loading 位置(整页 → footer)、重复 key 警告
+- 修复 search 上滑加载无 footer loading
+
+### Improved
+
+- 初始化:cold 准备阶段移到 Loading 期间、分块平衡、100ms 让出,交互流畅
+- 配置 Prettier 代码格式化工具
+
 ## [1.0.1] - 2026-08-01
 
 ### Fixed
+
 - 初始化:修复多页面并发 `getDatabase()` 导致重复初始化(重复解压/合并),initPromise 缓存
 - 冷合并:合并前清理残留文件(修复 malformed);并发锁防止 hotwarm 冲突;coldDb 绝对路径修复 ATTACH NPE
 - cold 合并分批执行(每批 5000 行 + 让出线程),初始化期间交互不卡死
@@ -16,6 +38,7 @@ All notable changes to Novly are documented here.
 - settings/about 页版本号同步为 v1.0.1
 
 ### Added
+
 - 首页/详情页/列表页 web 多列网格布局(3/2/1 列,tags 支持 6 列)
 - 书架 flexWrap 封面墙布局(固定高度/比例自适应)
 - settings 统计卡 2×2、危险区两列、ABOUT 链接两列;about Features 两列
@@ -23,6 +46,7 @@ All notable changes to Novly are documented here.
 ## [1.0.0] - 2026-08-01
 
 ### Added
+
 - 离线优先的轻小说元数据浏览器(数据内置 SQLite,无需网络)
 - 首页轮播(大屏自适应)、导航网格、热门排行
 - 多维列表:小说/排行/背投/作者/标签/比赛/分类/状态

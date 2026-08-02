@@ -1,6 +1,15 @@
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity , Platform, useWindowDimensions} from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+  Platform,
+  useWindowDimensions,
+} from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
-import { useState, useEffect, useMemo, useRef} from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
 import { statusMapping, normalizeStatus } from "../../utils/mappings";
@@ -73,7 +82,8 @@ export default function StatusDetailScreen() {
     () =>
       StyleSheet.create({
         container: {
-          flex: 1,          ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
+          flex: 1,
+          ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
 
           backgroundColor: colors.background,
         },
@@ -126,15 +136,14 @@ export default function StatusDetailScreen() {
           color: colors.textTertiary,
         },
       }),
-    [colors]
+    [colors],
   );
 
   useEffect(() => {
     loadCounts();
   }, [id, selectedPtype]);
 
-  
-    // head tab 切换(selectedPtype)时重新加载,实现分类过滤
+  // head tab 切换(selectedPtype)时重新加载,实现分类过滤
   useEffect(() => {
     loadCounts();
   }, [selectedPtype, filters]);
@@ -153,14 +162,16 @@ export default function StatusDetailScreen() {
       const p: any[] = normStatus === 4 || normStatus === 2 ? [] : [normStatus];
       const total = await db.getFirstAsync<{ v: number }>(
         `SELECT COUNT(*) as v FROM novels WHERE status ${statusIn}${selectedPtype !== null ? " AND n.ptype = ?" : ""}${filterSql}`,
-        p
+        p,
       );
       const rows = await db.getAllAsync<{ ptype: number; v: number }>(
         `SELECT ptype, COUNT(*) as v FROM novels WHERE status ${statusIn}${filterSql} GROUP BY ptype`,
-        p
+        p,
       );
       const map: Record<string, number> = { all: total?.v ?? 0 };
-      rows.forEach((r) => { map[String(r.ptype)] = r.v; });
+      rows.forEach((r) => {
+        map[String(r.ptype)] = r.v;
+      });
       setCounts(map);
       console.log("[db] counts:", map);
     } catch (e) {
@@ -206,12 +217,7 @@ export default function StatusDetailScreen() {
         windowSize={7}
         contentContainerStyle={styles.list}
         renderItem={({ item, index }) => (
-          <NovelRow
-            novel={item}
-            rank={index + 1}
-            value={item.click_num}
-            valueLabel="点击"
-          />
+          <NovelRow novel={item} rank={index + 1} value={item.click_num} valueLabel="点击" />
         )}
         ListFooterComponent={
           novels.length === 0 ? (

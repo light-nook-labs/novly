@@ -26,35 +26,35 @@ Novly 是一个离线优先的轻小说元数据浏览应用：数据打包内�
 
 > 以下截图展示了 Novly 的核心功能:首页轮播与导航、背投图库、多维排行、小说详情、主题切换(深/浅色)与关于页。
 
-| 页面 | 深色模式 | 浅色模式 |
-|---|---|---|
-| 首页 | <img src="screenshots/home.png" width="220" /> | <img src="screenshots/home-light.png" width="220" /> |
-| 背投 | <img src="screenshots/banners.png" width="220" /> | <img src="screenshots/banners-light.png" width="220" /> |
-| 排行 | <img src="screenshots/rank.png" width="220" /> | <img src="screenshots/rank-light.png" width="220" /> |
-| 小说详情 | <img src="screenshots/detail.png" width="220" /> | <img src="screenshots/detail-light.png" width="220" /> |
-| 设置 | <img src="screenshots/settings.png" width="220" /> | <img src="screenshots/settings-light.png" width="220" /> |
-| 关于 | <img src="screenshots/about.png" width="220" /> | <img src="screenshots/about-light.png" width="220" /> |
+| 页面     | 深色模式                                           | 浅色模式                                                 |
+| -------- | -------------------------------------------------- | -------------------------------------------------------- |
+| 首页     | <img src="screenshots/home.png" width="220" />     | <img src="screenshots/home-light.png" width="220" />     |
+| 背投     | <img src="screenshots/banners.png" width="220" />  | <img src="screenshots/banners-light.png" width="220" />  |
+| 排行     | <img src="screenshots/rank.png" width="220" />     | <img src="screenshots/rank-light.png" width="220" />     |
+| 小说详情 | <img src="screenshots/detail.png" width="220" />   | <img src="screenshots/detail-light.png" width="220" />   |
+| 设置     | <img src="screenshots/settings.png" width="220" /> | <img src="screenshots/settings-light.png" width="220" /> |
+| 关于     | <img src="screenshots/about.png" width="220" />    | <img src="screenshots/about-light.png" width="220" />    |
 
 ### PC 桌面版
 
 > 桌面应用(Tauri v2)在宽屏下的界面效果(多列网格布局)。
 
-| 页面 | 预览 |
-|---|---|
-| 首页 | <img src="screenshots/home-pc.png" width="480" /> |
-| 小说列表 | <img src="screenshots/novels-pc.png" width="480" /> |
-| 背投 | <img src="screenshots/banners-pc.png" width="480" /> |
+| 页面     | 预览                                                 |
+| -------- | ---------------------------------------------------- |
+| 首页     | <img src="screenshots/home-pc.png" width="480" />    |
+| 小说列表 | <img src="screenshots/novels-pc.png" width="480" />  |
+| 背投     | <img src="screenshots/banners-pc.png" width="480" /> |
 
 ## 技术栈
 
-| 类别 | 技术 |
-|---|---|
-| 框架 | [React Native](https://reactnative.dev) + [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/) |
-| 路由 | expo-router |
-| 语言 | TypeScript |
-| 数据库 | expo-sqlite（全局数据 + 书架本地库） |
-| 持久化 | AsyncStorage（主题偏好、列表缓存） |
-| 包管理 | pnpm |
+| 类别   | 技术                                                                                             |
+| ------ | ------------------------------------------------------------------------------------------------ |
+| 框架   | [React Native](https://reactnative.dev) + [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/) |
+| 路由   | expo-router                                                                                      |
+| 语言   | TypeScript                                                                                       |
+| 数据库 | expo-sqlite（全局数据 + 书架本地库）                                                             |
+| 持久化 | AsyncStorage（主题偏好、列表缓存）                                                               |
+| 包管理 | pnpm                                                                                             |
 
 ## 桌面应用(Windows)
 
@@ -66,7 +66,7 @@ Novly 支持打包为 Windows 桌面应用(Tauri v2),与 Web 版同源,离线优
 pnpm tauri build
 ```
 
-产物:`src-tauri/target/release/bundle/nsis/Novly_1.0.0_x64-setup.exe`
+产物:`src-tauri/target/release/bundle/nsis/Novly_1.0.2_x64-setup.exe`
 
 ### 安装行为
 
@@ -157,4 +157,4 @@ novim/
 
 ---
 
-*本项目的开发得到了 OpenCode & AtomCode AI 辅助。*
+_本项目的开发得到了 OpenCode & AtomCode AI 辅助。_

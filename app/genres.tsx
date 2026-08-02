@@ -1,4 +1,13 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator , useWindowDimensions, Platform} from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  useWindowDimensions,
+  Platform,
+} from "react-native";
 import { router } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -33,11 +42,11 @@ export default function GenresScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-          gridRow: {
-    gap: 16,
-    marginBottom: 16,
-  },
-container: {
+        gridRow: {
+          gap: 16,
+          marginBottom: 16,
+        },
+        container: {
           flex: 1,
           backgroundColor: colors.background,
         },
@@ -45,7 +54,7 @@ container: {
           padding: Spacing.lg,
         },
         genreItem: {
-    flex: 1,
+          flex: 1,
           flexDirection: "row",
           alignItems: "center",
           paddingHorizontal: Spacing.lg,
@@ -96,7 +105,7 @@ container: {
           color: colors.textTertiary,
         },
       }),
-    [colors]
+    [colors],
   );
 
   useEffect(() => {
@@ -119,7 +128,7 @@ container: {
       // 2. Load all genres from DB (data is small)
       const db = await getDatabase();
       const results = await db.getAllAsync<GenreCount>(
-        "SELECT genre, COUNT(*) as count FROM novels GROUP BY genre ORDER BY count DESC"
+        "SELECT genre, COUNT(*) as count FROM novels GROUP BY genre ORDER BY count DESC",
       );
       setGenres(results);
 
@@ -137,18 +146,15 @@ container: {
 
   return (
     <View style={styles.container}>
-      <PageHeader
-        title="Genres"
-        titleAppend={genres.length > 0 ? String(genres.length) : undefined}
-      />
+      <PageHeader title="Genres" titleAppend={genres.length > 0 ? String(genres.length) : undefined} />
 
       {loading && genres.length === 0 ? (
         <Loading />
       ) : (
         <FlatList
-        numColumns={numColumns}
-        key={`grid-${numColumns}`}
-        columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
+          numColumns={numColumns}
+          key={`grid-${numColumns}`}
+          columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
           data={genres}
           keyExtractor={(item) => item.genre.toString()}
           contentContainerStyle={styles.list}

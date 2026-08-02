@@ -1,4 +1,15 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Linking, Platform, useWindowDimensions, Image } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  RefreshControl,
+  Linking,
+  Platform,
+  useWindowDimensions,
+  Image,
+} from "react-native";
 import { Link, router } from "expo-router";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -77,7 +88,12 @@ function SurveyCard({ width, height, bgUri }: { width: number; height: number; b
             backgroundColor: "rgba(0,0,0,0.35)",
           }}
         >
-          <View style={[styles.surveyIconWrap, { backgroundColor: "rgba(255,255,255,0.2)", width: 96, height: 96, borderRadius: 48 }]}>
+          <View
+            style={[
+              styles.surveyIconWrap,
+              { backgroundColor: "rgba(255,255,255,0.2)", width: 96, height: 96, borderRadius: 48 },
+            ]}
+          >
             <Ionicons name="clipboard-outline" size={48} color="#fff" />
           </View>
           <Text style={[styles.surveyTitle, { fontSize: 30 }]}>用户反馈问卷</Text>
@@ -144,7 +160,7 @@ export default function HomeScreen() {
       setBannerNovels(banners);
 
       const top = await db.getAllAsync<NovelRowData>(
-        "SELECT id, title, author, cover, click_num, status, genre, ptype FROM novels ORDER BY click_num DESC LIMIT 12"
+        "SELECT id, title, author, cover, click_num, status, genre, ptype FROM novels ORDER BY click_num DESC LIMIT 12",
       );
       setTopNovels(top);
 
@@ -160,7 +176,7 @@ export default function HomeScreen() {
              WHEN status = 5 THEN 4
              WHEN status = 6 THEN 2
              ELSE status END) as v
-           FROM novels WHERE status IN (2, 3, 4, 5, 6)`
+           FROM novels WHERE status IN (2, 3, 4, 5, 6)`,
         ),
       ]);
       setStats({
@@ -182,7 +198,7 @@ export default function HomeScreen() {
       const placeholders = PINNED_BANNER_IDS.map(() => "?").join(",");
       pinned = await db.getAllAsync<BannerNovel>(
         `SELECT id, title, author FROM novels WHERE id IN (${placeholders})`,
-        PINNED_BANNER_IDS
+        PINNED_BANNER_IDS,
       );
     }
 
@@ -191,14 +207,12 @@ export default function HomeScreen() {
     const remaining = BANNER_COUNT - pinned.length;
     if (remaining <= 0) return pinned.slice(0, BANNER_COUNT);
 
-    const excludeSQL = excludeIds.length > 0
-      ? `AND id NOT IN (${excludeIds.map(() => "?").join(",")})`
-      : "";
+    const excludeSQL = excludeIds.length > 0 ? `AND id NOT IN (${excludeIds.map(() => "?").join(",")})` : "";
     const params: any[] = excludeIds.length > 0 ? excludeIds : [];
 
     const random = await db.getAllAsync<BannerNovel>(
       `SELECT id, title, author FROM novels WHERE has_banner = 1 ${excludeSQL} ORDER BY RANDOM() LIMIT ?`,
-      [...params, remaining]
+      [...params, remaining],
     );
 
     // 3. Combine: pinned first, then random
@@ -277,12 +291,22 @@ export default function HomeScreen() {
             </View>
             {isWide ? (
               <View style={styles.navTextWrap}>
-                <Text style={[styles.navLabel, { color: colors.text }, isWide && { fontSize: 16, textAlign: "left", marginTop: 0 }]}>
+                <Text
+                  style={[
+                    styles.navLabel,
+                    { color: colors.text },
+                    isWide && { fontSize: 16, textAlign: "left", marginTop: 0 },
+                  ]}
+                >
                   {item.label}
                 </Text>
                 {stats && (
                   <Text
-                    style={[styles.navCount, { color: colors.textTertiary }, isWide && { fontSize: 15, textAlign: "left", marginTop: 1 }]}
+                    style={[
+                      styles.navCount,
+                      { color: colors.textTertiary },
+                      isWide && { fontSize: 15, textAlign: "left", marginTop: 1 },
+                    ]}
                   >
                     {formatNumber(stats[item.key as keyof Stats] ?? 0)}
                   </Text>
@@ -331,12 +355,7 @@ export default function HomeScreen() {
                 : undefined
             }
           >
-            <NovelRow
-              novel={novel}
-              rank={index + 1}
-              value={novel.click_num}
-              valueLabel="点击"
-            />
+            <NovelRow novel={novel} rank={index + 1} value={novel.click_num} valueLabel="点击" />
           </View>
         ))}
       </View>
@@ -348,7 +367,8 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,    ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
+    flex: 1,
+    ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
 
     backgroundColor: Colors.background,
   },

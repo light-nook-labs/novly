@@ -1,4 +1,13 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator , Platform, useWindowDimensions} from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Platform,
+  useWindowDimensions,
+} from "react-native";
 import { router } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -33,12 +42,13 @@ export default function StatusesScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-          gridRow: {
-    gap: 16,
-    marginBottom: 16,
-  },
-container: {
-          flex: 1,          ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
+        gridRow: {
+          gap: 16,
+          marginBottom: 16,
+        },
+        container: {
+          flex: 1,
+          ...(Platform.OS === "web" ? { padding: Spacing.lg } : {}),
 
           backgroundColor: colors.background,
         },
@@ -66,7 +76,7 @@ container: {
           padding: Spacing.lg,
         },
         statusItem: {
-    flex: 1,
+          flex: 1,
           flexDirection: "row",
           alignItems: "center",
           paddingHorizontal: Spacing.lg,
@@ -122,7 +132,7 @@ container: {
           color: colors.textTertiary,
         },
       }),
-    [colors]
+    [colors],
   );
 
   useEffect(() => {
@@ -158,7 +168,7 @@ container: {
                   WHEN status = 6 THEN 2
                   ELSE status
                 END
-         ORDER BY count DESC`
+         ORDER BY count DESC`,
       );
       setStatuses(results);
 
@@ -176,16 +186,15 @@ container: {
 
   return (
     <View style={styles.container}>
-      <PageHeader
-        title="Statuses"
-        titleAppend={statuses.length > 0 ? String(statuses.length) : undefined}
-      />
+      <PageHeader title="Statuses" titleAppend={statuses.length > 0 ? String(statuses.length) : undefined} />
 
       {/* A 标记说明 */}
       <View style={styles.noteCard}>
         <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
         <Text style={styles.noteText}>
-          在小说列表等页面可能会看到 <Text style={styles.noteStrong}>完结A</Text> / <Text style={styles.noteStrong}>断更A</Text> 状态。带 <Text style={styles.noteStrong}>A</Text>（Active）表示完结或断更但数据表现突出（如 banner、点赞、点击等）的作品，很可能是读者想找的书
+          在小说列表等页面可能会看到 <Text style={styles.noteStrong}>完结A</Text> /{" "}
+          <Text style={styles.noteStrong}>断更A</Text> 状态。带 <Text style={styles.noteStrong}>A</Text>
+          （Active）表示完结或断更但数据表现突出（如 banner、点赞、点击等）的作品，很可能是读者想找的书
         </Text>
       </View>
 
@@ -193,9 +202,9 @@ container: {
         <Loading />
       ) : (
         <FlatList
-        numColumns={numColumns}
-        key={`grid-${numColumns}`}
-        columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
+          numColumns={numColumns}
+          key={`grid-${numColumns}`}
+          columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
           data={statuses}
           keyExtractor={(item) => item.status.toString()}
           contentContainerStyle={styles.list}
