@@ -118,7 +118,7 @@ export default function TagDetailScreen() {
 
       const tagResult = await db.getFirstAsync<Tag>(
         "SELECT id, name FROM tags WHERE id = ?",
-        [Number(id), ...(selectedPtype !== null ? [selectedPtype] : [])]
+        [Number(id)]
       );
       setTag(tagResult);
 
@@ -171,6 +171,7 @@ export default function TagDetailScreen() {
   
 
   if (!tag) {
+    if (loading) return <Loading />;
     return (
       <View style={styles.loading}>
         <Ionicons name="pricetag-outline" size={48} color={colors.textMuted} />

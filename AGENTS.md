@@ -90,6 +90,14 @@ Rules:
 
 11. **Android System WebView has no OPFS** — `navigator.storage.getDirectory` is not implemented in Android System WebView, but expo-sqlite's web backend (wa-sqlite) depends on OPFS. So **Tauri v2 Android (WebView shell) is NOT viable** for this app: the Android build must use the native RN/Expo path (native SQLite). Don't attempt `pnpm tauri android build` here (decided 2026-08-01, commit 2cef9ee); `src-tauri/gen/android` is a generated dir — keep it untracked.
 
+### Detail routes are variants of the novels route
+
+`app/tag/[id].tsx`、`app/contest/[id].tsx`、`app/genre/[id].tsx`、`app/status/[id].tsx` are all variants of `app/(tabs)/novels.tsx`:
+
+- List / pagination / filter / count all reuse `hooks/useNovels.ts`; detail fixed conditions are passed via `fromClause` / `extraWhere` / `extraParams` (e.g. tag: `FROM novels n INNER JOIN novel_tags nt` + `nt.tag_id = ?`; status: `FROM novels` + `status ${statusIn}`)
+- Head tabs share `components/PtypeTabs.tsx`; filter uses `NovelFilterSheet`; footer loading pattern identical to novels
+- **When changing list behavior → modify `useNovels` first, do NOT copy logic per page** (past per-page copies caused repeated bugs: count not showing, filter not applied, duplicate keys)
+
 ## Key Files Quick Reference
 
 | File | Purpose |

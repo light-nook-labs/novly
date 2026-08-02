@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../utils/database";
 import { formatNumber } from "../utils/mappings";
 import { PageHeader } from "../components/Header";
+import { LoadingFooter } from "../components/Loading";
 import { useTheme } from "../components/ThemeProvider";
 import { Colors, FontSize, Spacing, BorderRadius } from "../constants/theme";
 
@@ -26,6 +27,7 @@ export default function SearchScreen() {
   const [hasMore, setHasMore] = useState(true);
   const PAGE_SIZE = 10;
   const [listHeight, setListHeight] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const search = useCallback(async (searchQuery: string, reset = false) => {
     const trimmed = searchQuery.trim();
@@ -38,6 +40,7 @@ export default function SearchScreen() {
     }
 
     try {
+      setLoading(true);
       const db = await getDatabase();
       const offset = reset ? 0 : page * PAGE_SIZE;
       const numericId = Number.parseInt(trimmed, 10);
@@ -119,6 +122,9 @@ export default function SearchScreen() {
           if (hasMore) search(query, false);
         }}
         onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          loading && results.length > 0 ? <LoadingFooter /> : null
+        }
         ListEmptyComponent={
           query ? (
             <View style={styles.empty}>

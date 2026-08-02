@@ -118,7 +118,7 @@ export default function ContestDetailScreen() {
 
       const contestResult = await db.getFirstAsync<Contest>(
         "SELECT id, name FROM contests WHERE id = ?",
-        [Number(id), ...(selectedPtype !== null ? [selectedPtype] : [])]
+        [Number(id)]
       );
       setContest(contestResult);
 
@@ -167,6 +167,7 @@ export default function ContestDetailScreen() {
   
 
   if (!contest) {
+    if (loading) return <Loading />;
     return (
       <View style={styles.loading}>
         <Ionicons name="trophy-outline" size={48} color={colors.textMuted} />
