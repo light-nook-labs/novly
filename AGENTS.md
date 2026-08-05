@@ -24,30 +24,30 @@ npx tsc --noEmit   # ALWAYS run type check before finishing / committing — mus
 pnpm tauri build  # build Windows desktop installer (NSIS)
 ```
 
-### Android 真机调试(USB)
+### Android Real-Device Debugging (USB)
 
-> **不用 Expo Go**:Expo Go 无法运行最新版 Expo SDK(本项目为 SDK 57),且其依赖 WiFi 局域网,连接稳定性远低于 USB 反向通道。真机调试一律用 **USB + 开发构建(debug)**。
+> **Don't use Expo Go**: Expo Go cannot run the latest Expo SDK (this project uses SDK 57), and it relies on Wi-Fi LAN, whose connection stability is far lower than the USB reverse tunnel. Real-device debugging always uses **USB + development build (debug)**.
 
-前置:手机开启「开发者选项 → USB 调试」,数据线连接电脑。
-
-```bash
-adb devices          # 确认设备在线(状态为 device)
-pnpm run android     # expo run:android:构建 debug + 安装 + 自动 adb reverse + 启动 dev server
-```
-
-dev server 已由其他终端启动时,只手动做后两步:
+Prereqs: enable "Developer options → USB debugging" on the phone, connect it via USB cable.
 
 ```bash
-npx expo start --clear          # 1) 启动 Metro(缓存损坏报 deserialize 错误时加 --clear)
-adb reverse tcp:8081 tcp:8081   # 2) 手机经 USB 反向访问电脑的 Metro(debug 构建的 JS/资源由 Metro 运行时提供,必须 reverse)
-adb shell pm clear com.lightnooklabs.novly  # 3) 验证新数据(如 chunks 重建)前清旧库,否则旧合并库仍在
+adb devices          # confirm the device is online (status = device)
+pnpm run android     # expo run:android: builds debug, installs, sets up adb reverse automatically, starts dev server
 ```
 
-要点:
+When the dev server is already started from another terminal, only do the last two steps manually:
 
-- debug 构建的 JS bundle 与 `assets/chunks` **不打进 APK**,运行时从 Metro 拉取——真机必须 `adb reverse` 且 dev server 保持运行。
-- **不要同时起两个 dev server**(8081 端口冲突)。
-- 应用包名:`com.lightnooklabs.novly`。
+```bash
+npx expo start --clear          # 1) start Metro (add --clear when the cache is corrupted / deserialize errors)
+adb reverse tcp:8081 tcp:8081   # 2) phone reaches Metro on the PC over the USB reverse tunnel (debug JS/assets are served by Metro at runtime — reverse is mandatory)
+adb shell pm clear com.lightnooklabs.novly  # 3) clear the old DB before verifying new data (e.g. after chunk rebuild), otherwise the stale merged DB persists
+```
+
+Notes:
+
+- The debug build does **NOT** bundle the JS bundle or `assets/chunks` into the APK — they are fetched from Metro at runtime. Real-device testing requires `adb reverse` and a running dev server.
+- **Don't run two dev servers at once** (port 8081 conflict).
+- App package name: `com.lightnooklabs.novly`.
 
 ## Architecture & Conventions
 
@@ -105,8 +105,8 @@ Cold data is split into3 parts by author name hash (`md5(author) % 3`), so novel
 - `db-never-edit-or-delete-this-folder/` — original chunks from NovelHubMobile (novel_hub data, has errors)
 - `temp/nookdata-fixed/` — corrected JSONL from nookdata
 
-> **`temp/` 目录用途(硬性规定)**:只用于存放临时文件与 clone 其他仓库(避免占用系统临时目录),**禁止存放重要代码**。
-> 数据管线脚本(`build_chunks.py`、`validators.py`、`fix_ptype.py`)必须放在 `scripts/` 并纳入版本管理——曾因放在 temp/ 下 gitignore 而丢失,只能靠回收站找回。
+> **`temp/` directory policy (hard rule)**: reserved ONLY for temporary files and cloning other repos (to avoid using the system temp directory). **NEVER put important code here.**
+> Data pipeline scripts (`build_chunks.py`, `validators.py`, `fix_ptype.py`) must live in `scripts/` and be version-controlled — they were once gitignored under `temp/` and lost, recoverable only from the recycle bin.
 
 ### Theming (COMPLETE — all pages & components support light/dark)
 
