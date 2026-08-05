@@ -24,6 +24,31 @@ npx tsc --noEmit   # ALWAYS run type check before finishing / committing — mus
 pnpm tauri build  # build Windows desktop installer (NSIS)
 ```
 
+### Android 真机调试(USB)
+
+> **不用 Expo Go**:Expo Go 无法运行最新版 Expo SDK(本项目为 SDK 57),且其依赖 WiFi 局域网,连接稳定性远低于 USB 反向通道。真机调试一律用 **USB + 开发构建(debug)**。
+
+前置:手机开启「开发者选项 → USB 调试」,数据线连接电脑。
+
+```bash
+adb devices          # 确认设备在线(状态为 device)
+pnpm run android     # expo run:android:构建 debug + 安装 + 自动 adb reverse + 启动 dev server
+```
+
+dev server 已由其他终端启动时,只手动做后两步:
+
+```bash
+npx expo start --clear          # 1) 启动 Metro(缓存损坏报 deserialize 错误时加 --clear)
+adb reverse tcp:8081 tcp:8081   # 2) 手机经 USB 反向访问电脑的 Metro(debug 构建的 JS/资源由 Metro 运行时提供,必须 reverse)
+adb shell pm clear com.lightnooklabs.novly  # 3) 验证新数据(如 chunks 重建)前清旧库,否则旧合并库仍在
+```
+
+要点:
+
+- debug 构建的 JS bundle 与 `assets/chunks` **不打进 APK**,运行时从 Metro 拉取——真机必须 `adb reverse` 且 dev server 保持运行。
+- **不要同时起两个 dev server**(8081 端口冲突)。
+- 应用包名:`com.lightnooklabs.novly`。
+
 ## Architecture & Conventions
 
 ### Data layer
