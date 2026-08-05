@@ -79,7 +79,8 @@ Cold data is split into3 parts by author name hash (`md5(author) % 3`), so novel
 
 - `db-never-edit-or-delete-this-folder/` — original chunks from NovelHubMobile (novel_hub data, has errors)
 - `temp/nookdata-fixed/` — corrected JSONL from nookdata
-- `temp/scripts/` — build scripts (`build_chunks.py`, `validators.py`)
+
+> 数据管线脚本(`build_chunks.py`、`validators.py`、`fix_ptype.py`)已迁移到 `scripts/` 并纳入版本管理——不要再放回 gitignore 的 temp/ 目录,避免丢失。
 
 ### Theming (COMPLETE — all pages & components support light/dark)
 

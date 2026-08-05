@@ -70,3 +70,7 @@ patches/android/build/
 # tauri build artifacts
 src-tauri/target/
 src-tauri/gen/
+
+# python
+__pycache__/
+*.pyc
