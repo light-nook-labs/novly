@@ -80,7 +80,8 @@ Cold data is split into3 parts by author name hash (`md5(author) % 3`), so novel
 - `db-never-edit-or-delete-this-folder/` — original chunks from NovelHubMobile (novel_hub data, has errors)
 - `temp/nookdata-fixed/` — corrected JSONL from nookdata
 
-> 数据管线脚本(`build_chunks.py`、`validators.py`、`fix_ptype.py`)已迁移到 `scripts/` 并纳入版本管理——不要再放回 gitignore 的 temp/ 目录,避免丢失。
+> **`temp/` 目录用途(硬性规定)**:只用于存放临时文件与 clone 其他仓库(避免占用系统临时目录),**禁止存放重要代码**。
+> 数据管线脚本(`build_chunks.py`、`validators.py`、`fix_ptype.py`)必须放在 `scripts/` 并纳入版本管理——曾因放在 temp/ 下 gitignore 而丢失,只能靠回收站找回。
 
 ### Theming (COMPLETE — all pages & components support light/dark)
 
