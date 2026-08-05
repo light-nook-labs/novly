@@ -73,7 +73,6 @@ export default function TagsScreen() {
           marginBottom: Spacing.sm,
         },
         tagItem: {
-          flex: 1,
           flexDirection: "row",
           justifyContent: "space-between",
           alignItems: "center",
@@ -191,7 +190,18 @@ export default function TagsScreen() {
         }
         renderItem={({ item }) => (
           <Link href={`/tags/${item.id}`} asChild>
-            <TouchableOpacity style={styles.tagItem} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={StyleSheet.flatten([
+                styles.tagItem,
+                {
+                  width:
+                    numColumns > 1
+                      ? `${(100 - ((numColumns - 1) * 16 * 100) / (winWidth || 1)) / numColumns}%`
+                      : "100%",
+                },
+              ])}
+              activeOpacity={0.7}
+            >
               <Text style={styles.tagName} numberOfLines={1}>
                 {item.name}
               </Text>

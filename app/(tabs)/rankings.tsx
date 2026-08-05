@@ -48,7 +48,8 @@ export default function RankingsScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
   // web 按窗口宽度动态列数:≥1400 三列,≥900 两列,否则单列;手机恒为单列
-  const numColumns = Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
+  const numColumns =
+    Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const [novels, setNovels] = useState<Novel[]>([]);
   const [selectedTab, setSelectedTab] = useState("click_num");
   const [loading, setLoading] = useState(true);
@@ -57,6 +58,13 @@ export default function RankingsScreen() {
   const PAGE_SIZE = 10;
   const { scrollRef, showButton, onScroll, scrollToTop } = useScrollToTop();
   const [listHeight, setListHeight] = useState(0);
+  const [contentHeight, setContentHeight] = useState(0);
+  // 大屏:内容不足视口时自动填充(rankings 用 loadRankings)
+  useEffect(() => {
+    if (listHeight > 0 && contentHeight > 0 && contentHeight <= listHeight && hasMore && !loading) {
+      loadRankings(false);
+    }
+  }, [novels, listHeight, contentHeight, hasMore, loading]);
 
   const styles = useMemo(
     () =>
@@ -188,9 +196,14 @@ export default function RankingsScreen() {
         key={`grid-${numColumns}`}
         columnWrapperStyle={numColumns > 1 ? { gap: 16, marginBottom: 16 } : undefined}
         onScroll={onScroll}
-        onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}
+        onLayout={(e) => {
+          const h = e.nativeEvent.layout.height;
+          setListHeight(h);
+          if (contentHeight > 0 && contentHeight <= h && hasMore && !loading) loadRankings(false);
+        }}
         onContentSizeChange={(_, h) => {
-          if (h <= listHeight && hasMore && !loading) {
+          setContentHeight(h);
+          if (listHeight > 0 && h <= listHeight && hasMore && !loading) {
             loadRankings(false);
           }
         }}
@@ -199,12 +212,19 @@ export default function RankingsScreen() {
         windowSize={7}
         contentContainerStyle={styles.list}
         renderItem={({ item, index }) => (
-          <NovelRow
-            novel={item}
-            rank={index + 1}
-            value={item[selectedTab as keyof Novel] as number}
-            valueLabel={currentTab?.label}
-          />
+          <View
+            style={{
+              width:
+                numColumns > 1 ? `${(100 - ((numColumns - 1) * 16 * 100) / (winWidth || 1)) / numColumns}%` : "100%",
+            }}
+          >
+            <NovelRow
+              novel={item}
+              rank={index + 1}
+              value={item[selectedTab as keyof Novel] as number}
+              valueLabel={currentTab?.label}
+            />
+          </View>
         )}
         ListEmptyComponent={loading ? <Loading /> : null}
         ListFooterComponent={

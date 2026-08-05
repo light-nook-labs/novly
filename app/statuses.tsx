@@ -18,6 +18,7 @@ import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { useTheme } from "../components/ThemeProvider";
 import { PageHeader } from "../components/Header";
 import { Loading } from "../components/Loading";
+import { NoteCard, NoteStrong } from "../components/NoteCard";
 
 interface StatusCount {
   status: number;
@@ -35,7 +36,8 @@ interface CacheEntry {
 export default function StatusesScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
-  const numColumns = Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
+  const numColumns =
+    Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const [statuses, setStatuses] = useState<StatusCount[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -52,31 +54,10 @@ export default function StatusesScreen() {
 
           backgroundColor: colors.background,
         },
-        noteCard: {
-          flexDirection: "row",
-          alignItems: "flex-start",
-          gap: Spacing.sm,
-          backgroundColor: colors.primary + "0D",
-          marginHorizontal: Spacing.lg,
-          marginTop: Spacing.sm,
-          padding: Spacing.md,
-          borderRadius: BorderRadius.md,
-        },
-        noteText: {
-          flex: 1,
-          fontSize: FontSize.sm,
-          lineHeight: 20,
-          color: colors.textSecondary,
-        },
-        noteStrong: {
-          fontWeight: "700",
-          color: colors.primary,
-        },
         list: {
           padding: Spacing.lg,
         },
         statusItem: {
-          flex: 1,
           flexDirection: "row",
           alignItems: "center",
           paddingHorizontal: Spacing.lg,
@@ -189,14 +170,11 @@ export default function StatusesScreen() {
       <PageHeader title="Statuses" titleAppend={statuses.length > 0 ? String(statuses.length) : undefined} />
 
       {/* A 标记说明 */}
-      <View style={styles.noteCard}>
-        <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
-        <Text style={styles.noteText}>
-          在小说列表等页面可能会看到 <Text style={styles.noteStrong}>完结A</Text> /{" "}
-          <Text style={styles.noteStrong}>断更A</Text> 状态。带 <Text style={styles.noteStrong}>A</Text>
-          （Active）表示完结或断更但数据表现突出（如 banner、点赞、点击等）的作品，很可能是读者想找的书
-        </Text>
-      </View>
+      <NoteCard>
+        在小说列表等页面可能会看到 <NoteStrong>完结A</NoteStrong> / <NoteStrong>断更A</NoteStrong> 状态。带{" "}
+        <NoteStrong>A</NoteStrong>（Active）表示完结或断更但数据表现突出（如
+        banner、点赞、点击等）的作品，很可能是读者想找的书
+      </NoteCard>
 
       {loading && statuses.length === 0 ? (
         <Loading />
@@ -216,7 +194,15 @@ export default function StatusesScreen() {
           }
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={styles.statusItem}
+              style={[
+                styles.statusItem,
+                {
+                  width:
+                    numColumns > 1
+                      ? `${(100 - ((numColumns - 1) * 16 * 100) / (winWidth || 1)) / numColumns}%`
+                      : "100%",
+                },
+              ]}
               activeOpacity={0.7}
               onPress={() => router.push(`/statuses/${item.status}`)}
             >

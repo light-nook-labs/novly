@@ -23,25 +23,25 @@ For each type, follow these steps:
 
 ### Migrated
 
-| Type | From | To | Status |
-| --- | --- | --- | --- |
-| `Author` | app/authors.tsx | types/models.ts | done |
-| `Novel` | app/novels/[id].tsx | types/models.ts | done |
-| `Tag` | app/novels/[id].tsx | types/models.ts | done |
-| `Contest` | app/contests/[id].tsx, app/contests.tsx | types/models.ts | done |
-| `FilterState` | app/(tabs)/novels.tsx, app/contests/[id].tsx, app/genres/[id].tsx, app/(tabs)/bookshelf.tsx | types/models.ts | done |
-| `CacheEntry<T>` | app/contests.tsx, app/genres.tsx | types/models.ts | done |
-| `GenreCount` | app/genres.tsx | types/models.ts | done |
-| `AuthorStats` | app/authors/[id].tsx | types/models.ts | done |
-| `ICONS` | constants/icons.ts | centralized constants | done |
+| Type            | From                                                                                        | To                    | Status |
+| --------------- | ------------------------------------------------------------------------------------------- | --------------------- | ------ |
+| `Author`        | app/authors.tsx                                                                             | types/models.ts       | done   |
+| `Novel`         | app/novels/[id].tsx                                                                         | types/models.ts       | done   |
+| `Tag`           | app/novels/[id].tsx                                                                         | types/models.ts       | done   |
+| `Contest`       | app/contests/[id].tsx, app/contests.tsx                                                     | types/models.ts       | done   |
+| `FilterState`   | app/(tabs)/novels.tsx, app/contests/[id].tsx, app/genres/[id].tsx, app/(tabs)/bookshelf.tsx | types/models.ts       | done   |
+| `CacheEntry<T>` | app/contests.tsx, app/genres.tsx                                                            | types/models.ts       | done   |
+| `GenreCount`    | app/genres.tsx                                                                              | types/models.ts       | done   |
+| `AuthorStats`   | app/authors/[id].tsx                                                                        | types/models.ts       | done   |
+| `ICONS`         | constants/icons.ts                                                                          | centralized constants | done   |
 
 ### Pending
 
-| Type | Current location(s) | Notes |
-| --- | --- | --- |
-| `BannerNovel` | app/(tabs)/index.tsx | Local interface; fields differ from models.ts `Novel`. Needs dedicated model or merge. |
-| `NovelRowData` | components/NovelRow.tsx | Row-specific type (value/pick/stats). Could stay in component or move to types/models.ts. |
-| `Novel` (simplified) | app/(tabs)/rankings.tsx | Simplified Novel interface (subset of models.ts). Could reuse or extend. |
+| Type                 | Current location(s)     | Notes                                                                                     |
+| -------------------- | ----------------------- | ----------------------------------------------------------------------------------------- |
+| `BannerNovel`        | app/(tabs)/index.tsx    | Local interface; fields differ from models.ts `Novel`. Needs dedicated model or merge.    |
+| `NovelRowData`       | components/NovelRow.tsx | Row-specific type (value/pick/stats). Could stay in component or move to types/models.ts. |
+| `Novel` (simplified) | app/(tabs)/rankings.tsx | Simplified Novel interface (subset of models.ts). Could reuse or extend.                  |
 
 ## Verification
 

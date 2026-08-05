@@ -19,15 +19,14 @@ import { useTheme } from "../components/ThemeProvider";
 import { PageHeader } from "../components/Header";
 import { Loading, LoadingFooter } from "../components/Loading";
 
-
 const CACHE_KEY = "contests_cache_v1";
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24h
-
 
 export default function ContestsScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
-  const numColumns = Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
+  const numColumns =
+    Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const [contests, setContests] = useState<Contest[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -176,7 +175,15 @@ export default function ContestsScreen() {
         renderItem={({ item }) => (
           <Link href={`/contests/${item.id}`} asChild>
             <TouchableOpacity
-              style={StyleSheet.flatten([styles.contestItem, { width: numColumns > 1 ? `${100 / numColumns}%` : "100%" }])}
+              style={StyleSheet.flatten([
+                styles.contestItem,
+                {
+                  width:
+                    numColumns > 1
+                      ? `${(100 - ((numColumns - 1) * 16 * 100) / (winWidth || 1)) / numColumns}%`
+                      : "100%",
+                },
+              ])}
               activeOpacity={0.7}
             >
               <View style={styles.iconWrap}>

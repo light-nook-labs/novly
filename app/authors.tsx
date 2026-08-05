@@ -23,12 +23,11 @@ import { LoadingFooter } from "../components/Loading";
 import { PageHeader } from "../components/Header";
 import { Ionicons } from "@expo/vector-icons";
 
-
-
 export default function AuthorsScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
-  const numColumns = Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
+  const numColumns =
+    Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const [authors, setAuthors] = useState<Author[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [query, setQuery] = useState("");
@@ -42,6 +41,7 @@ export default function AuthorsScreen() {
     () =>
       StyleSheet.create({
         gridRow: {
+          paddingHorizontal: Spacing.lg,
           gap: 16,
           marginBottom: 16,
         },
@@ -52,14 +52,15 @@ export default function AuthorsScreen() {
         list: {
           paddingVertical: Spacing.sm,
         },
+        tipWrap: {
+          marginBottom: Spacing.md,
+        },
         authorItem: {
-          flex: 1,
           flexDirection: "row",
           alignItems: "center",
           paddingHorizontal: Spacing.lg,
           paddingVertical: Spacing.md,
           backgroundColor: colors.surface,
-          marginHorizontal: Spacing.lg,
           marginBottom: 1,
           gap: Spacing.md,
         },
@@ -219,9 +220,11 @@ export default function AuthorsScreen() {
         windowSize={21}
         contentContainerStyle={styles.list}
         ListHeaderComponent={
-          <NoteCard>
-            作者按代表作点击量从高到低排序。每行右侧的 <NoteStrong>点击量</NoteStrong> 为该作者代表作的累计点击数
-          </NoteCard>
+          <View style={styles.tipWrap}>
+            <NoteCard>
+              作者按代表作点击量从高到低排序。每行右侧的 <NoteStrong>点击量</NoteStrong> 为该作者代表作的累计点击数
+            </NoteCard>
+          </View>
         }
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.authorItem} onPress={() => router.push(`/authors/${item.id}`)}>

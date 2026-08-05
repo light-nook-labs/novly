@@ -1,4 +1,4 @@
-import {View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, Modal, Pressable} from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, Modal, Pressable } from "react-native";
 
 import { useState, useEffect, useMemo } from "react";
 import { router } from "expo-router";
@@ -10,6 +10,8 @@ import { clearBookshelf } from "../utils/bookshelfDb";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { PageHeader } from "../components/Header";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { InfoSheet, InfoBody, InfoItem } from "../components/InfoSheet";
+import { ICONS } from "../constants/icons";
 import { useTheme, type ThemeColors, type ThemeMode } from "../components/ThemeProvider";
 import { APP_VERSION, APP_GITHUB_URL } from "../constants/appInfo";
 
@@ -29,6 +31,7 @@ export default function SettingsScreen() {
     contests: 0,
   });
   const [themeVisible, setThemeVisible] = useState(false);
+  const [whyVisible, setWhyVisible] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState<"bookshelf" | "reset" | null>(null);
 
   useEffect(() => {
@@ -194,6 +197,21 @@ export default function SettingsScreen() {
 
             <TouchableOpacity
               style={[styles.linkRow, Platform.OS === "web" ? { width: "50%", paddingRight: 16 } : null]}
+              onPress={() => setWhyVisible(true)}
+              activeOpacity={0.6}
+            >
+              <Ionicons name={ICONS.tip} size={22} color={colors.primary} style={styles.actionIcon} />
+              <View style={styles.actionInfo}>
+                <Text style={styles.actionLabel}>Why Novly?</Text>
+                <Text style={styles.actionSubtitle}>Why this project exists (SFACG data problems)</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            {Platform.OS !== "web" && <View style={styles.divider} />}
+
+            <TouchableOpacity
+              style={[styles.linkRow, Platform.OS === "web" ? { width: "50%", paddingRight: 16 } : null]}
               onPress={() => Linking.openURL(`${APP_GITHUB_URL}/blob/main/CHANGELOG.md`)}
               activeOpacity={0.6}
             >
@@ -274,6 +292,19 @@ export default function SettingsScreen() {
         </View>
       </ScrollView>
 
+      {/* Why Novly? 说明弹层 */}
+      <InfoSheet visible={whyVisible} onClose={() => setWhyVisible(false)} title="为什么开发 Novly?">
+        <InfoBody>我是一名在 SFACG 看了 5 年书的用户,非常喜欢在这里看书。</InfoBody>
+        <InfoBody>但这些年,我遇到过不少困扰:</InfoBody>
+        <InfoItem>有些好书因为年代久远,封面和一些元信息已经丢失</InfoItem>
+        <InfoItem>搜索与推荐机制不佳,一些好书永远不会被人发现</InfoItem>
+        <InfoItem>不同平台(PC / 移动端 / App)数据不一致,同一本书各处信息都对不上</InfoItem>
+        <InfoBody>这些让找书、追书变得非常困难。</InfoBody>
+        <InfoBody>所以我希望帮助和我遇到同样问题的书友,提供一个更好的检索平台:</InfoBody>
+        <InfoItem>离线优先:内置稳定元数据,无需网络即可浏览</InfoItem>
+        <InfoItem>数据修复:找回丢失的封面、作者与书籍信息</InfoItem>
+        <InfoItem>更好的搜索与浏览:让好书不再被埋没</InfoItem>
+      </InfoSheet>
       {/* Theme picker modal */}
       <Modal visible={themeVisible} transparent animationType="fade" onRequestClose={() => setThemeVisible(false)}>
         <Pressable style={styles.themeBackdrop} onPress={() => setThemeVisible(false)}>

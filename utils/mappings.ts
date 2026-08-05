@@ -18,7 +18,6 @@ export const statusMapping: Record<number, string> = {
   4: "断更",
   5: "断更A",
   6: "完结A",
-  7: "下架",
 };
 
 // 带 A 后缀的状态归并到无 A 状态（断更A→断更、完结A→已完结）
@@ -42,7 +41,6 @@ export const statusColors: Record<number, string> = {
   4: "#999999",
   5: "#999999",
   6: "#2196F3",
-  7: "#999999",
 };
 
 export function formatNumber(num: number | null): string {

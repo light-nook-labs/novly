@@ -16,6 +16,8 @@ import * as Clipboard from "expo-clipboard";
 import Toast from "react-native-toast-message";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { PageHeader } from "../components/Header";
+import { InfoSheet, InfoBody, InfoItem } from "../components/InfoSheet";
+import { ICONS } from "../constants/icons";
 import { useTheme, type ThemeColors } from "../components/ThemeProvider";
 import { APP_VERSION } from "../constants/appInfo";
 
@@ -68,6 +70,20 @@ function createStyles(colors: ThemeColors) {
     content: {
       padding: Spacing.lg,
       paddingBottom: Spacing.xl * 2,
+    },
+    whyBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      marginTop: Spacing.md,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: 6,
+      borderRadius: BorderRadius.sm,
+      backgroundColor: colors.primaryLight,
+    },
+    whyText: {
+      fontSize: FontSize.sm,
+      fontWeight: "600",
     },
     logoSection: {
       alignItems: "center",
@@ -279,6 +295,7 @@ export default function AboutScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [showContribute, setShowContribute] = useState(false);
+  const [whyVisible, setWhyVisible] = useState(false); // Why Novly? 说明弹层
 
   // 进入 About 路由时弹出贡献提示(鼓励 star / PR / issue)
   useEffect(() => {
@@ -389,6 +406,10 @@ export default function AboutScreen() {
               {EMAIL}
             </Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.whyBtn} onPress={() => setWhyVisible(true)} activeOpacity={0.7}>
+            <Ionicons name={ICONS.tip} size={16} color={colors.primary} />
+            <Text style={[styles.whyText, { color: colors.primary }]}>Why Novly?</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -437,6 +458,18 @@ export default function AboutScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+      {/* Why Novly 弹窗(复用 InfoSheet 组件) */}
+      <InfoSheet visible={whyVisible} onClose={() => setWhyVisible(false)} title="Why Novly?">
+        <InfoBody>SFACG has been running for ~20 years. Over time its data became inconsistent:</InfoBody>
+        <InfoItem>Multi-platform drift: the mobile site/App redesigned APIs without backward compatibility</InfoItem>
+        <InfoItem>Unstable enum mappings: new enum values can shift existing data (genre/status drift)</InfoItem>
+        <InfoItem>Defective covers: duplicates, missing date directories, default covers</InfoItem>
+        <InfoItem>Upstream data projects get abandoned, leaving stale/broken data</InfoItem>
+        <InfoBody>Novly was built to solve this:</InfoBody>
+        <InfoItem>Offline-first: stable bundled metadata, browsable without network</InfoItem>
+        <InfoItem>Normalized & repaired data: stable enums, fixed covers, complete authors</InfoItem>
+        <InfoItem>Fast & elegant browsing on any screen</InfoItem>
+      </InfoSheet>
     </View>
   );
 }

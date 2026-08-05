@@ -31,11 +31,13 @@ interface NovelRowProps {
   value?: number | null;
   valueLabel?: string;
   extended?: boolean;
+  /** 无序列表模式:隐藏编号,适用于完本推荐等随机展示场景 */
+  unordered?: boolean;
 }
 
 const RANK_COLORS = ["#FFD700", "#C0C0C0", "#CD7F32"];
 
-export const NovelRow = memo(function NovelRow({ novel, rank, value, valueLabel, extended }: NovelRowProps) {
+export const NovelRow = memo(function NovelRow({ novel, rank, value, valueLabel, extended, unordered }: NovelRowProps) {
   const { colors } = useTheme();
   const isTop3 = rank !== undefined && rank <= 3;
 
@@ -45,7 +47,8 @@ export const NovelRow = memo(function NovelRow({ novel, rank, value, valueLabel,
       style={[styles.row, { backgroundColor: colors.surface }]}
       onPress={() => router.push(`/novels/${novel.id}`)}
     >
-      {rank !== undefined &&
+      {!unordered &&
+        rank !== undefined &&
         (isTop3 ? (
           <View style={[styles.medal, { backgroundColor: RANK_COLORS[rank - 1] }]}>
             <Text style={styles.medalText}>{rank}</Text>
@@ -74,12 +77,10 @@ export const NovelRow = memo(function NovelRow({ novel, rank, value, valueLabel,
             {novel.word_num != null && novel.word_num > 0 && (
               <View style={styles.extStat}>
                 <Ionicons name={ICONS.wordNum} size={12} color={colors.textTertiary} />
-                <Text style={[styles.extStatText, { color: colors.textTertiary }]}>
-                  {formatNumber(novel.word_num)}
-                </Text>
+                <Text style={[styles.extStatText, { color: colors.textTertiary }]}>{formatNumber(novel.word_num)}</Text>
               </View>
             )}
-{novel.comment_num != null && novel.comment_num > 0 && (
+            {novel.comment_num != null && novel.comment_num > 0 && (
               <View style={styles.extStat}>
                 <Ionicons name={ICONS.like} size={12} color={colors.textTertiary} />
                 <Text style={[styles.extStatText, { color: colors.textTertiary }]}>
@@ -87,7 +88,7 @@ export const NovelRow = memo(function NovelRow({ novel, rank, value, valueLabel,
                 </Text>
               </View>
             )}
-{novel.like_num != null && novel.like_num > 0 && (
+            {novel.like_num != null && novel.like_num > 0 && (
               <View style={styles.extStat}>
                 <Ionicons name={ICONS.click} size={12} color={colors.textTertiary} />
                 <Text style={[styles.extStatText, { color: colors.textTertiary }]}>{formatNumber(novel.like_num)}</Text>

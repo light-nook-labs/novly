@@ -20,15 +20,14 @@ import { useTheme } from "../components/ThemeProvider";
 import { PageHeader } from "../components/Header";
 import { Loading } from "../components/Loading";
 
-
 const CACHE_KEY = "genres_cache_v1";
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24h
-
 
 export default function GenresScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
-  const numColumns = Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
+  const numColumns =
+    Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const [genres, setGenres] = useState<GenreCount[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,7 +46,6 @@ export default function GenresScreen() {
           padding: Spacing.lg,
         },
         genreItem: {
-          flex: 1,
           flexDirection: "row",
           alignItems: "center",
           paddingHorizontal: Spacing.lg,
@@ -159,7 +157,15 @@ export default function GenresScreen() {
           }
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={styles.genreItem}
+              style={[
+                styles.genreItem,
+                {
+                  width:
+                    numColumns > 1
+                      ? `${(100 - ((numColumns - 1) * 16 * 100) / (winWidth || 1)) / numColumns}%`
+                      : "100%",
+                },
+              ]}
               activeOpacity={0.7}
               onPress={() => router.push(`/genres/${item.genre}`)}
             >

@@ -2,6 +2,26 @@
 
 All notable changes to Novly are documented here.
 
+## [1.1.0a] - 2026-08-05
+
+### Added
+
+- 首页改版:「完本推荐」从完结A状态随机抽取 12 本(下拉刷新重新随机)+「萌神大赛」按年份分组展示(20xx萌神 tag)+ 完本推荐抽取逻辑说明 tip
+- 新增「书单」浏览功能(SFACG 在线书单,需网络):
+  - 列表页:在线分页加载(每页 10 条)+ 手动"加载更多"按钮 + 右上角正整数 ID 搜索(自行探索书单 id)
+  - 详情页:书单信息 + 小说列表(封面/书名/作者/类型/系统标签/用户标签/字数/收藏/点击/书单主推荐理由)
+- InfoSheet 通用底部说明弹层组件(settings/about 的 Why Novly 弹窗统一复用)
+
+### Fixed
+
+- 修复 about 页 `whyVisible` 未声明导致的运行时崩溃(补全半成品 Why Novly 弹窗)
+- 移除状态枚举"下架"(7):该值在生成 db 时已被排除,永远不会有数据
+
+### Improved
+
+- NoteCard 全站统一(statuses 提示卡改用共享组件)
+- authors 页提示卡与列表之间增加间距
+
 ## [1.0.3] - 2026-08-02
 
 ### Fixed
@@ -11,16 +31,19 @@ All notable changes to Novly are documented here.
 - 修复初始化页面无状态栏(NORMAL:wifi/蓝牙/消息图标不显示)
 
 ### Added
+
 - 类型统一管理:types/models.ts(Author/Contest/Novel),渐进式迁移(见 TYPE_MIGRATION.md)
 - app 元信息统一常量 constants/appInfo.ts(名称/作者/GH/QQ/邮箱/版本/标语/许可证)
 - LoadingScreen 初始化进度条 + 耐心等待提示
 
 ### Fixed
+
 - 修复详情页 head tab 切换整页替换(对齐 novels:只更新内容区)
 - 修复 NovelRow 点赞数字截断(安卓 CJK 修法)
 - 修复 settings Linking 命名冲突(统一 expo-linking)
 
 ### Refactored
+
 - Changelog 改为跳转 GitHub CHANGELOG.md(删除 app 内 changelog 页面/路由,零维护)
 - 统一版本号与元信息管理(version.ts 并入 appInfo.ts)
 

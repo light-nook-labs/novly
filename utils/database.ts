@@ -28,7 +28,7 @@ export function subscribeInitProgress(cb: (p: string | null) => void): () => voi
   };
 }
 
-function setInitProgress(p: string | null) {
+export function setInitProgress(p: string | null) {
   initProgress = p;
   initProgressListeners.forEach((cb) => cb(p));
 }
@@ -92,12 +92,24 @@ function base64ToUint8Array(base64: string): Uint8Array {
   return bytes;
 }
 
-function uint8ArrayToBase64(bytes: Uint8Array): string {
-  let binary = "";
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
+function uint8ArrayToBase64(bytes: Uint8Array, onProgress?: (ratio: number) => void): string {
+  // 分块 base64 编码:逐字节拼接大数组极慢,按 32766(3 的倍数)分块 btoa 提速
+  const CHUNK = 0x7ffe; // 32766,3 的倍数:每块 btoa 无 padding,拼接后整体合法 base64
+  let result = "";
+  const total = bytes.length;
+  for (let i = 0; i < total; i += CHUNK) {
+    const chunk = bytes.subarray(i, i + CHUNK);
+    let bin = "";
+    for (let j = 0; j < chunk.length; j++) {
+      bin += String.fromCharCode(chunk[j]);
+    }
+    result += btoa(bin);
+    // 进度回调:每 5% 更新一次,让进度条平滑移动(解压阶段不再是固定断点)
+    if (onProgress && (i / total > 0.05 || i + CHUNK >= total)) {
+      onProgress(i / total);
+    }
   }
-  return btoa(binary);
+  return result;
 }
 
 async function decompressAsset(module: number): Promise<Uint8Array> {
@@ -138,15 +150,81 @@ async function decompressAsset(module: number): Promise<Uint8Array> {
   return pako.inflate(base64ToUint8Array(base64));
 }
 
-async function decompressAndWriteChunk(module: number, targetPath: string): Promise<void> {
+async function decompressAndWriteChunk(
+  module: number,
+  targetPath: string,
+  startPct: number = 0,
+  endPct: number = 100,
+  preloadedAsset?: { localUri: string | null },
+): Promise<void> {
   const FS = await getFS();
-  dbLog(`Decompressing ${targetPath.split("/").pop()}...`);
-  const decompressed = await decompressAsset(module);
-  const base64 = uint8ArrayToBase64(decompressed);
-  await FS.writeAsStringAsync(targetPath, base64, {
+  const name = targetPath.split("/").pop();
+  const pct = (p: number) => Math.floor(startPct + (endPct - startPct) * p);
+  const t0 = Date.now();
+  dbLog(`${name}: start`);
+
+  setInitProgress(`正在初始化数据 ${pct(0)}%...`);
+
+  let localUri: string;
+  const t1 = Date.now();
+  if (preloadedAsset?.localUri) {
+    localUri = preloadedAsset.localUri;
+    dbLog(`${name}: load=${Date.now() - t0}ms (cached)`);
+  } else {
+    const assets = await Asset.loadAsync(module);
+    const asset = assets[0];
+    if (!asset.localUri) throw new Error("Asset not loaded");
+    localUri = asset.localUri;
+    dbLog(`${name}: load=${Date.now() - t0}ms`);
+  }
+
+  setInitProgress(`正在初始化数据 ${pct(0.3)}%...`);
+
+  const base64Data = await FS.readAsStringAsync(localUri, {
     encoding: FS.EncodingType.Base64,
   });
-  dbLog(`Written ${(decompressed.length / 1024 / 1024).toFixed(1)} MB`);
+  const compressed = base64ToUint8Array(base64Data);
+  const t2 = Date.now();
+  dbLog(`${name}: ${(compressed.length / 1024 / 1024).toFixed(1)} MB compressed`);
+  dbLog(`${name}: read=${t2 - t1}ms total=${t2 - t0}ms`);
+  setInitProgress(`正在初始化数据 ${pct(0.5)}%...`);
+
+  const inf = new pako.Inflate({ chunkSize: 1024 * 1024 });
+  const SLICE = 2 * 1024 * 1024;
+  const totalSlices = Math.ceil(compressed.length / SLICE);
+  let sliceIdx = 0;
+  for (let i = 0; i < compressed.length; i += SLICE) {
+    inf.push(compressed.subarray(i, Math.min(i + SLICE, compressed.length)), false);
+    sliceIdx++;
+    const decompressProgress = 0.5 + 0.25 * (sliceIdx / totalSlices);
+    setInitProgress(`正在初始化数据 ${pct(decompressProgress)}%...`);
+    await new Promise((r) => setTimeout(r, 0));
+  }
+  inf.push(new Uint8Array(0), true);
+  const decompressed: Uint8Array = inf.result;
+  if (!decompressed || decompressed.length === 0) {
+    throw new Error(`Decompress produced no output for ${name}`);
+  }
+  const t3 = Date.now();
+  dbLog(`${name}: ${(decompressed.length / 1024 / 1024).toFixed(1)} MB decompressed`);
+  dbLog(`${name}: decompress=${t3 - t2}ms total=${t3 - t0}ms`);
+  setInitProgress(`正在初始化数据 ${pct(0.75)}%...`);
+
+  const WRITE_CHUNK = 2 * 1024 * 1024;
+  let isFirst = true;
+  for (let off = 0; off < decompressed.length; off += WRITE_CHUNK) {
+    const part = decompressed.subarray(off, Math.min(off + WRITE_CHUNK, decompressed.length));
+    const b64 = uint8ArrayToBase64(part);
+    if (isFirst) {
+      await FS.writeAsStringAsync(targetPath, b64, { encoding: FS.EncodingType.Base64 });
+      isFirst = false;
+    } else {
+      await FS.writeAsStringAsync(targetPath, b64, { encoding: FS.EncodingType.Base64, append: true });
+    }
+  }
+  const t4 = Date.now();
+  dbLog(`${name}: write=${t4 - t3}ms total=${t4 - t0}ms`);
+  dbLog(`${name}: written`);
 }
 
 async function decompressAndWriteChunkStreaming(
@@ -156,55 +234,38 @@ async function decompressAndWriteChunkStreaming(
 ): Promise<void> {
   const FS = await getFS();
   const name = targetPath.split("/").pop();
-  dbLog(`Streaming decompress to ${name}...`);
+  dbLog(`${name}: start`);
 
   let compressed: Uint8Array;
   if (preloaded) {
-    // 准备阶段已在初始化 Loading 期间完成,直接使用缓存,避免渲染后卡死交互
     compressed = preloaded;
   } else {
-    setInitProgress("正在准备冷数据...");
     const assets = await Asset.loadAsync(module);
     const asset = assets[0];
-    if (!asset.localUri) throw new Error("Asset not downloaded");
+    if (!asset.localUri) throw new Error("Asset not loaded");
     const base64Data = await FS.readAsStringAsync(asset.localUri, {
       encoding: FS.EncodingType.Base64,
     });
     compressed = base64ToUint8Array(base64Data);
   }
-  dbLog(`Compressed size: ${(compressed.length / 1024 / 1024).toFixed(1)} MB`);
+  dbLog(`${name}: ${(compressed.length / 1024 / 1024).toFixed(1)} MB compressed`);
 
-  // 注意:pako@3 的 onData/onEnd 回调不会触发,解压结果在全部 push 完成后存于 inf.result。
-  // 因此这里先分片 push(保持 JS 线程让出),最后一次性读取 result,再分块写入文件。
-  const inf = new pako.Inflate({ chunkSize: 256 * 1024 });
-
-  // 分片喂给 pako:每片之间 await 让出 JS 线程,避免一次性同步解压大文件冻结 UI
-  const SLICE = 1024 * 1024; // 1MB 压缩数据/片:每片处理快,配合 100ms 让出,React 渲染窗口更频繁,列表/详情能及时渲染
-  let lastReportedPct = -1;
-  for (let i = 0; i < compressed.length; i += SLICE) {
-    const slice = compressed.subarray(i, Math.min(i + SLICE, compressed.length));
-    inf.push(slice, false);
-
-    // 每 ~5% 更新一次进度(节流,避免频繁刷新)
-    const pct = Math.floor((i / compressed.length) * 100);
-    if (pct >= lastReportedPct + 5) {
-      lastReportedPct = pct;
-      setInitProgress(`正在解压冷数据 ${Math.min(pct, 99)}%...`);
-    }
-
-    await new Promise((r) => setTimeout(r, 100)); // 让出 ~6 帧,给 React 完整渲染窗口(列表/详情可渲染,不再只有固定 UI)
+  // 流式解压:分块 push + yield 让出 JS 线程
+  const inf = new pako.Inflate({ chunkSize: 1024 * 1024 });
+  const PUSH_SIZE = 256 * 1024; // 256KB per push
+  for (let i = 0; i < compressed.length; i += PUSH_SIZE) {
+    inf.push(compressed.subarray(i, Math.min(i + PUSH_SIZE, compressed.length)), false);
+    if (i % (1024 * 1024) === 0) await new Promise((r) => setTimeout(r, 0)); // 每 1MB yield
   }
-  inf.push(new Uint8Array(0), true); // flush 剩余数据
+  inf.push(new Uint8Array(0), true);
   const decompressed: Uint8Array = inf.result;
   if (!decompressed || decompressed.length === 0) {
     throw new Error(`Decompress produced no output for ${name}`);
   }
-  dbLog(`Decompressed ${(decompressed.length / 1024 / 1024).toFixed(1)} MB`);
+  dbLog(`${name}: ${(decompressed.length / 1024 / 1024).toFixed(1)} MB decompressed`);
 
-  // 分块写入文件(每次 1MB),避免一次性转出超大 base64 字符串
-  setInitProgress("正在写入冷数据...");
-  lastReportedPct = -1;
-  const WRITE_CHUNK = 2 * 1024 * 1024; // 2MB 写入分块:让出频繁,列表渲染不被饿死
+  // 分块写入 + yield
+  const WRITE_CHUNK = 2 * 1024 * 1024;
   let isFirst = true;
   let written = 0;
   for (let off = 0; off < decompressed.length; off += WRITE_CHUNK) {
@@ -217,42 +278,51 @@ async function decompressAndWriteChunkStreaming(
       await FS.writeAsStringAsync(targetPath, b64, { encoding: FS.EncodingType.Base64, append: true });
     }
     written += part.length;
-
-    const pct = Math.floor((off / decompressed.length) * 100);
-    if (pct >= lastReportedPct + 5) {
-      lastReportedPct = pct;
-      setInitProgress(`正在写入冷数据 ${pct}%...`);
-    }
-    await new Promise((r) => setTimeout(r, 100)); // 让出 ~6 帧,给 React 完整渲染窗口(列表/详情可渲染,不再只有固定 UI)
+    await new Promise((r) => setTimeout(r, 0)); // 每次写完让出
   }
-
-  setInitProgress(null);
-  dbLog(`Written ${(written / 1024 / 1024).toFixed(1)} MB to ${name}`);
+  dbLog(`${name}: written ${(written / 1024 / 1024).toFixed(1)} MB`);
 }
 
-async function mergeChunkIntoDb(targetDb: SQLite.SQLiteDatabase, alias: string, chunkPath: string): Promise<void> {
+async function mergeChunkIntoDb(
+  targetDb: SQLite.SQLiteDatabase,
+  alias: string,
+  chunkPath: string,
+  startPct: number = 75,
+  endPct: number = 100,
+): Promise<void> {
   const fsPath = toFsPath(chunkPath);
+  const t0 = Date.now();
   dbLog(`ATTACH ${alias} -> ${fsPath}`);
+  await targetDb.execAsync(`PRAGMA busy_timeout = 60000`);
   await targetDb.execAsync(`ATTACH '${fsPath}' AS ${alias}`);
+  dbLog(`ATTACH done: ${Date.now() - t0}ms`);
 
   dbLog(`Merging novels from ${alias}...`);
-  // 分批合并(每批 5000 行 + 让出线程),避免 24.6 万行大 INSERT 阻塞 JS 线程导致交互卡死
+  const t1 = Date.now();
   const { maxId } = await targetDb.getFirstAsync<{ maxId: number }>(
     `SELECT COALESCE(MAX(id), 0) as maxId FROM ${alias}.novels`,
   );
-  const BATCH = 5000;
+  dbLog(`novels maxId=${maxId} query: ${Date.now() - t1}ms`);
+  const t1b = Date.now();
+  const BATCH = 5000; // 更小的批次,更频繁 yield
   for (let start = 0; start <= maxId; start += BATCH) {
     await targetDb.execAsync(
       `INSERT OR REPLACE INTO novels SELECT * FROM ${alias}.novels WHERE id > ${start} AND id <= ${start + BATCH}`,
     );
     if (maxId > 0) {
-      setInitProgress(`正在合并数据 ${Math.min(Math.floor((start / maxId) * 100), 99)}%...`);
+      const overall = Math.min(Math.floor(startPct + ((endPct - startPct) * start) / maxId), endPct - 1);
+      setInitProgress(`正在初始化数据 ${overall}%...`);
     }
-    await new Promise((r) => setTimeout(r, 100)); // 让出 ~6 帧,给 React 完整渲染窗口(列表/详情可渲染,不再只有固定 UI)
+    await new Promise((r) => setTimeout(r, 0)); // 每批 yield
   }
+  dbLog(`novels batch insert: ${Date.now() - t1b}ms`);
 
   dbLog(`Merging contests from ${alias}...`);
+  const t2 = Date.now();
   await targetDb.execAsync(`INSERT OR IGNORE INTO contests (name) SELECT name FROM ${alias}.contests`);
+  dbLog(`contests insert: ${Date.now() - t2}ms`);
+  await new Promise((r) => setTimeout(r, 0));
+  const t2b = Date.now();
   await targetDb.execAsync(`
     UPDATE novels SET contest_id = (
       SELECT t.id FROM contests t JOIN ${alias}.contests a ON t.name = a.name
@@ -260,9 +330,15 @@ async function mergeChunkIntoDb(targetDb: SQLite.SQLiteDatabase, alias: string, 
     )
     WHERE contest_id IN (SELECT id FROM ${alias}.contests)
   `);
+  dbLog(`contests update: ${Date.now() - t2b}ms`);
+  await new Promise((r) => setTimeout(r, 0));
 
   dbLog(`Merging tags from ${alias}...`);
+  const t3 = Date.now();
   await targetDb.execAsync(`INSERT OR IGNORE INTO tags (name) SELECT name FROM ${alias}.tags`);
+  dbLog(`tags insert: ${Date.now() - t3}ms`);
+  await new Promise((r) => setTimeout(r, 0));
+  const t3b = Date.now();
   await targetDb.execAsync(`
     INSERT OR IGNORE INTO novel_tags (novel_id, tag_id)
     SELECT nt.novel_id, t.id
@@ -270,11 +346,17 @@ async function mergeChunkIntoDb(targetDb: SQLite.SQLiteDatabase, alias: string, 
     JOIN ${alias}.tags at ON at.id = nt.tag_id
     JOIN tags t ON t.name = at.name
   `);
+  dbLog(`novel_tags merge: ${Date.now() - t3b}ms`);
+  await new Promise((r) => setTimeout(r, 0));
 
   dbLog(`Merging authors from ${alias}...`);
+  const t4 = Date.now();
   await targetDb.execAsync(
     `INSERT OR IGNORE INTO authors (name, top_novel_id, top_novel_title, top_novel_clicks) SELECT name, top_novel_id, top_novel_title, top_novel_clicks FROM ${alias}.authors`,
   );
+  dbLog(`authors insert: ${Date.now() - t4}ms`);
+  await new Promise((r) => setTimeout(r, 0));
+  const t4b = Date.now();
   await targetDb.execAsync(`
     UPDATE authors SET
       top_novel_id = c.top_novel_id,
@@ -283,9 +365,13 @@ async function mergeChunkIntoDb(targetDb: SQLite.SQLiteDatabase, alias: string, 
     FROM ${alias}.authors c
     WHERE authors.name = c.name AND c.top_novel_clicks > authors.top_novel_clicks
   `);
+  dbLog(`authors update: ${Date.now() - t4b}ms`);
+  await new Promise((r) => setTimeout(r, 0));
 
+  const t5 = Date.now();
   await targetDb.execAsync(`DETACH ${alias}`);
-  dbLog(`Merged ${alias} into base.`);
+  dbLog(`DETACH: ${Date.now() - t5}ms`);
+  dbLog(`Merged ${alias} into base. total=${Date.now() - t0}ms`);
 }
 
 async function loadWebSeed(database: SQLite.SQLiteDatabase): Promise<void> {
@@ -313,20 +399,19 @@ async function loadWebSeed(database: SQLite.SQLiteDatabase): Promise<void> {
   dbLog("seed 加载完成");
 }
 
-export function initDatabase(): Promise<SQLite.SQLiteDatabase> {
+export function initDatabase(preloadedHot?: { localUri: string | null }): Promise<SQLite.SQLiteDatabase> {
   if (currentDb) {
     return Promise.resolve(currentDb);
   }
-  // 并发调用共享同一个初始化 promise,避免重复执行(重复解压 hot+warm / cold 合并)
   if (!initPromise) {
-    initPromise = initDatabaseInternal().finally(() => {
+    initPromise = initDatabaseInternal(preloadedHot).finally(() => {
       initPromise = null;
     });
   }
   return initPromise;
 }
 
-async function initDatabaseInternal(): Promise<SQLite.SQLiteDatabase> {
+async function initDatabaseInternal(preloadedHot?: { localUri: string | null }): Promise<SQLite.SQLiteDatabase> {
   if (Platform.OS === "web") {
     // Tauri 安卓 WebView 无 OPFS(navigator.storage.getDirectory 不存在),
     // 回退到内存数据库 + seed 加载(每次启动重新加载)
@@ -412,53 +497,24 @@ async function initDatabaseInternal(): Promise<SQLite.SQLiteDatabase> {
     }
   }
 
-  dbLog("First launch: decompressing hot+warm...");
+  dbLog("First launch: decompressing hot...");
   isFirstInit = true;
-  const warmPath = `${dbDir}/warm_chunk.sqlite`;
   const coldPath = `${dbDir}/cold_chunk.sqlite`;
 
-  // 清理上次进程被杀可能残留的半成品中间文件,避免脏文件干扰重建
-  await FS.deleteAsync(warmPath, { idempotent: true });
+  // 清理残留
+  await FS.deleteAsync(hotPath, { idempotent: true });
   await FS.deleteAsync(coldPath, { idempotent: true });
 
-  // 首次初始化:通过 header 进度条展示解压进度
-  setInitProgress("正在准备热数据...");
-
-  await decompressAndWriteChunk(require("../assets/chunks/hot_chunk.sqlite.gz"), hotPath);
-  await decompressAndWriteChunk(require("../assets/chunks/warm_chunk.sqlite.gz"), warmPath);
+  // hot 直接解压到最终路径(前台,~3s)
+  const tHot0 = Date.now();
+  await decompressAndWriteChunk(require("../assets/chunks/hot_chunk.sqlite.gz"), hotPath, 0, 100, preloadedHot);
+  dbLog(`hot: ${Date.now() - tHot0}ms`);
 
   const db = await SQLite.openDatabaseAsync("hot_chunk.sqlite");
-
-  await mergeChunkIntoDb(db, "warm", warmPath);
-  await FS.deleteAsync(warmPath, { idempotent: true });
-
-  dbLog("Hot+warm ready. Page can render now.");
-  // cold 准备阶段(加载 asset/读 base64/转 Uint8Array)在初始化 Loading 期间完成,
-  // 避免渲染后无让出的 CPU 密集准备阶段卡死交互
-  setInitProgress("正在准备冷数据...");
-  try {
-    const coldAssets = await Asset.loadAsync(require("../assets/chunks/cold_chunk.sqlite.gz"));
-    const coldAsset = coldAssets[0];
-    if (coldAsset.localUri) {
-      const coldBase64 = await FS.readAsStringAsync(coldAsset.localUri, {
-        encoding: FS.EncodingType.Base64,
-      });
-      coldCompressed = base64ToUint8Array(coldBase64);
-    }
-  } catch (e) {
-    dbLog(`Cold preload failed: ${String(e)}`);
-  }
   currentDb = db;
-  // 热数据已就绪、页面即将渲染:清除"准备热数据"文案,避免进度条显示过时内容
-  setInitProgress(null);
 
-  // 始终执行 cold 合并(dev 与 release 一致,便于真机观测性能);
-  // 渲染后延迟启动,且等首屏交互空闲(InteractionManager)再开始,
-  // 避免 cold 解压抢占 JS 线程导致"页面已渲染但无法交互"的窗口。
-  // 延迟 8s:让欢迎弹窗(渲染后 2s)有充足时间被用户关闭后再启动,
-  // 否则 cold 合并会阻塞 JS 线程导致弹窗点击无响应。
-  // cold 合并已分批让出线程,不再阻塞 JS 线程;
-  // 缩短延迟(1.5s)尽快启动,避免浪费等待时间(InteractionManager 已弃用且可能迟迟不触发)
+  // cold 后台合并(不阻塞渲染)
+  setInitProgress(null);
   setTimeout(() => {
     mergeColdInBackground(db, docDir, coldPath, hotPath, markerPath)
       .then(() => setInitProgress(null))
@@ -490,7 +546,6 @@ async function mergeColdInBackground(
   hotPath: string,
   markerPath: string,
 ): Promise<void> {
-  // 防并发:自动触发与手动触发不能同时合并(hotwarm 只能被一个进程 ATTACH)
   if (coldMergeRunning) {
     dbLog("Cold merge already running, skip.");
     return;
@@ -499,34 +554,64 @@ async function mergeColdInBackground(
   try {
     const FS = await getFS();
 
-    // 清理上次失败可能残留的损坏/半成品文件,从干净状态重新解压,避免 malformed
+    // 设置 busy_timeout 防止 database is locked
+    await oldDb.execAsync("PRAGMA busy_timeout = 30000");
+
+    // 清理上次失败残留
     await FS.deleteAsync(coldPath, { idempotent: true });
+    const coldTmpPath = `${docDir}/cold_tmp.sqlite`;
+    await FS.deleteAsync(coldTmpPath, { idempotent: true });
 
-    await decompressAndWriteChunkStreaming(
-      require("../assets/chunks/cold_chunk.sqlite.gz"),
-      coldPath,
-      coldCompressed ?? undefined,
-    );
+    // 1. 逐个解压 cold_1/2/3 并合并到 coldDb
+    //    关键: coldDb 使用 coldPath, 后续 part 解压到 coldTmpPath 避免文件冲突
+    const coldModules = [
+      require("../assets/chunks/cold_1_chunk.sqlite.gz"),
+      require("../assets/chunks/cold_2_chunk.sqlite.gz"),
+      require("../assets/chunks/cold_3_chunk.sqlite.gz"),
+    ];
 
-    dbLog("Opening cold DB and merging hot+warm into it...");
-    setInitProgress("正在合并数据库...");
-    const coldDb = await SQLite.openDatabaseAsync(coldPath, { readOnly: false });
+    const tCold0 = Date.now();
+    let coldDb: SQLite.SQLiteDatabase | null = null;
+    for (let i = 0; i < coldModules.length; i++) {
+      const tPart = Date.now();
+      const targetPath = i === 0 ? coldPath : coldTmpPath;
+      setInitProgress(`正在解压冷数据 ${i + 1}/3...`);
+      await decompressAndWriteChunkStreaming(coldModules[i], targetPath);
+      dbLog(`cold_${i + 1} decompress: ${Date.now() - tPart}ms`);
 
-    await mergeChunkIntoDb(coldDb, "hotwarm", hotPath);
+      if (i === 0) {
+        // 第一个 cold part: 直接作为 coldDb
+        coldDb = await SQLite.openDatabaseAsync(coldPath, { readOnly: false });
+      } else {
+        // 后续 cold parts: ATTACH coldTmpPath 到 coldDb 合并
+        setInitProgress(`正在合并冷数据 ${i + 1}/3...`);
+        await mergeChunkIntoDb(coldDb!, `cold${i + 1}`, coldTmpPath);
+        await FS.deleteAsync(coldTmpPath, { idempotent: true });
+      }
+      await new Promise((r) => setTimeout(r, 0)); // yield
+    }
+    dbLog(`cold decompress+merge: ${Date.now() - tCold0}ms`);
 
-    dbLog("Creating indexes on merged DB...");
+    // 2. ATTACH hot → INSERT 热数据
+    dbLog("Merging hot into cold DB...");
+    const tMerge0 = Date.now();
+    setInitProgress("正在合并热数据...");
+    await mergeChunkIntoDb(coldDb!, "hot", hotPath);
+
+    // 3. 建索引
+    dbLog("Creating indexes...");
     setInitProgress("正在创建索引...");
-    await createIndexes(coldDb);
+    await createIndexes(coldDb!);
 
+    // 5. 原子替换
     dbLog("Swapping cold DB into place...");
     await oldDb.closeAsync();
     await FS.deleteAsync(hotPath, { idempotent: true });
     await FS.moveAsync({ from: coldPath, to: hotPath });
     await FS.writeAsStringAsync(markerPath, "1");
 
-    currentDb = coldDb;
+    currentDb = coldDb!;
     dbLog("Full database ready with cold data.");
-    // 全量库就位,通知订阅者刷新数据(如首页 nav 统计)
     emitDbReady();
     emitColdMerged();
   } finally {

@@ -14,6 +14,8 @@ Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before 
 
 ## Quick Commands
 
+x
+
 ```bash
 pnpm install       # install deps
 pnpm start         # dev server (interactive platform picker)
@@ -26,10 +28,58 @@ pnpm tauri build  # build Windows desktop installer (NSIS)
 
 ### Data layer
 
-- **Global DB** (`utils/database.ts`): `initDatabase()` / `getDatabase()` — promise-cached singleton, loads `assets/seed.sql.gz` on first run (Web uses OPFS via expo-sqlite). Read-only app data.
+- **Global DB** (`utils/database.ts`): `initDatabase(preloadedHot?)` / `getDatabase()` — promise-cached singleton. First run: decompress hot chunk → open DB → background merge cold (3 parts). Read-only app data.
 - **Bookshelf local DB** (`utils/bookshelfDb.ts`): separate `bookshelf.sqlite` for user-private data — NEVER read the bookshelf from the global DB. API: `getBookshelf()`, `addToBookshelf(novel)` (takes `Omit<BookshelfNovel, "added_at">`), `removeFromBookshelf(id)`, `clearBookshelf()`, `isInBookshelf(id)`.
 - **Pagination**: lists page at 10 items per page (`PAGE_SIZE = 10`); infinite scroll via `onEndReached` + `onContentSizeChange` auto-fill on tall screens.
 - **Status normalization** (`normalizeStatus` in `utils/mappings.ts`): A-variants are merged — status `5` (Abandoned-A) → `4`, status `6` (Completed-A) → `2`. The `statuses` list page groups by the normalized value; `NovelRow` renders the raw value (both display fine via `statusMapping`).
+- **Cold merge**: runs in background via `setTimeout`, uses `PRAGMA busy_timeout = 60000`. Progress banner shown in UI via `subscribeInitProgress`. Cold merged marker: `.db_merged_v5`.
+
+### Regenerating data chunks (gzip files)
+
+Data source: `interset-wq/nookdata` (corrected data from `light-nook-labs/novel_hub`).
+
+**Source of truth**: `nookdata` release JSONL files → `scripts/build_chunks.py` → `assets/chunks/*.sqlite.gz`.
+
+```bash
+# 1. Get nookdata-fixed JSONL (from nookdata repo's temp/repaired/jsonl_fixed/)
+#    Place them in a local directory, e.g. temp/nookdata-fixed/
+
+# 2. Run build_chunks.py (from scripts/ directory)
+cd scripts
+python build_chunks.py <jsonl_dir> <output_dir>
+# Example: python build_chunks.py ../temp/nookdata-fixed ../temp/output-chunks
+
+# 3. Compress output to gzip and copy to assets/chunks/
+node -e "
+const fs=require('fs'),zlib=require('zlib');
+const dir='<output_dir>';
+for(const name of['hot','cold_1','cold_2','cold_3']){
+  const raw=fs.readFileSync(dir+'/'+name+'_chunk.sqlite');
+  const gz=zlib.gzipSync(raw,{level:9});
+  fs.writeFileSync('../assets/chunks/'+name+'_chunk.sqlite.gz',gz);
+  console.log(name+': raw='+(raw.length/1024/1024).toFixed(1)+'MB, gz='+(gz.length/1024/1024).toFixed(1)+'MB');
+}
+"
+```
+
+**Chunk categories** (defined in `scripts/build_chunks.py`):
+
+| Chunk  | Status                                 | Records | Size (compressed) | Update Frequency |
+| ------ | -------------------------------------- | ------- | ----------------- | ---------------- |
+| hot    | 连载中, 完结A, 断更A                   | ~5k     | ~1.6MB            | Monthly          |
+| cold_1 | 断更, 已完结 (author hash partition 0) | ~80k    | ~20MB             | Never            |
+| cold_2 | 断更, 已完结 (author hash partition 1) | ~80k    | ~20MB             | Never            |
+| cold_3 | 断更, 已完结 (author hash partition 2) | ~80k    | ~20MB             | Never            |
+
+Cold data is split into3 parts by author name hash (`md5(author) % 3`), so novels by the same author always stay in the same chunk. This minimizes redundant author data across chunks.
+
+下架 (7) and 其他 (1) data is excluded. Genre "其他" (1) is also excluded.
+
+**Source dirs** (gitignored, for reference):
+
+- `db-never-edit-or-delete-this-folder/` — original chunks from NovelHubMobile (novel_hub data, has errors)
+- `temp/nookdata-fixed/` — corrected JSONL from nookdata
+- `temp/scripts/` — build scripts (`build_chunks.py`, `validators.py`)
 
 ### Theming (COMPLETE — all pages & components support light/dark)
 
@@ -95,6 +145,10 @@ Rules:
 
 11. **Android System WebView has no OPFS** — `navigator.storage.getDirectory` is not implemented in Android System WebView, but expo-sqlite's web backend (wa-sqlite) depends on OPFS. So **Tauri v2 Android (WebView shell) is NOT viable** for this app: the Android build must use the native RN/Expo path (native SQLite). Don't attempt `pnpm tauri android build` here (decided 2026-08-01, commit 2cef9ee); `src-tauri/gen/android` is a generated dir — keep it untracked.
 
+12. **Cold merge must use separate file paths** — when merging multiple cold parts, each part must be decompressed to a different temp path (e.g. `cold_tmp.sqlite`) than the coldDb's file (`cold_chunk.sqlite`). Overwriting the coldDb's file while it's open causes "database is locked" errors. The `mergeColdInBackground` function uses `coldPath` for coldDb and `coldTmpPath` for subsequent parts.
+
+13. **Large gz decompression must yield to event loop** — `readAsStringAsync` + `pako.inflate` on a 20MB gz file blocks the JS thread for ~50s. The `decompressAndWriteChunkStreaming` function uses 256KB push chunks with `setTimeout` yields every1MB to keep the UI responsive. Never read an entire gz file into memory in one shot on Android.
+
 ### Detail routes are variants of the novels route
 
 `app/tags/[id].tsx`、`app/contests/[id].tsx`、`app/genres/[id].tsx`、`app/statuses/[id].tsx` are all variants of `app/(tabs)/novels.tsx`:
@@ -153,13 +207,13 @@ On each `vX.Y.Z` release, do ALL of:
 
 Report & fix bugs with 5 severity levels:
 
-| Level    | Meaning                                    | Example                          |
-| -------- | ------------------------------------------ | -------------------------------- |
-| BLOCKER  | Blocks release: crash / data loss / core feature completely unusable | App crashes on launch |
-| CRITICAL | Severe: core feature broken, fix ASAP      | Data not found after DB merge    |
-| MAJOR    | Main: feature usable but clearly broken    | Restart dialog cannot restart the app |
-| NORMAL   | General: feature affected but not severe   | Loading screen has no StatusBar  |
-| MINOR    | Minor: UX / style nit, can be deferred     | Wording / style details          |
+| Level    | Meaning                                                              | Example                               |
+| -------- | -------------------------------------------------------------------- | ------------------------------------- |
+| BLOCKER  | Blocks release: crash / data loss / core feature completely unusable | App crashes on launch                 |
+| CRITICAL | Severe: core feature broken, fix ASAP                                | Data not found after DB merge         |
+| MAJOR    | Main: feature usable but clearly broken                              | Restart dialog cannot restart the app |
+| NORMAL   | General: feature affected but not severe                             | Loading screen has no StatusBar       |
+| MINOR    | Minor: UX / style nit, can be deferred                               | Wording / style details               |
 
 - Tag bugs with a severity level; fix in priority order BLOCKER -> CRITICAL -> MAJOR -> NORMAL -> MINOR
 - BLOCKER / CRITICAL must be fixed immediately and never shipped with

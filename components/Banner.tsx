@@ -362,8 +362,8 @@ function WelcomeCard({ width, height, bgUri }: { width: number; height: number; 
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 16,
-    marginBottom: 24,
+    // 首页已由 heroCard 统一控制外边距与卡片背景,这里不再留外边距,
+    // 否则 banner 与下方导航网格之间 gap 过大,看起来不像一个整体
     alignItems: "center",
     width: "100%",
   },

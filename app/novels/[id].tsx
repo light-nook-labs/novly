@@ -28,8 +28,6 @@ import { ID } from "../../components/ID";
 import { ImageLightbox } from "../../components/ImageLightbox";
 import { DetailSkeleton } from "../../components/Skeleton";
 
-
-
 interface Contest {
   id: number;
   name: string;

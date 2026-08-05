@@ -24,8 +24,6 @@ import { NovelFilterSheet } from "../../components/NovelFilterSheet";
 import { Colors, FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { useTheme } from "../../components/ThemeProvider";
 
-
-
 const DEFAULT_FILTER: FilterState = {
   genre: null,
   status: null,

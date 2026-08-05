@@ -18,6 +18,7 @@ import { router } from "expo-router";
 import Constants from "expo-constants";
 import { APP_NAME, APP_SLOGAN, APP_AUTHOR, APP_FOOTER, APP_GITHUB_URL } from "../constants/appInfo";
 import { initDatabase, isFirstInit, subscribeColdMerged, subscribeInitProgress } from "../utils/database";
+import { Asset } from "expo-asset";
 import Toast from "react-native-toast-message";
 import * as Clipboard from "expo-clipboard";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -139,20 +140,47 @@ function LoadingScreen() {
           </Animated.Text>
         </View>
         <ActivityIndicator size="small" color={colors.primary} style={[styles.spinner, { marginTop: 16 }]} />
-      {initProgress ? (
-        <View style={{ alignItems: "center", marginTop: 12 }}>
-          <Text style={{ fontSize: 13, color: colors.textSecondary, textAlign: "center", paddingHorizontal: 24, fontWeight: "600" }}>
-            {initProgress}
-          </Text>
-          <View style={{ height: 4, width: "55%", backgroundColor: colors.surfaceBorder, borderRadius: 2, marginTop: 8, overflow: "hidden" }}>
-            <View style={{ height: 4, flex: pctNum / 100, backgroundColor: colors.primary, borderRadius: 2 }} />
+        {initProgress ? (
+          <View style={{ alignItems: "center", marginTop: 12 }}>
+            <Text
+              style={{
+                fontSize: 13,
+                color: colors.textSecondary,
+                textAlign: "center",
+                paddingHorizontal: 24,
+                fontWeight: "600",
+              }}
+            >
+              {initProgress}
+            </Text>
+            {pctNum > 0 && (
+              <View
+                style={{
+                  height: 4,
+                  width: "55%",
+                  backgroundColor: colors.surfaceBorder,
+                  borderRadius: 2,
+                  marginTop: 8,
+                  overflow: "hidden",
+                }}
+              >
+                <View style={{ height: 4, width: `${pctNum}%`, backgroundColor: colors.primary, borderRadius: 2 }} />
+              </View>
+            )}
+            <Text
+              style={{
+                fontSize: 12,
+                color: colors.textTertiary,
+                marginTop: 8,
+                textAlign: "center",
+                paddingHorizontal: 24,
+                fontWeight: "600",
+              }}
+            >
+              请耐心等待,首次启动需要初始化数据
+            </Text>
           </View>
-          <Text style={{ fontSize: 12, color: colors.textTertiary, marginTop: 8, textAlign: "center", paddingHorizontal: 24, fontWeight: "600" }}>
-            请耐心等待,首次启动需要初始化数据
-          </Text>
-        </View>
-      ) : null}
-
+        ) : null}
       </View>
       <View style={{ marginTop: "auto", alignItems: "center", paddingBottom: 16, gap: 4 }}>
         <Text
@@ -193,9 +221,24 @@ function BackButton() {
 
 function AppContent({ ready, error, onRestart }: { ready: boolean; error: string | null; onRestart: () => void }) {
   const [coldMerged, setColdMerged] = useState(false);
+  const [coldProgress, setColdProgress] = useState<string | null>(null);
   // 冷合并完成(全量库就位)后,弹窗提示重启应用,防页面未及时更新
   useEffect(() => {
-    return subscribeColdMerged(() => setColdMerged(true));
+    const unsub = subscribeColdMerged(() => setColdMerged(true));
+    return unsub;
+  }, []);
+  // 冷合并进度(首次启动时显示底部提示)
+  useEffect(() => {
+    if (!isFirstInit) return;
+    const unsub = subscribeInitProgress((p) => {
+      // 只在冷合并阶段显示(解压冷数据/合并冷数据/创建索引)
+      if (p && (p.includes("冷数据") || p.includes("合并") || p.includes("索引"))) {
+        setColdProgress(p);
+      } else if (!p) {
+        setColdProgress(null);
+      }
+    });
+    return unsub;
   }, []);
   const { colors, mode } = useTheme();
 
@@ -233,6 +276,8 @@ function AppContent({ ready, error, onRestart }: { ready: boolean; error: string
         <Stack.Screen name="statuses/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ headerShown: false }} />
         <Stack.Screen name="about" options={{ headerShown: false }} />
+        <Stack.Screen name="booklists" options={{ headerShown: false }} />
+        <Stack.Screen name="booklists/[id]" options={{ headerShown: false }} />
       </Stack>
       <Toast />
 
@@ -255,6 +300,16 @@ function AppContent({ ready, error, onRestart }: { ready: boolean; error: string
           </View>
         </View>
       </Modal>
+
+      {/* 冷合并进度提示(首次启动时底部显示) */}
+      {coldProgress && !coldMerged && (
+        <View style={[styles.coldBanner, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
+          <ActivityIndicator size="small" color={colors.primary} style={{ marginRight: 8 }} />
+          <Text style={{ fontSize: 12, color: colors.textSecondary, flex: 1 }} numberOfLines={1}>
+            {coldProgress}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -266,20 +321,19 @@ export default function RootLayout() {
   const [appKey, setAppKey] = useState(0);
 
   useEffect(() => {
-    // 仅首次初始化(需解压 hot+warm)时 LoadingScreen 至少展示 3s;
-    // 快速路径(库已就绪)直接渲染页面,不显示 loading
     const start = Date.now();
-    initDatabase()
-      .then(() => {
-        if (!isFirstInit) {
-          setReady(true);
-          return;
-        }
-        const elapsed = Date.now() - start;
-        const wait = Math.max(0, 3000 - elapsed);
-        setTimeout(() => setReady(true), wait);
-      })
-      .catch((e) => setError(e.message));
+    (async () => {
+      // 预加载 hot .sqlite.gz:首次启动预提取到 cache(2-3s),之后 Asset.loadAsync 直接返回缓存
+      const preloadedAssets = await Promise.all([Asset.loadAsync(require("../assets/chunks/hot_chunk.sqlite.gz"))]);
+      await initDatabase(preloadedAssets[0]);
+      if (!isFirstInit) {
+        setReady(true);
+        return;
+      }
+      const elapsed = Date.now() - start;
+      const wait = Math.max(0, 3000 - elapsed);
+      setTimeout(() => setReady(true), wait);
+    })().catch((e: any) => setError(e.message));
   }, []);
 
   // 欢迎弹窗:页面渲染成功(ready)后再延迟 2s 弹出,不抢占 LoadingScreen
@@ -493,5 +547,16 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: "600",
     paddingHorizontal: 2,
+  },
+  coldBanner: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
 });

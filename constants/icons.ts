@@ -6,7 +6,7 @@ export const ICONS = {
   jump: "chevron-forward", // 跳转页面(右侧箭头)
   link: "open-outline", // 超链接(外链)
   like: "heart-outline", // 收藏/喜欢(like_num)
-  click: "thumbs-up-outline", // 点赞/点击(click_num)
+  click: "thumbs-up-outline", // 点赞/点击(click_num)jixu
   author: "person-outline", // 作者
   wordNum: "document-text-outline", // 字数(word_num)
   search: "search-outline",
@@ -23,4 +23,7 @@ export const ICONS = {
   bug: "bug-outline",
   trash: "trash-outline",
   swap: "swap-vertical",
+  tip: "help-circle-outline", // 小提示/说明(展开 why 解释,如完本推荐抽取逻辑)
+  booklist: "bookmarks-outline", // 书单(sfacg 在线书单入口)
+  wifi: "wifi-outline", // 在线/需网络(书单数据在线拉取)
 } as const;

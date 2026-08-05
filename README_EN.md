@@ -20,6 +20,7 @@ Novly is an offline-first light-novel metadata browsing app: all data is bundled
 - 🌗 **SFACG deep links**: open the original in the SFACG app / browser; Web share via SFACG URL
 - 🎨 **Theme switching**: System / Light / Dark color schemes, applied app-wide in real time
 - 🖼️ **Banner gallery**: browse and full-screen preview novel banner images
+- 📚 **Online booklists**: browse SFACG booklists (requires network), with ID search to explore booklists & their novels
 - 🌐 **Cross-platform**: Web / Android / iOS
 
 ## Screenshots
@@ -56,7 +57,7 @@ Novly can be packaged as a Windows desktop app (Tauri v2), same source as the We
 pnpm tauri build
 ```
 
-Output: `src-tauri/target/release/bundle/nsis/Novly_1.0.3_x64-setup.exe`
+Output: `src-tauri/target/release/bundle/nsis/Novly_1.1.0a_x64-setup.exe`
 
 ### Install behavior
 
@@ -87,7 +88,7 @@ On first launch, `assets/seed.sql.gz` is automatically decompressed to initializ
 novim/
 ├── app/                      # expo-router routes (pages)
 │   ├── (tabs)/               # bottom tabs: Home/Novels/Banners/Rankings/Bookshelf
-│   │   ├── index.tsx         #   home (banner + nav grid + top rankings)
+│   │   ├── index.tsx         #   home (banner + nav grid + recommended/moe sections + booklist entry)
 │   │   ├── novels.tsx        #   novel list (search + filter sheet)
 │   │   ├── banners.tsx       #   banner gallery
 │   │   ├── rankings.tsx      #   multi-dimension rankings
@@ -103,6 +104,8 @@ novim/
 │   ├── contests.tsx          # contest list
 │   ├── genres.tsx            # genre list
 │   ├── statuses.tsx          # status list
+│   ├── booklists.tsx         # booklist list (online fetch, ID search)
+│   ├── booklists/[id].tsx    # booklist detail (info + novel list)
 │   ├── search.tsx            # global search
 │   ├── search/banners.tsx    # banner search
 │   └── settings.tsx          # settings (theme / dangerous area / about)
@@ -113,6 +116,7 @@ novim/
 │   ├── NovelRow.tsx          #   novel row (cover + badges + rank)
 │   ├── Banner*.tsx           #   carousel / banner components
 │   ├── NovelFilterSheet.tsx  #   filter bottom sheet
+│   ├── InfoSheet.tsx         #   bottom info sheet (Why Novly etc.)
 │   ├── ConfirmDialog.tsx     #   dangerous-action confirm dialog
 │   ├── AppInfoSheet.tsx      #   about info sheet
 │   └── ...

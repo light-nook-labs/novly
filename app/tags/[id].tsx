@@ -64,7 +64,8 @@ export default function TagDetailScreen() {
   const lastTabTapRef = useRef(0);
   const { width: winWidth } = useWindowDimensions();
   // web 按窗口宽度动态列数:≥1400 三列,≥900 两列,否则单列;手机恒为单列
-  const numColumns = Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
+  const numColumns =
+    Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const { id } = useLocalSearchParams();
   const [tag, setTag] = useState<Tag | null>(null);
   // 列表数据由 useNovels 统一管理(与 novels 页完全一致)
@@ -80,6 +81,13 @@ export default function TagDetailScreen() {
     maxWordNum: filters.maxWordNum,
   });
   const [listHeight, setListHeight] = useState(0);
+  const [contentHeight, setContentHeight] = useState(0);
+  // 大屏:内容不足视口时自动填充(onEndReached 不触发时持续加载直到铺满)
+  useEffect(() => {
+    if (listHeight > 0 && contentHeight > 0 && contentHeight <= listHeight && hasMore && !loading) {
+      loadMore();
+    }
+  }, [novels, listHeight, contentHeight, hasMore, loading, loadMore]);
   const { scrollRef, showButton, onScroll, scrollToTop } = useScrollToTop();
 
   const styles = useMemo(
@@ -210,9 +218,14 @@ export default function TagDetailScreen() {
         columnWrapperStyle={numColumns > 1 ? { gap: 16, marginBottom: 16 } : undefined}
         onScroll={onScroll}
         scrollEventThrottle={16}
-        onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}
+        onLayout={(e) => {
+          const h = e.nativeEvent.layout.height;
+          setListHeight(h);
+          if (contentHeight > 0 && contentHeight <= h && hasMore && !loading) loadMore();
+        }}
         onContentSizeChange={(_, h) => {
-          if (h <= listHeight && hasMore && !loading) {
+          setContentHeight(h);
+          if (listHeight > 0 && h <= listHeight && hasMore && !loading) {
             loadMore();
           }
         }}
@@ -221,7 +234,14 @@ export default function TagDetailScreen() {
         windowSize={7}
         contentContainerStyle={styles.list}
         renderItem={({ item, index }) => (
-          <NovelRow novel={item} rank={index + 1} value={item.click_num} valueLabel="点击" />
+          <View
+            style={{
+              width:
+                numColumns > 1 ? `${(100 - ((numColumns - 1) * 16 * 100) / (winWidth || 1)) / numColumns}%` : "100%",
+            }}
+          >
+            <NovelRow novel={item} rank={index + 1} value={item.click_num} valueLabel="点击" />
+          </View>
         )}
         ListEmptyComponent={
           !loading && novels.length === 0 ? (

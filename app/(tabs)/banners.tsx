@@ -30,7 +30,8 @@ export default function BannersScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
   // web 按窗口宽度动态列数(与其他列表页一致);手机单列
-  const numColumns = Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
+  const numColumns =
+    Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   // 列表项宽度:多列时按列数均分(含列间距),单列时占满容器
   const itemW =
     numColumns > 1 ? (winWidth - Spacing.lg * 2 - 16 * (numColumns - 1)) / numColumns : winWidth - Spacing.lg * 2;

@@ -20,6 +20,7 @@ Novly 是一个离线优先的轻小说元数据浏览应用：数据打包内�
 - 🌗 **SFACG 跳转**：在 App / 浏览器中打开原文，支持 Web 端分享 SFACG 链接
 - 🎨 **主题切换**：跟随系统 / 浅色 / 深色三种配色方案，全页面即时响应
 - 🖼️ **背投图库**：小说背投（banner）图片浏览与全屏预览
+- 📚 **在线书单**：浏览 SFACG 书单（需网络），支持 ID 搜索自行探索书单与作品
 - 🌐 **跨平台**：Web / Android / iOS
 
 ## 界面预览
@@ -66,7 +67,7 @@ Novly 支持打包为 Windows 桌面应用(Tauri v2),与 Web 版同源,离线优
 pnpm tauri build
 ```
 
-产物:`src-tauri/target/release/bundle/nsis/Novly_1.0.3_x64-setup.exe`
+产物:`src-tauri/target/release/bundle/nsis/Novly_1.1.0a_x64-setup.exe`
 
 ### 安装行为
 
@@ -97,7 +98,7 @@ pnpm run ios        # iOS
 novim/
 ├── app/                      # expo-router 路由（页面）
 │   ├── (tabs)/               # 底部 tab：首页/小说/背投/排行/书架
-│   │   ├── index.tsx         #   首页（banner + 导航网格 + 热门排行）
+│   │   ├── index.tsx         #   首页（banner + 导航网格 + 完本推荐/萌神大赛 + 书单入口）
 │   │   ├── novels.tsx        #   小说列表（搜索 + 筛选面板）
 │   │   ├── banners.tsx       #   背投图库
 │   │   ├── rankings.tsx      #   多维排行
@@ -113,6 +114,8 @@ novim/
 │   ├── contests.tsx          # 赛事列表
 │   ├── genres.tsx            # 分类列表
 │   ├── statuses.tsx          # 状态列表
+│   ├── booklists.tsx         # 书单列表（在线拉取，ID 搜索）
+│   ├── booklists/[id].tsx    # 书单详情（书单信息 + 小说列表）
 │   ├── search.tsx            # 全局搜索
 │   ├── search/banners.tsx    # 背投搜索
 │   └── settings.tsx          # 设置（主题切换/危险操作/关于）
@@ -123,6 +126,7 @@ novim/
 │   ├── NovelRow.tsx          #   小说行（封面 + 徽章 + 排行）
 │   ├── Banner*.tsx           #   轮播/背投组件
 │   ├── NovelFilterSheet.tsx  #   筛选弹窗
+│   ├── InfoSheet.tsx         #   底部说明弹层（Why Novly 等）
 │   ├── ConfirmDialog.tsx     #   危险操作确认框
 │   ├── AppInfoSheet.tsx      #   关于信息弹窗
 │   └── ...

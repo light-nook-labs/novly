@@ -14,12 +14,14 @@ import { Link, router } from "expo-router";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { TAB_ICONS } from "../../constants/tabIcons";
+import { ICONS } from "../../constants/icons";
 import { getDatabase, subscribeDbReady } from "../../utils/database";
 import { formatNumber, genreMapping, statusMapping, ptypeMapping } from "../../utils/mappings";
 import { Colors, FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { Banner, DEFAULT_PINNED, type PinnedBanner } from "../../components/Banner";
 import { NovelRow, type NovelRowData } from "../../components/NovelRow";
 import { TabHeader } from "../../components/TabHeader";
+import { InfoSheet, InfoBody, InfoItem } from "../../components/InfoSheet";
 import { useTheme } from "../../components/ThemeProvider";
 
 interface BannerNovel {
@@ -126,10 +128,13 @@ export default function HomeScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
   // web 按窗口宽度动态列数(与 novels 等列表一致);手机单列
-  const numColumns = Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
+  const numColumns =
+    Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const isWide = winWidth >= 1024;
   const [bannerNovels, setBannerNovels] = useState<BannerNovel[]>([]);
   const [topNovels, setTopNovels] = useState<NovelRowData[]>([]);
+  const [topTipVisible, setTopTipVisible] = useState(false); // 完本推荐说明弹层
+  const [moeGrouped, setMoeGrouped] = useState<{ year: string; novels: NovelRowData[] }[]>([]); // 萌神大赛(按年份分组)
   const [stats, setStats] = useState<Stats | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   // 防抖:防止快速多次点击导航按钮导致同一页面重复入栈
@@ -161,9 +166,31 @@ export default function HomeScreen() {
       setBannerNovels(banners);
 
       const top = await db.getAllAsync<NovelRowData>(
-        "SELECT id, title, author, cover, click_num, status, genre, ptype FROM novels ORDER BY click_num DESC LIMIT 12",
+        "SELECT id, title, author, cover, click_num, status, genre, ptype FROM novels WHERE status = 6 ORDER BY RANDOM() LIMIT 12",
       );
       setTopNovels(top);
+
+      // 萌神大赛:获取所有 20xx萌神 标签的 novels(每年2本,按标签年份倒序)
+      const moeRows = await db.getAllAsync<NovelRowData & { tag_name: string }>(
+        `SELECT DISTINCT n.id, n.title, n.author, n.cover, n.click_num, n.status, n.genre, n.ptype, t.name as tag_name
+         FROM novels n
+         INNER JOIN novel_tags nt ON n.id = nt.novel_id
+         INNER JOIN tags t ON nt.tag_id = t.id
+         WHERE t.name LIKE '%萌神'
+         ORDER BY t.name DESC, n.click_num DESC`,
+      );
+      // 按年份分组:tag_name -> novels[]
+      const moeGrouped: { year: string; novels: NovelRowData[] }[] = [];
+      const moeMap = new Map<string, NovelRowData[]>();
+      for (const row of moeRows) {
+        const year = row.tag_name.replace("萌神", "");
+        if (!moeMap.has(year)) {
+          moeMap.set(year, []);
+          moeGrouped.push({ year, novels: moeMap.get(year)! });
+        }
+        moeMap.get(year)!.push(row);
+      }
+      setMoeGrouped(moeGrouped);
 
       const [a, t, c, g, s] = await Promise.all([
         db.getFirstAsync<{ v: number }>("SELECT COUNT(*) as v FROM authors"),
@@ -226,6 +253,11 @@ export default function HomeScreen() {
       const db = await getDatabase();
       const banners = await loadBanners(db);
       setBannerNovels(banners);
+      // 下拉刷新同时刷新完本推荐(完结A 随机 12 本,每次刷新随机变化)
+      const top = await db.getAllAsync<NovelRowData>(
+        "SELECT id, title, author, cover, click_num, status, genre, ptype FROM novels WHERE status = 6 ORDER BY RANDOM() LIMIT 12",
+      );
+      setTopNovels(top);
     } catch (error) {
       console.error("Refresh failed:", error);
     } finally {
@@ -234,135 +266,195 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={colors.primary}
-          colors={[colors.primary]}
-        />
-      }
-    >
-      <TabHeader
-        placeholder="搜索小说..."
-        right={
-          <TouchableOpacity onPress={openSettings} style={styles.settingsBtn}>
-            <Ionicons name="settings-outline" size={22} color={colors.textSecondary} />
-          </TouchableOpacity>
+    <>
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
         }
-      />
-
-      <Banner data={bannerNovels} pinned={[DEFAULT_PINNED, SURVEY_PIN]} maxItems={BANNER_COUNT} />
-
-      <View
-        style={[
-          styles.navGrid,
-          { backgroundColor: colors.surface },
-          isWide && { paddingHorizontal: Spacing.xl, paddingVertical: Spacing.xl },
-        ]}
       >
-        {NAV_ITEMS.map((item) => (
-          <TouchableOpacity
-            key={item.key}
-            style={[
-              styles.navItem,
-              isWide && {
-                width: "20%",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: Spacing.sm,
-                paddingHorizontal: Spacing.sm,
-                paddingVertical: Spacing.xs,
-              },
-            ]}
-            onPress={() => router.push(NAV_ROUTES[item.key])}
-          >
-            <View
-              style={[
-                styles.navIconWrap,
-                { backgroundColor: item.color + "15" },
-                isWide && { width: 64, height: 64, borderRadius: 18 },
-              ]}
-            >
-              <Ionicons name={item.icon} size={isWide ? 32 : 22} color={item.color} />
-            </View>
-            {isWide ? (
-              <View style={styles.navTextWrap}>
-                <Text
+        <TabHeader
+          placeholder="搜索小说..."
+          right={
+            <TouchableOpacity onPress={openSettings} style={styles.settingsBtn}>
+              <Ionicons name="settings-outline" size={22} color={colors.textSecondary} />
+            </TouchableOpacity>
+          }
+        />
+
+        {/* 顶部卡片:banner 与导航网格同一父容器 */}
+        <View style={[styles.heroCard, { backgroundColor: colors.surface }]}>
+          <Banner data={bannerNovels} pinned={[DEFAULT_PINNED, SURVEY_PIN]} maxItems={BANNER_COUNT} />
+
+          <View style={[styles.navGrid, isWide && { paddingHorizontal: Spacing.xl, paddingVertical: Spacing.xl }]}>
+            {NAV_ITEMS.map((item) => (
+              <TouchableOpacity
+                key={item.key}
+                style={[
+                  styles.navItem,
+                  isWide && {
+                    width: "20%",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: Spacing.sm,
+                    paddingHorizontal: Spacing.sm,
+                    paddingVertical: Spacing.xs,
+                  },
+                ]}
+                onPress={() => router.push(NAV_ROUTES[item.key])}
+              >
+                <View
                   style={[
-                    styles.navLabel,
-                    { color: colors.text },
-                    isWide && { fontSize: 16, textAlign: "left", marginTop: 0 },
+                    styles.navIconWrap,
+                    { backgroundColor: item.color + "15" },
+                    isWide && { width: 64, height: 64, borderRadius: 18 },
                   ]}
                 >
-                  {item.label}
-                </Text>
-                {stats && (
-                  <Text
-                    style={[
-                      styles.navCount,
-                      { color: colors.textTertiary },
-                      isWide && { fontSize: 15, textAlign: "left", marginTop: 1 },
-                    ]}
-                  >
-                    {formatNumber(stats[item.key as keyof Stats] ?? 0)}
-                  </Text>
+                  <Ionicons name={item.icon} size={isWide ? 32 : 22} color={item.color} />
+                </View>
+                {isWide ? (
+                  <View style={styles.navTextWrap}>
+                    <Text
+                      style={[
+                        styles.navLabel,
+                        { color: colors.text },
+                        isWide && { fontSize: 16, textAlign: "left", marginTop: 0 },
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                    {stats && (
+                      <Text
+                        style={[
+                          styles.navCount,
+                          { color: colors.textTertiary },
+                          isWide && { fontSize: 15, textAlign: "left", marginTop: 1 },
+                        ]}
+                      >
+                        {formatNumber(stats[item.key as keyof Stats] ?? 0)}
+                      </Text>
+                    )}
+                  </View>
+                ) : (
+                  <>
+                    <Text style={[styles.navLabel, { color: colors.text }]}>{item.label}</Text>
+                    {stats && (
+                      <Text style={[styles.navCount, { color: colors.textTertiary }]}>
+                        {formatNumber(stats[item.key as keyof Stats] ?? 0)}
+                      </Text>
+                    )}
+                  </>
                 )}
-              </View>
-            ) : (
-              <>
-                <Text style={[styles.navLabel, { color: colors.text }]}>{item.label}</Text>
-                {stats && (
-                  <Text style={[styles.navCount, { color: colors.textTertiary }]}>
-                    {formatNumber(stats[item.key as keyof Stats] ?? 0)}
-                  </Text>
-                )}
-              </>
-            )}
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>热门排行</Text>
-        <Link href="/novels" asChild>
-          <TouchableOpacity style={styles.seeAllBtn}>
-            <Text style={[styles.seeAllText, { color: colors.primary }]}>查看全部</Text>
-            <Ionicons name="chevron-forward" size={14} color={colors.primary} />
-          </TouchableOpacity>
-        </Link>
-      </View>
-
-      <View
-        style={{
-          flexDirection: numColumns > 1 ? "row" : "column",
-          flexWrap: numColumns > 1 ? "wrap" : undefined,
-        }}
-      >
-        {topNovels.map((novel, index) => (
-          <View
-            key={novel.id}
-            style={
-              numColumns > 1
-                ? {
-                    width: `${100 / numColumns}%`, // 百分比均分,基于容器实际宽度(含滚动条自适应)
-                    paddingRight: (index + 1) % numColumns !== 0 ? 16 : 0,
-                    paddingBottom: 16,
-                  }
-                : undefined
-            }
-          >
-            <NovelRow novel={novel} rank={index + 1} value={novel.click_num} valueLabel="点击" />
+              </TouchableOpacity>
+            ))}
           </View>
-        ))}
-      </View>
+        </View>
 
-      <View style={{ height: 32 }} />
-    </ScrollView>
+        {/* 书单:在线数据,独立于导航容器,单独卡片 */}
+        <TouchableOpacity
+          style={[styles.booklistNavItem, { backgroundColor: colors.surface }]}
+          onPress={() => router.push("/booklists")}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.booklistNavIconWrap, { backgroundColor: colors.primary + "15" }]}>
+            <Ionicons name={ICONS.booklist} size={22} color={colors.primary} />
+          </View>
+          <View style={styles.booklistNavTextWrap}>
+            <Text style={[styles.booklistNavLabel, { color: colors.text }]}>书单</Text>
+            <Text style={[styles.booklistNavSub, { color: colors.textSecondary }]}>来自 SFACG 的在线书单</Text>
+          </View>
+          <Ionicons name={ICONS.wifi} size={18} color={colors.textTertiary} />
+        </TouchableOpacity>
+
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleRow}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>完本推荐</Text>
+            <TouchableOpacity onPress={() => setTopTipVisible(true)} hitSlop={8} accessibilityLabel="完本推荐说明">
+              <Ionicons name={ICONS.tip} size={16} color={colors.textTertiary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View
+          style={{
+            flexDirection: numColumns > 1 ? "row" : "column",
+            flexWrap: numColumns > 1 ? "wrap" : undefined,
+          }}
+        >
+          {topNovels.map((novel, index) => (
+            <View
+              key={novel.id}
+              style={
+                numColumns > 1
+                  ? {
+                      width: `${100 / numColumns}%`, // 百分比均分,基于容器实际宽度(含滚动条自适应)
+                      paddingRight: (index + 1) % numColumns !== 0 ? 16 : 0,
+                      paddingBottom: 16,
+                    }
+                  : undefined
+              }
+            >
+              <NovelRow novel={novel} unordered value={novel.click_num} valueLabel="点击" />
+            </View>
+          ))}
+        </View>
+
+        {/* 萌神大赛(按年份分组) */}
+        {moeGrouped.length > 0 && (
+          <>
+            <View style={[styles.sectionHeader, { marginTop: Spacing.xl }]}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>萌神大赛</Text>
+            </View>
+
+            {moeGrouped.map(({ year, novels }) => (
+              <View key={year} style={{ marginBottom: 16 }}>
+                <View style={[styles.sectionHeader, { marginTop: 0 }]}>
+                  <Text style={[styles.sectionSubTitle, { color: colors.textSecondary }]}>{year}</Text>
+                </View>
+                <View
+                  style={{
+                    flexDirection: numColumns > 1 ? "row" : "column",
+                    flexWrap: numColumns > 1 ? "wrap" : undefined,
+                  }}
+                >
+                  {novels.map((novel, index) => (
+                    <View
+                      key={novel.id}
+                      style={
+                        numColumns > 1
+                          ? {
+                              width: `${100 / numColumns}%`,
+                              paddingRight: (index + 1) % numColumns !== 0 ? 16 : 0,
+                              paddingBottom: 16,
+                            }
+                          : undefined
+                      }
+                    >
+                      <NovelRow novel={novel} unordered value={novel.click_num} valueLabel="点击" />
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ))}
+          </>
+        )}
+
+        <View style={{ height: 32 }} />
+      </ScrollView>
+
+      {/* 完本推荐说明弹层 */}
+      <InfoSheet visible={topTipVisible} onClose={() => setTopTipVisible(false)} title="完本推荐说明">
+        <InfoBody>完本推荐从「完结A」状态的小说中随机抽取 12 本展示。</InfoBody>
+        <InfoBody>每次下拉刷新都会重新随机抽取一批,所以每次看到的推荐可能不同。</InfoBody>
+      </InfoSheet>
+    </>
   );
 }
 
@@ -417,18 +509,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  heroCard: {
+    // banner + 导航网格 同一父容器,整块卡片背景(背景色在 JSX 内联)
+    marginHorizontal: Platform.OS === "web" ? Spacing.lg : 0,
+    marginBottom: Spacing.xl,
+    borderRadius: BorderRadius.lg,
+    overflow: "hidden",
+    boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+    elevation: 2,
+  },
   navGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.xl,
-    backgroundColor: Colors.surface,
-    // 仅 web 保留外边距(避免与容器 padding 叠加浪费空间);手机端占满容器宽度
-    marginHorizontal: Platform.OS === "web" ? Spacing.lg : 0,
-    borderRadius: BorderRadius.lg,
     paddingVertical: Spacing.lg,
-    boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-    elevation: 2,
   },
   navItem: {
     width: "20%",
@@ -460,6 +554,37 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "flex-start",
   },
+  booklistNavItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.xl,
+    marginHorizontal: Platform.OS === "web" ? Spacing.lg : 0,
+    boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+    elevation: 2,
+  },
+  booklistNavIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.lg,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  booklistNavTextWrap: {
+    flex: 1,
+  },
+  booklistNavLabel: {
+    fontSize: FontSize.md,
+    fontWeight: "700",
+  },
+  booklistNavSub: {
+    fontSize: FontSize.xs,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -471,6 +596,15 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xl,
     fontWeight: "700",
     color: Colors.text,
+  },
+  sectionTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+  },
+  sectionSubTitle: {
+    fontSize: FontSize.md,
+    fontWeight: "600",
   },
   seeAllBtn: {
     flexDirection: "row",

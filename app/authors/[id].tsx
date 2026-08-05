@@ -20,11 +20,11 @@ import { PageHeader } from "../../components/Header";
 import { NovelRow, type NovelRowData } from "../../components/NovelRow";
 import { DetailSkeleton } from "../../components/Skeleton";
 
-
 export default function AuthorDetailScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
-  const numColumns = Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
+  const numColumns =
+    Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { id } = useLocalSearchParams();
   const [author, setAuthor] = useState<AuthorStats | null>(null);
