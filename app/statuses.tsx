@@ -35,7 +35,7 @@ interface CacheEntry {
 export default function StatusesScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
-  const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
+  const numColumns = Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const [statuses, setStatuses] = useState<StatusCount[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -218,7 +218,7 @@ export default function StatusesScreen() {
             <TouchableOpacity
               style={styles.statusItem}
               activeOpacity={0.7}
-              onPress={() => router.push(`/status/${item.status}`)}
+              onPress={() => router.push(`/statuses/${item.status}`)}
             >
               <View style={styles.iconWrap}>
                 <View style={[styles.dot, { backgroundColor: statusColors[item.status] || "#999" }]} />

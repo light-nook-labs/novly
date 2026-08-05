@@ -28,7 +28,7 @@ import { Ionicons } from "@expo/vector-icons";
 export default function AuthorsScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
-  const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
+  const numColumns = Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const [authors, setAuthors] = useState<Author[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [query, setQuery] = useState("");
@@ -224,7 +224,7 @@ export default function AuthorsScreen() {
           </NoteCard>
         }
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.authorItem} onPress={() => router.push(`/author/${item.id}`)}>
+          <TouchableOpacity style={styles.authorItem} onPress={() => router.push(`/authors/${item.id}`)}>
             <View style={styles.authorInfo}>
               <Text style={styles.authorName}>{item.name}</Text>
               {item.top_novel_title && (

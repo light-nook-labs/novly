@@ -76,7 +76,7 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
   }
 
   function handleTitlePress() {
-    router.push(`/novel/${id}`);
+    router.push(`/novels/${id}`);
   }
 
   return (

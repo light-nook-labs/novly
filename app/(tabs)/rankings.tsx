@@ -48,7 +48,7 @@ export default function RankingsScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
   // web 按窗口宽度动态列数:≥1400 三列,≥900 两列,否则单列;手机恒为单列
-  const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
+  const numColumns = Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const [novels, setNovels] = useState<Novel[]>([]);
   const [selectedTab, setSelectedTab] = useState("click_num");
   const [loading, setLoading] = useState(true);

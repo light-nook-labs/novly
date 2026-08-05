@@ -1,15 +1,16 @@
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { TAB_ICONS } from "../constants/tabIcons";
 import { useRef } from "react";
 import { useTheme } from "./ThemeProvider";
 import { Spacing, BorderRadius, FontSize } from "../constants/theme";
 
 /** 分类 tab 定义(全部/免费/签约/VIP),novels 与各详情页共用 */
 export const PTYPES = [
-  { key: null, label: "全部", icon: "list-outline" as const },
-  { key: 2, label: "免费", icon: "gift-outline" as const },
-  { key: 3, label: "签约", icon: "ribbon-outline" as const },
-  { key: 4, label: "VIP", icon: "diamond-outline" as const },
+  { key: null, label: "全部", icon: TAB_ICONS.all },
+  { key: 2, label: "免费", icon: TAB_ICONS.free },
+  { key: 3, label: "签约", icon: TAB_ICONS.sign },
+  { key: 4, label: "VIP", icon: TAB_ICONS.vip },
 ];
 
 export type PtypeKey = number | null;

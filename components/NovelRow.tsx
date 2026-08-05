@@ -43,7 +43,7 @@ export const NovelRow = memo(function NovelRow({ novel, rank, value, valueLabel,
     <TouchableOpacity
       activeOpacity={0.7}
       style={[styles.row, { backgroundColor: colors.surface }]}
-      onPress={() => router.push(`/novel/${novel.id}`)}
+      onPress={() => router.push(`/novels/${novel.id}`)}
     >
       {rank !== undefined &&
         (isTop3 ? (

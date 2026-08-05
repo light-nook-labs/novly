@@ -139,7 +139,7 @@ export function BannerItem({ id, title, author, width, height }: BannerItemProps
     <TouchableOpacity
       activeOpacity={0.9}
       style={[styles.card, { width: containerWidth, height: fixedHeight, backgroundColor: colors.surfaceBorder }]}
-      onPress={() => router.push(`/novel/${id}`)}
+      onPress={() => router.push(`/novels/${id}`)}
     >
       {loadError ? (
         <View

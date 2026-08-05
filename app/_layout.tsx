@@ -218,19 +218,19 @@ function AppContent({ ready, error, onRestart }: { ready: boolean; error: string
       <StatusBar style={mode === "dark" ? "light" : "dark"} />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="novel/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="novels/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="search" options={{ headerShown: false }} />
         <Stack.Screen name="search/banners" options={{ headerShown: false }} />
         <Stack.Screen name="authors" options={{ headerShown: false }} />
-        <Stack.Screen name="author/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="authors/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="tags" options={{ headerShown: false }} />
-        <Stack.Screen name="tag/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="tags/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="contests" options={{ headerShown: false }} />
-        <Stack.Screen name="contest/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="contests/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="genres" options={{ headerShown: false }} />
-        <Stack.Screen name="genre/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="genres/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="statuses" options={{ headerShown: false }} />
-        <Stack.Screen name="status/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="statuses/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ headerShown: false }} />
         <Stack.Screen name="about" options={{ headerShown: false }} />
       </Stack>

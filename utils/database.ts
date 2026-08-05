@@ -7,7 +7,9 @@ const pako = require("pako");
 let currentDb: SQLite.SQLiteDatabase | null = null;
 // 初始化 promise 缓存:防止多个页面并发 getDatabase() 导致重复初始化(重复解压/合并)
 let initPromise: Promise<SQLite.SQLiteDatabase> | null = null;
-const DB_NAME = "novel_hub.sqlite";
+const DB_NAME = "novel_hub_v3.sqlite";
+// seed 数据版本(web 端用 PRAGMA user_version 对比;seed 数据更新时 +1,强制浏览器重载新数据)
+const SEED_VERSION = 3;
 // 冷合并并发锁:自动触发与手动触发共用,防止 hotwarm 被重复 ATTACH
 let coldMergeRunning = false;
 // cold 压缩数据预加载缓存(准备阶段在初始化 Loading 期间完成,避免渲染后卡死交互)
@@ -291,7 +293,10 @@ async function loadWebSeed(database: SQLite.SQLiteDatabase): Promise<void> {
   const decompressed = await decompressAsset(require("../assets/seed.sql.gz"));
   const sql = new TextDecoder().decode(decompressed);
   const lines = sql.split("\n");
-  const BATCH_SIZE = 500;
+  // seed 约 113 万行:BATCH_SIZE 500 → 2264 次 execAsync,web(wa-sqlite)下极慢像卡死;
+  // 增大到 10000(约 114 批)并输出进度日志,避免"一直加载中"
+  const BATCH_SIZE = 10000;
+  const total = lines.length;
   for (let i = 0; i < lines.length; i += BATCH_SIZE) {
     const batch = lines.slice(i, i + BATCH_SIZE).filter((l) => l.trim().length > 0);
     if (batch.length > 0) {
@@ -301,7 +306,11 @@ async function loadWebSeed(database: SQLite.SQLiteDatabase): Promise<void> {
         dbLog(`Batch ${i}-${i + batch.length} failed: ${String(e)}`);
       }
     }
+    if (i % (BATCH_SIZE * 10) === 0) {
+      dbLog(`seed 加载进度: ${Math.min(i + BATCH_SIZE, total)}/${total} 行`);
+    }
   }
+  dbLog("seed 加载完成");
 }
 
 export function initDatabase(): Promise<SQLite.SQLiteDatabase> {
@@ -325,15 +334,48 @@ async function initDatabaseInternal(): Promise<SQLite.SQLiteDatabase> {
       typeof navigator !== "undefined" &&
       !!navigator.storage &&
       typeof (navigator.storage as any).getDirectory === "function";
-    const database = await SQLite.openDatabaseAsync(hasOPFS ? DB_NAME : ":memory:");
+    // 一个浏览器只有一个 db(OPFS),只能启动一个实例——createSyncAccessHandle 占用非 bug,无需清理重试
+    // 注意:seed 版本化重载时会重新打开数据库(else 分支重新赋值),必须用 let
+    let database: SQLite.SQLiteDatabase;
     try {
-      const count = await database.getFirstAsync<{ c: number }>("SELECT COUNT(*) as c FROM novels");
-      if (count && count.c > 0) {
-        currentDb = database;
-        return database;
-      }
+      database = await SQLite.openDatabaseAsync(hasOPFS ? DB_NAME : ":memory:");
+    } catch (e) {
+      // OPFS 不可用(如 Firefox 主线程不支持 createSyncAccessHandle)→ 回退内存库,避免初始化失败
+      dbLog(`web OPFS open failed, fallback to memory db: ${String(e)}`);
+      database = await SQLite.openDatabaseAsync(":memory:");
+    }
+    // seed 版本化:user_version 与 SEED_VERSION 不一致时清库重载,
+    // 避免浏览器 OPFS 残留旧 seed(如 cover 处理更新后强制刷新数据)
+    let version = 0;
+    try {
+      const r = await database.getFirstAsync<{ user_version: number }>("PRAGMA user_version");
+      version = r?.user_version ?? 0;
     } catch {}
+    if (version === SEED_VERSION) {
+      try {
+        const count = await database.getFirstAsync<{ c: number }>("SELECT COUNT(*) as c FROM novels");
+        if (count && count.c > 0) {
+          currentDb = database;
+          return database;
+        }
+      } catch {}
+    } else {
+      dbLog(`web seed 版本 ${version} != ${SEED_VERSION},重新加载 seed`);
+      await database.closeAsync().catch(() => {});
+      if (hasOPFS) {
+        try {
+          const dir = await (navigator.storage as any).getDirectory();
+          await dir.removeEntry(DB_NAME).catch(() => {});
+        } catch {}
+      }
+      try {
+        database = await SQLite.openDatabaseAsync(hasOPFS ? DB_NAME : ":memory:");
+      } catch {
+        database = await SQLite.openDatabaseAsync(":memory:");
+      }
+    }
     await loadWebSeed(database);
+    await database.execAsync(`PRAGMA user_version = ${SEED_VERSION}`);
     currentDb = database;
     return database;
   }

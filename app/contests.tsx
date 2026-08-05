@@ -27,7 +27,7 @@ const CACHE_TTL = 24 * 60 * 60 * 1000; // 24h
 export default function ContestsScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
-  const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
+  const numColumns = Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const [contests, setContests] = useState<Contest[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -47,7 +47,6 @@ export default function ContestsScreen() {
           padding: Spacing.lg,
         },
         contestItem: {
-          flex: 1,
           flexDirection: "row",
           alignItems: "center",
           paddingHorizontal: Spacing.lg,
@@ -175,8 +174,11 @@ export default function ContestsScreen() {
           )
         }
         renderItem={({ item }) => (
-          <Link href={`/contest/${item.id}`} asChild>
-            <TouchableOpacity style={styles.contestItem} activeOpacity={0.7}>
+          <Link href={`/contests/${item.id}`} asChild>
+            <TouchableOpacity
+              style={StyleSheet.flatten([styles.contestItem, { width: numColumns > 1 ? `${100 / numColumns}%` : "100%" }])}
+              activeOpacity={0.7}
+            >
               <View style={styles.iconWrap}>
                 <Ionicons name="trophy-outline" size={18} color={colors.primary} />
               </View>

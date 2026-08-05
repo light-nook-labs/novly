@@ -50,7 +50,7 @@ export default function NovelsScreen() {
   const lastTabTapRef = useRef(0);
   const { width: winWidth } = useWindowDimensions();
   // web 按窗口宽度动态列数:≥1400 三列,≥900 两列,否则单列;手机恒为单列
-  const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
+  const numColumns = Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const { genre, status, ptype } = useLocalSearchParams<{ genre?: string; status?: string; ptype?: string }>();
   const [selectedPtype, setSelectedPtype] = useState<number | null>(ptype ? Number(ptype) : null);
   const [counts, setCounts] = useState<Record<string, number>>({});

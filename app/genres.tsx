@@ -28,7 +28,7 @@ const CACHE_TTL = 24 * 60 * 60 * 1000; // 24h
 export default function GenresScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
-  const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
+  const numColumns = Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const [genres, setGenres] = useState<GenreCount[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -161,7 +161,7 @@ export default function GenresScreen() {
             <TouchableOpacity
               style={styles.genreItem}
               activeOpacity={0.7}
-              onPress={() => router.push(`/genre/${item.genre}`)}
+              onPress={() => router.push(`/genres/${item.genre}`)}
             >
               <View style={styles.iconWrap}>
                 <Ionicons name="layers-outline" size={18} color={colors.primary} />

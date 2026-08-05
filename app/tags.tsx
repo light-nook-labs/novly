@@ -190,7 +190,7 @@ export default function TagsScreen() {
           )
         }
         renderItem={({ item }) => (
-          <Link href={`/tag/${item.id}`} asChild>
+          <Link href={`/tags/${item.id}`} asChild>
             <TouchableOpacity style={styles.tagItem} activeOpacity={0.7}>
               <Text style={styles.tagName} numberOfLines={1}>
                 {item.name}

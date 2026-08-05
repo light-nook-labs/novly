@@ -165,7 +165,7 @@ export default function BookshelfScreen() {
           {filteredNovels.map((item) => (
             <View key={item.id} style={[styles.item, { width: itemWidth }]}>
               <View>
-                <Link href={`/novel/${item.id}`} asChild>
+                <Link href={`/novels/${item.id}`} asChild>
                   <TouchableOpacity activeOpacity={0.7}>
                     <Cover cover={item.cover} width={itemWidth} height={coverHeight} borderRadius={BorderRadius.md} />
                   </TouchableOpacity>
@@ -178,7 +178,7 @@ export default function BookshelfScreen() {
                   <Ionicons name="close" size={14} color="#fff" />
                 </TouchableOpacity>
               </View>
-              <Link href={`/novel/${item.id}`} asChild>
+              <Link href={`/novels/${item.id}`} asChild>
                 <TouchableOpacity activeOpacity={0.7}>
                   <Text style={styles.title} numberOfLines={2}>
                     {item.title}

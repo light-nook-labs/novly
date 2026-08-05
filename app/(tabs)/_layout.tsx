@@ -1,5 +1,6 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { TAB_ICONS } from "../../constants/tabIcons";
 import { useTheme } from "../../components/ThemeProvider";
 
 export default function TabLayout() {
@@ -21,35 +22,35 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "首页",
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name={TAB_ICONS.home} size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="novels"
         options={{
           title: "小说",
-          tabBarIcon: ({ color, size }) => <Ionicons name="book" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name={TAB_ICONS.novels} size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="banners"
         options={{
           title: "背投",
-          tabBarIcon: ({ color, size }) => <Ionicons name="images" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name={TAB_ICONS.banners} size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="rankings"
         options={{
           title: "排行",
-          tabBarIcon: ({ color, size }) => <Ionicons name="podium" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name={TAB_ICONS.rankings} size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="bookshelf"
         options={{
           title: "书架",
-          tabBarIcon: ({ color, size }) => <Ionicons name="bookmark" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name={TAB_ICONS.bookshelf} size={size} color={color} />,
         }}
       />
     </Tabs>

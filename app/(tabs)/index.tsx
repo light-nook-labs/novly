@@ -13,6 +13,7 @@ import {
 import { Link, router } from "expo-router";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { TAB_ICONS } from "../../constants/tabIcons";
 import { getDatabase, subscribeDbReady } from "../../utils/database";
 import { formatNumber, genreMapping, statusMapping, ptypeMapping } from "../../utils/mappings";
 import { Colors, FontSize, Spacing, BorderRadius } from "../../constants/theme";
@@ -38,8 +39,8 @@ interface Stats {
 const NAV_ITEMS = [
   { key: "authors" as const, icon: "person-outline" as const, label: "作者", color: Colors.primary },
   { key: "tags" as const, icon: "pricetag-outline" as const, label: "标签", color: Colors.primary },
-  { key: "contests" as const, icon: "trophy-outline" as const, label: "比赛", color: Colors.primary },
-  { key: "genres" as const, icon: "layers-outline" as const, label: "分类", color: Colors.primary },
+  { key: "contests" as const, icon: TAB_ICONS.contests, label: "比赛", color: Colors.primary },
+  { key: "genres" as const, icon: TAB_ICONS.genres, label: "分类", color: Colors.primary },
   { key: "statuses" as const, icon: "pulse-outline" as const, label: "状态", color: Colors.primary },
 ];
 
@@ -125,7 +126,7 @@ export default function HomeScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
   // web 按窗口宽度动态列数(与 novels 等列表一致);手机单列
-  const numColumns = Platform.OS === "web" ? (winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
+  const numColumns = Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const isWide = winWidth >= 1024;
   const [bannerNovels, setBannerNovels] = useState<BannerNovel[]>([]);
   const [topNovels, setTopNovels] = useState<NovelRowData[]>([]);

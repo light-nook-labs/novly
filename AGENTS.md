@@ -67,7 +67,7 @@ const styles = useMemo(
 Rules:
 
 - **Never** reference module-level `StyleSheet.create` with `Colors.xxx` for new code — put styles in the component via `useMemo([colors])` (or `createStyles(colors)`).
-- Any helper/sub-component that uses `colors` must call `useTheme()` itself (e.g. `StatItem` in `app/novel/[id].tsx` and `app/author/[id].tsx`).
+- Any helper/sub-component that uses `colors` must call `useTheme()` itself (e.g. `StatItem` in `app/novels/[id].tsx` and `app/authors/[id].tsx`).
 - Root container background must follow `colors.background` so the whole page flips with the theme.
 - Keep `import { Colors } from ".../constants/theme"` only where a module-level constant genuinely needs a static color (e.g. `NAV_ITEMS` icons in `app/(tabs)/index.tsx`).
 
@@ -97,7 +97,7 @@ Rules:
 
 ### Detail routes are variants of the novels route
 
-`app/tag/[id].tsx`、`app/contest/[id].tsx`、`app/genre/[id].tsx`、`app/status/[id].tsx` are all variants of `app/(tabs)/novels.tsx`:
+`app/tags/[id].tsx`、`app/contests/[id].tsx`、`app/genres/[id].tsx`、`app/statuses/[id].tsx` are all variants of `app/(tabs)/novels.tsx`:
 
 - List / pagination / filter / count all reuse `hooks/useNovels.ts`; detail fixed conditions are passed via `fromClause` / `extraWhere` / `extraParams` (e.g. tag: `FROM novels n INNER JOIN novel_tags nt` + `nt.tag_id = ?`; status: `FROM novels` + `status ${statusIn}`)
 - Head tabs share `components/PtypeTabs.tsx`; filter uses `NovelFilterSheet`; footer loading pattern identical to novels
