@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Novly",
-  "version": "1.1.0b",
+  "version": "1.1.0",
   "identifier": "com.lightnooklabs.novly",
   "build": {
     "beforeDevCommand": "pnpm run web",

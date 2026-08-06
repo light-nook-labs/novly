@@ -15,14 +15,7 @@ export function statusColor(colors: ThemeColors, statusId: number): string {
 
 // 全局 tag 徽章颜色(枚举风格:主题色 + 15% 底/30% 边,高对比且与 UI 一致;按小说内下标取色,≤6 个互不相同)
 export function tagColor(colors: ThemeColors, index: number): string {
-  const palette = [
-    colors.primary,
-    colors.success,
-    colors.danger,
-    colors.info,
-    colors.textSecondary,
-    colors.textMuted,
-  ];
+  const palette = [colors.primary, colors.success, colors.danger, colors.info, colors.textSecondary, colors.textMuted];
   return palette[index % palette.length];
 }
 

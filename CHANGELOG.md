@@ -2,6 +2,29 @@
 
 All notable changes to Novly are documented here.
 
+## [1.1.0] - 2026-08-06
+
+稳定版发布(自 1.1.0a/1.1.0b pre-release 正式转正)。
+
+### Added
+
+- 新增「月榜」功能:rankings 月榜 tab 展示月份列表(最早可追溯 2013-03),点击月份进入该月榜单页(月票榜/新书榜/热销榜/对话月票 head tabs,在线拉取 sfacg MonthlyBoy + 本地 DB 补元数据);月份列表支持手动加载更多、回到最新、yyyymm/yyyy 搜索
+- 书单功能:在线书单列表/详情页(ID 搜索、手动加载更多、回到 #1、BackToTop)
+- 主题系统:系统/浅色/深色三模式,全站页面与组件适配
+- 首页:完本推荐说明弹层(InfoSheet)、书单入口、萌神大赛区块
+- Settings:「Reinit」原地重新初始化数据(清除后自动重解压/合并,带进度显示,无需重启)
+
+### Fixed
+
+- 修复 ptype 数据错误:503 条 VIP 作品被标为"免费",已修复并重建 chunks
+- 首页导航图标缺失(图标合并后复数键残留)
+- 全站 badge 颜色统一:枚举(状态)与 tag 均绑定主题色,以 NovelRow 为准
+
+### Improved
+
+- APK 体积优化:164MB → 105MB(移除冗余 seed 打包与构建残留旧分块资产)
+- 类型集中化(`types/models.ts`)、图标集中化(`constants/icons.ts`);AGENTS.md 拆分 `docs/` 独立文档
+
 ## [1.1.0b] - 2026-08-06
 
 ### Added

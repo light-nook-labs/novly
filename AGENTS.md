@@ -68,7 +68,7 @@ pnpm tauri build  # build Windows desktop installer (NSIS)
 | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `types/models.ts`                                                                       | centralized data-model types (Author/Novel/Contest/FilterState/Booklist/...; pages import from here) |
 | `constants/theme.ts`                                                                    | `lightColors`, `darkColors`, `Colors`(=light), `FontSize`/`Spacing`/`BorderRadius`                   |
-| `constants/icons.ts`                                                                    | 统一图标常量(含底部 tab 图标,注释区分)                                                                 |
+| `constants/icons.ts`                                                                    | 统一图标常量(含底部 tab 图标,注释区分)                                                               |
 | `components/ThemeProvider.tsx`                                                          | `ThemeProvider`, `useTheme()`, `ThemeMode` / `ThemeColors` types                                     |
 | `utils/database.ts`                                                                     | `initDatabase()` / `getDatabase()` (promise-cached singleton)                                        |
 | `utils/bookshelfDb.ts`                                                                  | bookshelf local db: `getBookshelf/addToBookshelf/removeFromBookshelf/clearBookshelf/isInBookshelf`   |
