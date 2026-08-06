@@ -40,10 +40,10 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk  # install to the USB d
 
 > **Don't rebuild debug repeatedly**: the debug APK does NOT bundle JS or data (`assets/chunks`) — everything is served by Metro at runtime, so rebuilding does NOT pick up data changes. Rebuild only when native code changes; for data/JS changes just restart/refresh Metro.
 
-Then start the dev server and expose it to the phone over USB. **`adb reverse` must be established MANUALLY** — it is not automatic; do it every time after (re)connecting the USB cable:
+Then start the dev server and expose it to the phone over USB. **`adb reverse` must be established MANUALLY** — it is not automatic; do it every time after (re)connecting the USB cable. **Port 8081 is fixed (hardcoded)**: Metro must run on 8081 and `adb reverse` must use 8081 — the app connects to `localhost:8081`; do NOT use any other port:
 
 ```bash
-npx expo start --clear          # 1) start Metro (add --clear when the cache is corrupted / deserialize errors)
+npx expo start --port 8081 --clear  # 1) start Metro on the fixed port 8081 (add --clear when the cache is corrupted / deserialize errors)
 adb reverse tcp:8081 tcp:8081   # 2) REQUIRED manual step: phone reaches Metro on the PC over the USB reverse tunnel (debug JS/assets are served by Metro at runtime)
 adb shell pm clear com.lightnooklabs.novly  # 3) clear the old DB before verifying new data (e.g. after chunk rebuild), otherwise the stale merged DB persists
 ```
@@ -51,6 +51,7 @@ adb shell pm clear com.lightnooklabs.novly  # 3) clear the old DB before verifyi
 Notes:
 
 - The debug build does **NOT** bundle the JS bundle or `assets/chunks` into the APK — they are fetched from Metro at runtime. Real-device testing requires a manually-established `adb reverse` and a running dev server.
+- **Port 8081 is the ONLY allowed port** for the dev server and `adb reverse` — other ports are forbidden.
 - **Don't run two dev servers at once** (port 8081 conflict).
 - App package name: `com.lightnooklabs.novly`.
 
