@@ -13,7 +13,6 @@ import {
 import { Link, router } from "expo-router";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { TAB_ICONS } from "../../constants/tabIcons";
 import { ICONS } from "../../constants/icons";
 import { getDatabase, subscribeDbReady } from "../../utils/database";
 import { formatNumber, genreMapping, statusMapping, ptypeMapping } from "../../utils/mappings";
@@ -23,12 +22,7 @@ import { NovelRow, type NovelRowData } from "../../components/NovelRow";
 import { TabHeader } from "../../components/TabHeader";
 import { InfoSheet, InfoBody, InfoItem } from "../../components/InfoSheet";
 import { useTheme } from "../../components/ThemeProvider";
-
-interface BannerNovel {
-  id: number;
-  title: string;
-  author: string | null;
-}
+import { type BannerNovel } from "../../types/models";
 
 interface Stats {
   authors: number;
@@ -41,8 +35,8 @@ interface Stats {
 const NAV_ITEMS = [
   { key: "authors" as const, icon: "person-outline" as const, label: "作者", color: Colors.primary },
   { key: "tags" as const, icon: "pricetag-outline" as const, label: "标签", color: Colors.primary },
-  { key: "contests" as const, icon: TAB_ICONS.contests, label: "比赛", color: Colors.primary },
-  { key: "genres" as const, icon: TAB_ICONS.genres, label: "分类", color: Colors.primary },
+  { key: "contests" as const, icon: ICONS.contests, label: "比赛", color: Colors.primary },
+  { key: "genres" as const, icon: ICONS.genres, label: "分类", color: Colors.primary },
   { key: "statuses" as const, icon: "pulse-outline" as const, label: "状态", color: Colors.primary },
 ];
 

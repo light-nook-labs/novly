@@ -12,6 +12,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
+import { FilterState } from "../../types/models";
 import { statusMapping, normalizeStatus } from "../../utils/mappings";
 import { FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { useTheme } from "../../components/ThemeProvider";
@@ -30,16 +31,6 @@ const PTYPES = [
   { key: 3, label: "签约", icon: "ribbon-outline" as const },
   { key: 4, label: "VIP", icon: "diamond-outline" as const },
 ];
-
-interface FilterState {
-  genre: number | null;
-  status: number | null;
-  year: number | null;
-  minWordNum: number | null;
-  maxWordNum: number | null;
-  sortBy: string;
-  descending: boolean;
-}
 
 const DEFAULT_FILTER: FilterState = {
   genre: null,

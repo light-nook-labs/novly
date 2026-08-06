@@ -12,6 +12,7 @@ import { router } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import { StatusCount, CacheEntry } from "../types/models";
 import { getDatabase } from "../utils/database";
 import { statusMapping, statusColors } from "../utils/mappings";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
@@ -20,18 +21,8 @@ import { PageHeader } from "../components/Header";
 import { Loading } from "../components/Loading";
 import { NoteCard, NoteStrong } from "../components/NoteCard";
 
-interface StatusCount {
-  status: number;
-  count: number;
-}
-
-const CACHE_KEY = "statuses_cache_v2";
+const CACHE_KEY = "statuses_cache_v3";
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24h
-
-interface CacheEntry {
-  timestamp: number;
-  statuses: StatusCount[];
-}
 
 export default function StatusesScreen() {
   const { colors } = useTheme();
@@ -127,7 +118,7 @@ export default function StatusesScreen() {
       if (cached) {
         const entry: CacheEntry = JSON.parse(cached);
         if (Date.now() - entry.timestamp < CACHE_TTL) {
-          setStatuses(entry.statuses);
+          setStatuses(entry.data);
           setLoading(false);
           return;
         }
@@ -154,7 +145,7 @@ export default function StatusesScreen() {
       setStatuses(results);
 
       // 3. Write cache
-      const entry: CacheEntry = { timestamp: Date.now(), statuses: results };
+      const entry: CacheEntry = { timestamp: Date.now(), data: results };
       await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(entry));
     } catch (error) {
       console.error("Failed to load statuses:", error);

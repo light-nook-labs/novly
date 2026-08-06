@@ -9,21 +9,9 @@ import { Cover } from "./Cover";
 import { formatNumber, statusMapping, genreMapping, ptypeMapping } from "../utils/mappings";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { useTheme } from "./ThemeProvider";
+import { type NovelRowData } from "../types/models";
 
-export interface NovelRowData {
-  id: number;
-  title: string;
-  author: string | null;
-  cover: string | null;
-  click_num: number | null;
-  word_num?: number | null;
-  like_num?: number | null;
-  comment_num?: number | null;
-  tags?: string[];
-  status: number;
-  genre: number;
-  ptype: number;
-}
+export type { NovelRowData };
 
 interface NovelRowProps {
   novel: NovelRowData;

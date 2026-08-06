@@ -37,6 +37,7 @@ export interface Novel {
 export interface Tag {
   id: number;
   name: string;
+  novel_count?: number; // 标签列表页的计数投影
 }
 
 export interface FilterState {
@@ -68,4 +69,92 @@ export interface AuthorStats {
 export interface CacheEntry<T> {
   timestamp: number;
   data: T;
+}
+
+export interface BannerNovel {
+  id: number;
+  title: string;
+  author: string | null;
+}
+
+export interface NovelRowData {
+  id: number;
+  title: string;
+  author: string | null;
+  cover: string | null;
+  click_num: number | null;
+  word_num?: number | null;
+  like_num?: number | null;
+  comment_num?: number | null;
+  tags?: string[];
+  status: number;
+  genre: number;
+  ptype: number;
+}
+
+export interface StatusCount {
+  status: number;
+  count: number;
+}
+
+export interface Booklist {
+  bookListID: number;
+  title: string;
+  summary: string | null;
+  markNum: number;
+  recommendNum: number;
+  novelNum: number;
+  nickName: string;
+  avatar: string | null;
+  vipLevel: number;
+  lastUpdate: string | null;
+}
+
+export interface BooklistMeta {
+  bookListID: number;
+  title: string;
+  summary: string | null;
+  markNum: number;
+  recommendNum: number;
+  novelNum: number;
+  nickName: string;
+}
+
+export interface BooklistNovel {
+  novelId: number;
+  novelName: string;
+  authorName: string;
+  novelCover: string | null;
+  typeName: string | null;
+  tags: string[];
+  sysTags: string[];
+  charCount: number;
+  markCount: number;
+  viewTimes: number;
+  isFinish: number;
+  note: string | null;
+}
+
+export interface RankNovel {
+  id: number;
+  title: string;
+  author: string | null;
+  genre: number;
+  status: number;
+  ptype: number;
+  word_num: number;
+  click_num: number;
+  like_num: number;
+  praise_num: number;
+  review_num: number;
+  comment_num: number;
+  cover: string | null;
+  ticket_num: number;
+}
+
+export interface SearchNovel {
+  id: number;
+  title: string;
+  author: string | null;
+  click_num: number | null;
 }

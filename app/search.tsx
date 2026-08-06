@@ -12,18 +12,12 @@ import { Link } from "expo-router";
 import { useState, useEffect, useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../utils/database";
+import { type SearchNovel } from "../types/models";
 import { formatNumber } from "../utils/mappings";
 import { PageHeader } from "../components/Header";
 import { LoadingFooter } from "../components/Loading";
 import { useTheme } from "../components/ThemeProvider";
 import { Colors, FontSize, Spacing, BorderRadius } from "../constants/theme";
-
-interface Novel {
-  id: number;
-  title: string;
-  author: string | null;
-  click_num: number | null;
-}
 
 export default function SearchScreen() {
   const { colors } = useTheme();
@@ -32,7 +26,7 @@ export default function SearchScreen() {
   const numColumns =
     Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Novel[]>([]);
+  const [results, setResults] = useState<SearchNovel[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const PAGE_SIZE = 10;
@@ -57,7 +51,7 @@ export default function SearchScreen() {
         const numericId = Number.parseInt(trimmed, 10);
         const idQuery = Number.isNaN(numericId) ? -1 : numericId;
 
-        const results = await db.getAllAsync<Novel>(
+        const results = await db.getAllAsync<SearchNovel>(
           `SELECT id, title, author, click_num
          FROM novels
          WHERE title LIKE ?

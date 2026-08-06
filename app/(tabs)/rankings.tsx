@@ -14,6 +14,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
 import { NovelRow } from "../../components/NovelRow";
+import { type Novel } from "../../types/models";
 import { TabHeader } from "../../components/TabHeader";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
 import { FontSize, Spacing, BorderRadius } from "../../constants/theme";
@@ -21,23 +22,6 @@ import { ICONS } from "../../constants/icons";
 import { useTheme } from "../../components/ThemeProvider";
 import { BackToTop } from "../../components/BackToTop";
 import { Loading, LoadingFooter } from "../../components/Loading";
-
-interface Novel {
-  id: number;
-  title: string;
-  author: string | null;
-  genre: number;
-  status: number;
-  ptype: number;
-  word_num: number;
-  click_num: number;
-  like_num: number;
-  praise_num: number;
-  review_num: number;
-  comment_num: number;
-  cover: string | null;
-  ticket_num?: number; // 月榜票数(在线月榜专用)
-}
 
 const RANKING_TABS = [
   { key: "click_num", label: "点击", icon: "eye-outline" as const },
@@ -230,7 +214,7 @@ export default function RankingsScreen() {
   async function fetchRankings(limit: number, offset: number) {
     const db = await getDatabase();
     return db.getAllAsync<Novel>(
-      `SELECT id, title, author, genre, status, ptype, word_num, click_num, like_num, praise_num, review_num, comment_num, cover
+      `SELECT id, title, author, genre, status, ptype, word_num, click_num, like_num, praise_num, review_num, comment_num, cover, contest_id, has_banner, last_update
        FROM novels
        WHERE ${selectedTab} > 0
        ORDER BY ${selectedTab} DESC

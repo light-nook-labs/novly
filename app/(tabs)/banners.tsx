@@ -13,7 +13,7 @@ import {
 import { useState, useEffect, useMemo, useRef } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { TAB_ICONS } from "../../constants/tabIcons";
+import { ICONS } from "../../constants/icons";
 import { getDatabase } from "../../utils/database";
 import { BannerListItem, type BannerNovel } from "../../components/BannerListItem";
 import { EmptyState } from "../../components/EmptyState";
@@ -166,7 +166,7 @@ export default function BannersScreen() {
             <BannerListItem id={item.id} title={item.title} author={item.author} />
           </View>
         )}
-        ListEmptyComponent={!loading ? <EmptyState icon={TAB_ICONS.banners} message="暂无背投数据" /> : null}
+        ListEmptyComponent={!loading ? <EmptyState icon={ICONS.banners} message="暂无背投数据" /> : null}
         ListFooterComponent={loading ? <LoadingFooter /> : null}
       />
 

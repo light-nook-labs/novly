@@ -26,4 +26,15 @@ export const ICONS = {
   tip: "help-circle-outline", // 小提示/说明(展开 why 解释,如完本推荐抽取逻辑)
   booklist: "bookmarks-outline", // 书单(sfacg 在线书单入口)
   wifi: "wifi-outline", // 在线/需网络(书单数据在线拉取)
+  // 底部 tab 图标(RN tab bar)
+  home: "home",
+  novels: "book",
+  banners: "images",
+  rankings: "podium",
+  bookshelf: "bookmark",
+  // head tab(小说列表分类)
+  all: "list-outline",
+  free: "gift-outline",
+  sign: "ribbon-outline",
+  vip: "diamond-outline",
 } as const;

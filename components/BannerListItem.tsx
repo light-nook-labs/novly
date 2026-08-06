@@ -7,14 +7,11 @@ import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { useTheme } from "./ThemeProvider";
 import { ImageShimmer } from "./ImageShimmer";
 import { delayImageLoad } from "../utils/imageDelay";
+import { type BannerNovel } from "../types/models";
 
 const BANNER_PREFIX = "https://rs.sfacg.com/web/novel/images/images/beitouNew/";
 
-export interface BannerNovel {
-  id: number;
-  title: string;
-  author: string | null;
-}
+export type { BannerNovel };
 
 interface BannerItemProps extends BannerNovel {
   /** 固定宽度;不传时用 onLayout 自适应测量(配合百分比宽度排布) */

@@ -1,4 +1,4 @@
-import { Novel, Tag } from "../types/models";
+import { Novel, Tag, Contest } from "../types/models";
 import {
   View,
   Text,
@@ -27,11 +27,6 @@ import { Cover } from "../../components/Cover";
 import { ID } from "../../components/ID";
 import { ImageLightbox } from "../../components/ImageLightbox";
 import { DetailSkeleton } from "../../components/Skeleton";
-
-interface Contest {
-  id: number;
-  name: string;
-}
 
 // 规范化 last_update 时间（原始格式: 2024-12-27 19:14:23+00:00）
 function formatUpdateTime(raw: string): string {

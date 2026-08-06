@@ -5,12 +5,9 @@ import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { useTheme } from "./ThemeProvider";
 import { ImageShimmer } from "./ImageShimmer";
 import { delayImageLoad } from "../utils/imageDelay";
+import { type BannerNovel } from "../types/models";
 
-export interface BannerNovel {
-  id: number;
-  title: string;
-  author: string | null;
-}
+export type { BannerNovel };
 
 interface BannerItemProps extends BannerNovel {
   width?: number;

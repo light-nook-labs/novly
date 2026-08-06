@@ -12,6 +12,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
+import { Tag, FilterState } from "../../types/models";
 import { FontSize, Spacing } from "../../constants/theme";
 import { useTheme } from "../../components/ThemeProvider";
 import { BackToTop } from "../../components/BackToTop";
@@ -23,27 +24,12 @@ import { useNovels } from "../../hooks/useNovels";
 import { NovelRow, type NovelRowData } from "../../components/NovelRow";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
 
-interface Tag {
-  id: number;
-  name: string;
-}
-
 const PTYPES = [
   { key: null, label: "全部", icon: "list-outline" as const },
   { key: 2, label: "免费", icon: "gift-outline" as const },
   { key: 3, label: "签约", icon: "ribbon-outline" as const },
   { key: 4, label: "VIP", icon: "diamond-outline" as const },
 ];
-
-interface FilterState {
-  genre: number | null;
-  status: number | null;
-  year: number | null;
-  minWordNum: number | null;
-  maxWordNum: number | null;
-  sortBy: string;
-  descending: boolean;
-}
 
 const DEFAULT_FILTER: FilterState = {
   genre: null,

@@ -10,6 +10,7 @@ import { BackToTop } from "../../components/BackToTop";
 import { Cover } from "../../components/Cover";
 import { ICONS } from "../../constants/icons";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
+import { type BooklistMeta, type BooklistNovel } from "../../types/models";
 
 // SFACG 书单在线接口(详情页:actionName=/bookList/{id}/novel 返回书单内小说列表)
 // 原生端 fetch 无 CORS 限制;Web/Tauri WebView 被 CORS 拦截时可将该地址换成代理
@@ -18,31 +19,6 @@ const BOOKLIST_API = "https://pages.sfacg.com/api/HttpProxy";
 const DETAIL_EXPAND = "bigNovelCover,typeName,intropointCount,tags,sysTags";
 // 书单元数据 expand(用户头像/认证/等级等)
 const META_EXPAND = "avatar,verifyType,vipLevel,nickName,growup";
-
-interface BooklistMeta {
-  bookListID: number;
-  title: string;
-  summary: string | null;
-  markNum: number;
-  recommendNum: number;
-  novelNum: number;
-  nickName: string;
-}
-
-interface BooklistNovel {
-  novelId: number;
-  novelName: string;
-  authorName: string;
-  novelCover: string | null;
-  typeName: string | null; // expand.typeName 类型名(如 玄幻/古风)
-  tags: string[]; // expand.tags 用户标签
-  sysTags: string[]; // expand.sysTags[].tagName 系统标签
-  charCount: number;
-  markCount: number;
-  viewTimes: number;
-  isFinish: number;
-  note: string | null; // 书单主的推荐理由(item.summary)
-}
 
 /** 规整文本:合并连续换行为单个换行(禁止空行),去除首尾空白 */
 function cleanText(s: string | null | undefined): string | null {

@@ -14,7 +14,8 @@ import {
 import { useState, useEffect, useRef, useCallback, type ReactNode } from "react";
 import * as Clipboard from "expo-clipboard";
 import Toast from "react-native-toast-message";
-import { BannerItem, type BannerNovel } from "./IndexBannerItem";
+import { BannerItem } from "./IndexBannerItem";
+import { type BannerNovel } from "../types/models";
 import { bannerUrl } from "../utils/urls";
 import { useTheme } from "./ThemeProvider";
 import { FontSize, Spacing } from "../constants/theme";

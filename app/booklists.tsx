@@ -19,6 +19,7 @@ import { Loading, LoadingFooter } from "../components/Loading";
 import { BackToTop } from "../components/BackToTop";
 import { ICONS } from "../constants/icons";
 import { useScrollToTop } from "../hooks/useScrollToTop";
+import { type Booklist } from "../types/models";
 
 // SFACG 书单在线接口(离线 DB 无书单数据,需网络拉取)
 // 列表页:actionName=/bookList/{id} + expand 返回用户头像/认证/等级等;详情页另用 /bookList/{id}/novel
@@ -30,19 +31,6 @@ const BOOKLIST_EXPAND = "avatar,verifyType,vipLevel,nickName,growup";
 const BOOKLIST_KNOWN_TOTAL = 1272;
 const PAGE_SIZE = 10; // 分页大小(每批拉取的书单数)
 const CONCURRENCY = 8; // 并发请求数
-
-interface Booklist {
-  bookListID: number;
-  title: string;
-  summary: string | null;
-  markNum: number;
-  recommendNum: number;
-  novelNum: number;
-  nickName: string;
-  avatar: string | null; // 创建者头像(user.expand.avatar)
-  vipLevel: number; // 创建者 VIP 等级(0=非 VIP)
-  lastUpdate: string | null; // 最后更新时间(日期部分)
-}
 
 /** 规整文本:合并连续换行为单个换行(禁止空行,避免破坏布局层次),去除首尾空白 */
 function cleanText(s: string | null | undefined): string | null {

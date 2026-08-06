@@ -5,16 +5,9 @@ import { getDatabase } from "../utils/database";
 import { genreMapping, statusMapping } from "../utils/mappings";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { useTheme } from "./ThemeProvider";
+import { type FilterState } from "../types/models";
 
-export interface FilterState {
-  genre: number | null;
-  status: number | null;
-  year: number | null;
-  minWordNum: number | null;
-  maxWordNum: number | null;
-  sortBy: string;
-  descending: boolean;
-}
+export type { FilterState };
 
 interface NovelFilterSheetProps {
   visible: boolean;

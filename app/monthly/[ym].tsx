@@ -6,6 +6,7 @@ import { getDatabase } from "../../utils/database";
 import { NovelRow } from "../../components/NovelRow";
 import { PageHeader } from "../../components/Header";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
+import { type RankNovel } from "../../types/models";
 import { FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { ICONS } from "../../constants/icons";
 import { useTheme } from "../../components/ThemeProvider";
@@ -20,23 +21,6 @@ const MONTHLY_TABS = [
   { key: "hotsale", rank: 3, label: "热销榜", valueLabel: "票数" },
   { key: "dialogue", rank: 4, label: "对话月票", valueLabel: "月票" },
 ];
-
-interface RankNovel {
-  id: number;
-  title: string;
-  author: string | null;
-  genre: number;
-  status: number;
-  ptype: number;
-  word_num: number;
-  click_num: number;
-  like_num: number;
-  praise_num: number;
-  review_num: number;
-  comment_num: number;
-  cover: string | null;
-  ticket_num: number;
-}
 
 export default function MonthlyRankScreen() {
   const { colors } = useTheme();

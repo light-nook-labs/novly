@@ -12,25 +12,15 @@ import { Link } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import { Tag, CacheEntry } from "../types/models";
 import { getDatabase } from "../utils/database";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { useTheme } from "../components/ThemeProvider";
 import { PageHeader } from "../components/Header";
 import { Loading, LoadingFooter } from "../components/Loading";
 
-interface Tag {
-  id: number;
-  name: string;
-  novel_count: number;
-}
-
-const CACHE_KEY = "tags_cache_v1";
+const CACHE_KEY = "tags_cache_v2";
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24h
-
-interface CacheEntry {
-  timestamp: number;
-  tags: Tag[];
-}
 
 export default function TagsScreen() {
   const { colors } = useTheme();
@@ -126,7 +116,7 @@ export default function TagsScreen() {
       if (cached) {
         const entry: CacheEntry = JSON.parse(cached);
         if (Date.now() - entry.timestamp < CACHE_TTL) {
-          setTags(entry.tags);
+          setTags(entry.data);
           setLoading(false);
           return;
         }
@@ -144,7 +134,7 @@ export default function TagsScreen() {
       setTags(results);
 
       // 3. Write cache
-      const entry: CacheEntry = { timestamp: Date.now(), tags: results };
+      const entry: CacheEntry = { timestamp: Date.now(), data: results };
       await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(entry));
     } catch (error) {
       console.error("Failed to load tags:", error);

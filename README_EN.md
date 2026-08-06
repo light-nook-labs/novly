@@ -128,6 +128,7 @@ novim/
 │   ├── bookshelfDb.ts        #   bookshelf local database
 │   ├── mappings.ts           #   genre/status/ptype mappings & formatting
 │   └── urls.ts               #   cover / banner URL helpers
+├── types/models.ts           # centralized data-model types (Author/Novel/Booklist/FilterState etc.)
 ├── constants/theme.ts        # color schemes (light/dark) + size constants
 └── assets/                   # icons, seed.sql.gz
 ```

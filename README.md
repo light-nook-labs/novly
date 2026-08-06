@@ -138,6 +138,7 @@ novim/
 │   ├── bookshelfDb.ts        #   书架本地数据库
 │   ├── mappings.ts           #   分类/状态/ptype 映射与格式化
 │   └── urls.ts               #   封面/背投 URL 生成
+├── types/models.ts           # 统一数据模型类型(Author/Novel/Booklist/FilterState 等)
 ├── constants/theme.ts        # 配色方案（light/dark）+ 尺寸常量
 └── assets/                   # 图标、seed.sql.gz
 ```
