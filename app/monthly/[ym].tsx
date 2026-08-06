@@ -173,14 +173,13 @@ export default function MonthlyRankScreen() {
           scrollEventThrottle={16}
           contentContainerStyle={styles.list}
           renderItem={({ item, index }) => (
-            <View style={{ paddingBottom: 16 }}>
-              <NovelRow
-                novel={item}
-                rank={index + 1}
-                value={item.ticket_num}
-                valueLabel={MONTHLY_TABS[tabIndex].valueLabel}
-              />
-            </View>
+            <NovelRow
+              novel={item}
+              rank={index + 1}
+              // 仅 ticketNum > 0 才显示票数(新书榜/热销榜返回 0,无意义不显示)
+              value={item.ticket_num > 0 ? item.ticket_num : undefined}
+              valueLabel={MONTHLY_TABS[tabIndex].valueLabel}
+            />
           )}
         />
       )}

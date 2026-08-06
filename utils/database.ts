@@ -3,6 +3,7 @@ import { Asset } from "expo-asset";
 import { Platform } from "react-native";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pako = require("pako");
+import { getSeedAsset } from "./seedLoader";
 
 let currentDb: SQLite.SQLiteDatabase | null = null;
 // 初始化 promise 缓存:防止多个页面并发 getDatabase() 导致重复初始化(重复解压/合并)
@@ -376,7 +377,7 @@ async function mergeChunkIntoDb(
 
 async function loadWebSeed(database: SQLite.SQLiteDatabase): Promise<void> {
   dbLog("Loading seed data for web...");
-  const decompressed = await decompressAsset(require("../assets/seed.sql.gz"));
+  const decompressed = await decompressAsset(getSeedAsset());
   const sql = new TextDecoder().decode(decompressed);
   const lines = sql.split("\n");
   // seed 约 113 万行:BATCH_SIZE 500 → 2264 次 execAsync,web(wa-sqlite)下极慢像卡死;
