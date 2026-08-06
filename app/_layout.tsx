@@ -278,6 +278,7 @@ function AppContent({ ready, error, onRestart }: { ready: boolean; error: string
         <Stack.Screen name="about" options={{ headerShown: false }} />
         <Stack.Screen name="booklists" options={{ headerShown: false }} />
         <Stack.Screen name="booklists/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="monthly/[ym]" options={{ headerShown: false }} />
       </Stack>
       <Toast />
 

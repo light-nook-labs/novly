@@ -2,6 +2,24 @@
 
 All notable changes to Novly are documented here.
 
+## [1.1.0b] - 2026-08-06
+
+### Added
+
+- 新增「月榜」功能:rankings 月榜 tab 展示月份列表(最早可追溯 2013-03),点击月份进入该月榜单页:
+  - 月榜详情页 `monthly/[ym]`:head tabs 月票榜/新书榜/热销榜/对话月票(在线拉取 sfacg MonthlyBoy + 本地 DB 补元数据);旧月份分类不足 4 类时显示"该月暂无此榜单"
+  - 月份列表:手动"加载更多"(每页 10 期)、"已是最后一期"提示、"回到最新"、支持 yyyymm/yyyy 搜索(年份为当年 12 月简写)
+- 书单列表/详情页补充返回顶部(BackToTop)
+
+### Fixed
+
+- 修复 ptype 数据错误:503 条 VIP 作品被标为"免费"(以 novel_hub 首个 release 数据为基准修复,重建 chunks)
+
+### Improved
+
+- 数据管线脚本(`build_chunks.py`/`validators.py`/`fix_ptype.py`)迁移到 `scripts/` 并纳入版本管理,不再放 gitignore 的 temp/
+- AGENTS.md/README 修正过期文件路径引用(`version.ts`→`appInfo.ts`、`AppInfoSheet`→`InfoSheet`/`NoteCard` 等)与项目结构
+
 ## [1.1.0a] - 2026-08-05
 
 ### Added

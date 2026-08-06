@@ -6,8 +6,10 @@ import { FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { useTheme } from "../../components/ThemeProvider";
 import { PageHeader } from "../../components/Header";
 import { Loading } from "../../components/Loading";
+import { BackToTop } from "../../components/BackToTop";
 import { Cover } from "../../components/Cover";
 import { ICONS } from "../../constants/icons";
+import { useScrollToTop } from "../../hooks/useScrollToTop";
 
 // SFACG 书单在线接口(详情页:actionName=/bookList/{id}/novel 返回书单内小说列表)
 // 原生端 fetch 无 CORS 限制;Web/Tauri WebView 被 CORS 拦截时可将该地址换成代理
@@ -74,6 +76,7 @@ export default function BooklistDetailScreen() {
   const [novels, setNovels] = useState<BooklistNovel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { scrollRef, showButton, onScroll, scrollToTop } = useScrollToTop();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -157,8 +160,11 @@ export default function BooklistDetailScreen() {
         </View>
       ) : (
         <FlatList
+          ref={scrollRef}
           data={novels}
           keyExtractor={(item) => item.novelId.toString()}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
           contentContainerStyle={styles.list}
           ListHeaderComponent={
             meta ? (
@@ -208,16 +214,11 @@ export default function BooklistDetailScreen() {
                           <Text style={[styles.tagText, { color: colors.primary }]}>{item.typeName}</Text>
                         </View>
                       ) : null}
-                      {[...item.sysTags, ...item.tags].slice(0, 4).map((tag) => (
+                      {[...new Set([...item.sysTags, ...item.tags])].map((tag) => (
                         <View key={tag} style={[styles.tag, { backgroundColor: colors.surfaceBorder }]}>
                           <Text style={[styles.tagText, { color: colors.textSecondary }]}>{tag}</Text>
                         </View>
                       ))}
-                      {item.sysTags.length + item.tags.length > 4 && (
-                        <Text style={[styles.tagMore, { color: colors.textTertiary }]}>
-                          +{item.sysTags.length + item.tags.length - 4}
-                        </Text>
-                      )}
                     </View>
                   )}
                 </View>
@@ -227,6 +228,8 @@ export default function BooklistDetailScreen() {
           )}
         />
       )}
+
+      {showButton && <BackToTop onPress={scrollToTop} />}
     </View>
   );
 }
@@ -292,10 +295,6 @@ function createStyles(colors: ReturnType<typeof useTheme>["colors"]) {
     tagText: {
       fontSize: FontSize.xs - 1,
       fontWeight: "600",
-    },
-    tagMore: {
-      fontSize: FontSize.xs - 1,
-      alignSelf: "center",
     },
     row: {
       paddingHorizontal: Spacing.lg,

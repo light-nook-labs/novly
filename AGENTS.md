@@ -192,23 +192,23 @@ Rules:
 
 ## Key Files Quick Reference
 
-| File                                                                      | Purpose                                                                                            |
-| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `constants/theme.ts`                                                      | `lightColors`, `darkColors`, `Colors`(=light), `FontSize`/`Spacing`/`BorderRadius`                 |
-| `components/ThemeProvider.tsx`                                            | `ThemeProvider`, `useTheme()`, `ThemeMode` / `ThemeColors` types                                   |
-| `utils/database.ts`                                                       | `initDatabase()` / `getDatabase()` (promise-cached singleton)                                      |
-| `utils/bookshelfDb.ts`                                                    | bookshelf local db: `getBookshelf/addToBookshelf/removeFromBookshelf/clearBookshelf/isInBookshelf` |
-| `utils/mappings.ts`                                                       | `genreMapping`, `statusMapping`, `ptypeMapping`, `statusColors`, `normalizeStatus`, `formatNumber` |
-| `utils/urls.ts`                                                           | `coverUrl()`, `bannerUrl()`                                                                        |
-| `components/Header.tsx`                                                   | `PageHeader`                                                                                       |
-| `components/TabHeader.tsx`                                                | tab-page header (logo + search + right)                                                            |
-| `components/NovelRow.tsx`                                                 | novel list row (cover, badges, rank, optional extended stats/tags)                                 |
-| `components/NovelFilterSheet.tsx`                                         | generic filter bottom sheet (`FilterState` interface; reuse for novels & bookshelf)                |
-| `components/Banner.tsx` / `BannerListItem.tsx` / `IndexBannerItem.tsx`    | home carousel & banner list items                                                                  |
-| `components/InfoSheet.tsx` / `NoteCard.tsx` / `ConfirmDialog.tsx` / `ImageLightbox.tsx` | 说明弹层 / 提示卡 / 确认弹窗 / 图片灯箱                                        |
-| `hooks/useNovels.ts`                                                      | novel list query hook (filters + paging + whitelisted ORDER BY)                                    |
-| `hooks/useScrollToTop.ts`                                                 | back-to-top button behavior                                                                        |
-| `src-tauri/`                                                              | Tauri v2 desktop packaging (tauri.conf.json, nsis-hooks.nsh, icons)                                |
+| File                                                                                    | Purpose                                                                                            |
+| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `constants/theme.ts`                                                                    | `lightColors`, `darkColors`, `Colors`(=light), `FontSize`/`Spacing`/`BorderRadius`                 |
+| `components/ThemeProvider.tsx`                                                          | `ThemeProvider`, `useTheme()`, `ThemeMode` / `ThemeColors` types                                   |
+| `utils/database.ts`                                                                     | `initDatabase()` / `getDatabase()` (promise-cached singleton)                                      |
+| `utils/bookshelfDb.ts`                                                                  | bookshelf local db: `getBookshelf/addToBookshelf/removeFromBookshelf/clearBookshelf/isInBookshelf` |
+| `utils/mappings.ts`                                                                     | `genreMapping`, `statusMapping`, `ptypeMapping`, `statusColors`, `normalizeStatus`, `formatNumber` |
+| `utils/urls.ts`                                                                         | `coverUrl()`, `bannerUrl()`                                                                        |
+| `components/Header.tsx`                                                                 | `PageHeader`                                                                                       |
+| `components/TabHeader.tsx`                                                              | tab-page header (logo + search + right)                                                            |
+| `components/NovelRow.tsx`                                                               | novel list row (cover, badges, rank, optional extended stats/tags)                                 |
+| `components/NovelFilterSheet.tsx`                                                       | generic filter bottom sheet (`FilterState` interface; reuse for novels & bookshelf)                |
+| `components/Banner.tsx` / `BannerListItem.tsx` / `IndexBannerItem.tsx`                  | home carousel & banner list items                                                                  |
+| `components/InfoSheet.tsx` / `NoteCard.tsx` / `ConfirmDialog.tsx` / `ImageLightbox.tsx` | 说明弹层 / 提示卡 / 确认弹窗 / 图片灯箱                                                            |
+| `hooks/useNovels.ts`                                                                    | novel list query hook (filters + paging + whitelisted ORDER BY)                                    |
+| `hooks/useScrollToTop.ts`                                                               | back-to-top button behavior                                                                        |
+| `src-tauri/`                                                                            | Tauri v2 desktop packaging (tauri.conf.json, nsis-hooks.nsh, icons)                                |
 
 ## Version Bump
 
