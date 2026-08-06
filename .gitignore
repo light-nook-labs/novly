@@ -40,7 +40,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
-db-never-edit-or-delete-this-folder/
 
 # app data (large bundled files — not tracked to keep repo small)
 /assets/chunks/

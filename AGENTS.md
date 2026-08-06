@@ -108,7 +108,6 @@ Cold data is split into3 parts by author name hash (`md5(author) % 3`), so novel
 
 **Source dirs** (gitignored, for reference):
 
-- `db-never-edit-or-delete-this-folder/` — original chunks from NovelHubMobile (novel_hub data, has errors)
 - `temp/nookdata-fixed/` — corrected JSONL from nookdata
 
 > **`temp/` directory policy (hard rule)**: reserved ONLY for temporary files and cloning other repos (to avoid using the system temp directory). **NEVER put important code here.**
