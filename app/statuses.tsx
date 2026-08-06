@@ -14,7 +14,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusCount, CacheEntry } from "../types/models";
 import { getDatabase } from "../utils/database";
-import { statusMapping, statusColors } from "../utils/mappings";
+import { statusMapping } from "../utils/mappings";
+import { statusColor } from "../components/Badge";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { useTheme } from "../components/ThemeProvider";
 import { PageHeader } from "../components/Header";
@@ -198,7 +199,7 @@ export default function StatusesScreen() {
               onPress={() => router.push(`/statuses/${item.status}`)}
             >
               <View style={styles.iconWrap}>
-                <View style={[styles.dot, { backgroundColor: statusColors[item.status] || "#999" }]} />
+                <View style={[styles.dot, { backgroundColor: statusColor(colors, item.status) }]} />
               </View>
               <View style={styles.statusInfo}>
                 <Text style={styles.statusName} numberOfLines={1}>

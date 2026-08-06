@@ -5,7 +5,7 @@ import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
-import { getDatabase } from "../utils/database";
+import { getDatabase, reinitDatabase, subscribeInitProgress, subscribeColdMerged } from "../utils/database";
 import { clearBookshelf } from "../utils/bookshelfDb";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { PageHeader } from "../components/Header";
@@ -33,10 +33,32 @@ export default function SettingsScreen() {
   const [themeVisible, setThemeVisible] = useState(false);
   const [whyVisible, setWhyVisible] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState<"bookshelf" | "reset" | null>(null);
+  const [reinitializing, setReinitializing] = useState(false);
+  const [reinitState, setReinitState] = useState<string | null>(null);
 
   useEffect(() => {
     loadStats();
   }, []);
+
+  // Reinit 期间订阅初始化进度与冷合并完成事件
+  useEffect(() => {
+    if (!reinitializing) return;
+    const unsubMerge = subscribeColdMerged(() => {
+      setReinitState("初始化完成");
+      loadStats();
+      setTimeout(() => {
+        setReinitState(null);
+        setReinitializing(false);
+      }, 2000);
+    });
+    const unsubProgress = subscribeInitProgress((p) => {
+      setReinitState(p ? `正在初始化: ${p}` : "正在重新初始化数据...");
+    });
+    return () => {
+      unsubMerge();
+      unsubProgress();
+    };
+  }, [reinitializing]);
 
   async function loadStats() {
     try {
@@ -79,9 +101,13 @@ export default function SettingsScreen() {
     try {
       await AsyncStorage.clear();
       await clearBookshelf();
-      Alert.alert("Done", "Cache cleared. Please restart the app to load default data.");
+      setReinitializing(true);
+      setReinitState("正在重新初始化数据...");
+      await reinitDatabase();
     } catch (error) {
-      console.error("Failed to reset data:", error);
+      console.error("Failed to reinit data:", error);
+      setReinitializing(false);
+      setReinitState(null);
     }
   }
 
@@ -169,12 +195,13 @@ export default function SettingsScreen() {
             >
               <Ionicons name="alert-circle-outline" size={22} color={colors.danger} style={styles.actionIcon} />
               <View style={styles.actionInfo}>
-                <Text style={styles.actionLabelDanger}>Reset Data</Text>
-                <Text style={styles.actionSubtitle}>Clear cache, bookshelf and restore defaults</Text>
+                <Text style={styles.actionLabelDanger}>Reinit</Text>
+                <Text style={styles.actionSubtitle}>Clear cache, bookshelf and reinitialize data</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
+          {reinitState && <Text style={styles.reinitStatus}>{reinitState}</Text>}
         </View>
 
         {/* About */}
@@ -349,13 +376,13 @@ export default function SettingsScreen() {
       {/* Dangerous action confirm */}
       <ConfirmDialog
         visible={confirmTarget !== null}
-        title={confirmTarget === "reset" ? "重置数据" : "清空书架"}
+        title={confirmTarget === "reset" ? "重新初始化" : "清空书架"}
         message={
           confirmTarget === "reset"
-            ? "将清除全部缓存与书架并恢复默认数据库，此操作不可恢复！"
+            ? "将清除全部缓存与书架并重新初始化数据库，此操作不可恢复！"
             : "将从书架移除所有作品，此操作不可恢复！"
         }
-        confirmText={confirmTarget === "reset" ? "确认重置" : "确认清空"}
+        confirmText={confirmTarget === "reset" ? "确认重新初始化" : "确认清空"}
         danger
         onConfirm={() => {
           if (confirmTarget === "reset") {
@@ -498,6 +525,13 @@ function createSettingsStyles(colors: ThemeColors) {
       fontSize: FontSize.sm,
       color: colors.textSecondary,
       marginTop: 2,
+    },
+    reinitStatus: {
+      fontSize: FontSize.sm,
+      color: colors.textSecondary,
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.sm,
+      textAlign: "center",
     },
     // About section
     aboutRow: {

@@ -35,8 +35,8 @@ interface Stats {
 const NAV_ITEMS = [
   { key: "authors" as const, icon: "person-outline" as const, label: "作者", color: Colors.primary },
   { key: "tags" as const, icon: "pricetag-outline" as const, label: "标签", color: Colors.primary },
-  { key: "contests" as const, icon: ICONS.contests, label: "比赛", color: Colors.primary },
-  { key: "genres" as const, icon: ICONS.genres, label: "分类", color: Colors.primary },
+  { key: "contests" as const, icon: ICONS.contest, label: "比赛", color: Colors.primary },
+  { key: "genres" as const, icon: ICONS.genre, label: "分类", color: Colors.primary },
   { key: "statuses" as const, icon: "pulse-outline" as const, label: "状态", color: Colors.primary },
 ];
 

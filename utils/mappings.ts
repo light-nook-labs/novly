@@ -34,15 +34,6 @@ export const ptypeMapping: Record<number, string> = {
   4: "VIP",
 };
 
-export const statusColors: Record<number, string> = {
-  1: "#999999",
-  2: "#2196F3",
-  3: "#4CAF50",
-  4: "#999999",
-  5: "#999999",
-  6: "#2196F3",
-};
-
 export function formatNumber(num: number | null): string {
   if (num === null || num === undefined) return "0";
   if (num >= 10000) {

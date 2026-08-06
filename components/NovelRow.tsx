@@ -4,7 +4,7 @@ import { memo } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ID } from "./ID";
-import { StatusBadge, Badge } from "./Badge";
+import { StatusBadge, Badge, tagColor } from "./Badge";
 import { Cover } from "./Cover";
 import { formatNumber, statusMapping, genreMapping, ptypeMapping } from "../utils/mappings";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
@@ -86,10 +86,8 @@ export const NovelRow = memo(function NovelRow({ novel, rank, value, valueLabel,
         )}
         {extended && novel.tags && novel.tags.length > 0 && (
           <View style={styles.tagRow}>
-            {novel.tags.slice(0, 4).map((tag) => (
-              <View key={tag} style={[styles.tag, { backgroundColor: colors.surfaceBorder }]}>
-                <Text style={[styles.tagText, { color: colors.textSecondary }]}>{tag}</Text>
-              </View>
+            {novel.tags.slice(0, 4).map((tag, index) => (
+              <Badge key={tag} label={tag} variant="tag" color={tagColor(colors, index)} />
             ))}
             {novel.tags.length > 4 && (
               <Text style={[styles.tagMore, { color: colors.textTertiary }]}>+{novel.tags.length - 4}</Text>
@@ -185,14 +183,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 4,
     marginTop: 4,
-  },
-  tag: {
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 4,
-  },
-  tagText: {
-    fontSize: FontSize.xs - 1,
   },
   tagMore: {
     fontSize: FontSize.xs - 1,

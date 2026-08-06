@@ -412,6 +412,33 @@ export function initDatabase(preloadedHot?: { localUri: string | null }): Promis
   return initPromise;
 }
 
+// Reinit:关闭并删除本地数据文件,重置单例后重新触发初始化(重新解压 hot + 后台合并 cold)
+export async function reinitDatabase(): Promise<SQLite.SQLiteDatabase> {
+  if (currentDb) {
+    await currentDb.closeAsync().catch(() => {});
+    currentDb = null;
+  }
+  initPromise = null;
+  if (Platform.OS === "web") {
+    // web:删除 OPFS 中的 DB(内存库无需清理),重新初始化走 seed 加载
+    const hasOPFS =
+      typeof navigator !== "undefined" &&
+      !!navigator.storage &&
+      typeof (navigator.storage as any).getDirectory === "function";
+    if (hasOPFS) {
+      const dir = await (navigator.storage as any).getDirectory().catch(() => null);
+      await dir?.removeEntry(DB_NAME).catch(() => {});
+    }
+    return initDatabase();
+  }
+  const FS = await getFS();
+  const docDir = FS.documentDirectory;
+  await FS.deleteAsync(`${docDir}${MERGED_MARKER}`, { idempotent: true }).catch(() => {});
+  await FS.deleteAsync(`${docDir}${SQLITE_SUBDIR}`, { idempotent: true }).catch(() => {});
+  dbLog("reinit: 数据文件已清除,重新触发初始化");
+  return initDatabase();
+}
+
 async function initDatabaseInternal(preloadedHot?: { localUri: string | null }): Promise<SQLite.SQLiteDatabase> {
   if (Platform.OS === "web") {
     // Tauri 安卓 WebView 无 OPFS(navigator.storage.getDirectory 不存在),

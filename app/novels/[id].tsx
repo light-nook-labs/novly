@@ -18,7 +18,8 @@ import * as Clipboard from "expo-clipboard";
 import Toast from "react-native-toast-message";
 import { getDatabase } from "../../utils/database";
 import { isInBookshelf as isInBookshelfDb, addToBookshelf, removeFromBookshelf } from "../../utils/bookshelfDb";
-import { formatNumber, statusMapping, genreMapping, ptypeMapping, statusColors } from "../../utils/mappings";
+import { formatNumber, statusMapping, genreMapping, ptypeMapping } from "../../utils/mappings";
+import { StatusBadge, Badge, tagColor } from "../../components/Badge";
 import { coverUrl, bannerUrl } from "../../utils/urls";
 import { FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { PageHeader } from "../../components/Header";
@@ -40,28 +41,6 @@ function formatUpdateTime(raw: string): string {
   if (isNaN(date.getTime())) return raw;
 
   return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
-}
-
-// 根据 tag ID 生成稳定颜色
-const TAG_PALETTE = [
-  "#5B5FE9",
-  "#FF6B6B",
-  "#4ECDC4",
-  "#FFB347",
-  "#A78BFA",
-  "#34D399",
-  "#F472B6",
-  "#60A5FA",
-  "#FBBF24",
-  "#6EE7B7",
-  "#C084FC",
-  "#FB923C",
-  "#22D3EE",
-  "#F87171",
-  "#A3E635",
-];
-function tagColor(id: number): string {
-  return TAG_PALETTE[id % TAG_PALETTE.length];
 }
 
 export default function NovelDetailScreen() {
@@ -288,30 +267,22 @@ export default function NovelDetailScreen() {
             )}
             <View style={styles.badgeRow}>
               <TouchableOpacity onPress={() => router.push(`/statuses/${novel.status}`)}>
-                <View style={[styles.badge, { backgroundColor: statusColors[novel.status] || "#999" }]}>
-                  <Text style={styles.badgeText}>{statusMapping[novel.status]}</Text>
-                </View>
+                <StatusBadge statusId={novel.status} label={statusMapping[novel.status] ?? "其他"} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => router.push(`/genres/${novel.genre}`)}>
-                <View style={[styles.badge, { backgroundColor: "#666" }]}>
-                  <Text style={styles.badgeText}>{genreMapping[novel.genre]}</Text>
-                </View>
+                {genreMapping[novel.genre] && <Badge label={genreMapping[novel.genre]} variant="genre" />}
               </TouchableOpacity>
               {novel.ptype > 1 && (
                 <TouchableOpacity onPress={() => router.push(`/novels?ptype=${novel.ptype}`)}>
-                  <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.badgeText}>{ptypeMapping[novel.ptype]}</Text>
-                  </View>
+                  <Badge label={ptypeMapping[novel.ptype] ?? ""} variant="ptype" />
                 </TouchableOpacity>
               )}
             </View>
             {tags.length > 0 && (
               <View style={styles.tagRow}>
-                {tags.map((tag) => (
+                {tags.map((tag, i) => (
                   <TouchableOpacity key={tag.id} onPress={() => router.push(`/tags/${tag.id}`)} activeOpacity={0.7}>
-                    <View style={[styles.badge, { backgroundColor: tagColor(tag.id) }]}>
-                      <Text style={styles.badgeText}>{tag.name}</Text>
-                    </View>
+                    <Badge label={tag.name} variant="tag" color={tagColor(colors, i)} />
                   </TouchableOpacity>
                 ))}
               </View>
@@ -515,17 +486,6 @@ function createStyles(colors: ThemeColors) {
       flexDirection: "row",
       gap: Spacing.xs,
       flexWrap: "wrap",
-    },
-    badge: {
-      paddingHorizontal: Spacing.sm,
-      paddingVertical: 2,
-      borderRadius: BorderRadius.sm,
-    },
-    badgeText: {
-      fontSize: FontSize.xs,
-      fontWeight: "600",
-      color: "#fff",
-      paddingHorizontal: 2,
     },
     // Stats
     statsCard: {
