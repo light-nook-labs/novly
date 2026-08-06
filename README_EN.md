@@ -74,7 +74,7 @@ pnpm install
 # 2. Start the dev server (pick a platform)
 pnpm start          # interactive
 pnpm run web        # Web
-pnpm run android    # Android
+pnpm run android    # Android (launches AS emulator + installs Expo Go; real-device debugging: see AGENTS.md)
 pnpm run ios        # iOS
 ```
 

@@ -30,12 +30,15 @@ pnpm tauri build  # build Windows desktop installer (NSIS)
 
 Prereqs: enable "Developer options → USB debugging" on the phone, connect it via USB cable.
 
+> **Do NOT use `pnpm run android`**: it does NOT build the app — it launches the Android Studio emulator and installs Expo Go (which cannot run this project's SDK 57). Build & install the debug APK manually:
+
 ```bash
-adb devices          # confirm the device is online (status = device)
-pnpm run android     # expo run:android: builds debug, installs, sets up adb reverse automatically, starts dev server
+adb devices                            # confirm the device is online (status = device)
+cd android && ./gradlew assembleDebug  # build the debug APK (bundles the latest assets/chunks)
+adb install -r app/build/outputs/apk/debug/app-debug.apk  # install to the USB device
 ```
 
-When the dev server is already started from another terminal, only do the last two steps manually:
+Then start the dev server and expose it to the phone over USB:
 
 ```bash
 npx expo start --clear          # 1) start Metro (add --clear when the cache is corrupted / deserialize errors)

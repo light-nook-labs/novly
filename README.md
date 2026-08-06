@@ -84,7 +84,7 @@ pnpm install
 # 2. 启动开发服务（选择平台）
 pnpm start          # 交互式选择
 pnpm run web        # Web
-pnpm run android    # Android
+pnpm run android    # Android(启动 AS 模拟器并安装 Expo Go;真机调试见 AGENTS.md)
 pnpm run ios        # iOS
 ```
 
