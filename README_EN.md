@@ -93,12 +93,12 @@ novim/
 │   │   ├── banners.tsx       #   banner gallery
 │   │   ├── rankings.tsx      #   multi-dimension rankings
 │   │   └── bookshelf.tsx     #   bookshelf (grid layout)
-│   ├── novel/[id].tsx        # novel detail (share / bookshelf / SFACG link)
-│   ├── author/[id].tsx       # author detail
-│   ├── tag/[id].tsx          # tag detail
-│   ├── contest/[id].tsx      # contest detail
-│   ├── genre/[id].tsx        # genre detail
-│   ├── status/[id].tsx       # status detail
+│   ├── novels/[id].tsx       # novel detail (share / bookshelf / SFACG link)
+│   ├── authors/[id].tsx      # author detail
+│   ├── tags/[id].tsx         # tag detail
+│   ├── contests/[id].tsx     # contest detail
+│   ├── genres/[id].tsx       # genre detail
+│   ├── statuses/[id].tsx     # status detail
 │   ├── authors.tsx           # author list
 │   ├── tags.tsx              # tag list
 │   ├── contests.tsx          # contest list
@@ -106,9 +106,11 @@ novim/
 │   ├── statuses.tsx          # status list
 │   ├── booklists.tsx         # booklist list (online fetch, ID search)
 │   ├── booklists/[id].tsx    # booklist detail (info + novel list)
+│   ├── monthly/[ym].tsx      # monthly ranking (month list → ticket/new/hot/dialogue tabs)
 │   ├── search.tsx            # global search
 │   ├── search/banners.tsx    # banner search
-│   └── settings.tsx          # settings (theme / dangerous area / about)
+│   ├── settings.tsx          # settings (theme / dangerous area / about)
+│   └── about.tsx             # about (Why Novly / support)
 ├── components/               # shared components
 │   ├── ThemeProvider.tsx     #   theme system (system/light/dark)
 │   ├── Header.tsx            #   PageHeader (back / search / right actions)
@@ -117,8 +119,8 @@ novim/
 │   ├── Banner*.tsx           #   carousel / banner components
 │   ├── NovelFilterSheet.tsx  #   filter bottom sheet
 │   ├── InfoSheet.tsx         #   bottom info sheet (Why Novly etc.)
+│   ├── NoteCard.tsx          #   page-top info tip card (sorting rules / data notes)
 │   ├── ConfirmDialog.tsx     #   dangerous-action confirm dialog
-│   ├── AppInfoSheet.tsx      #   about info sheet
 │   └── ...
 ├── hooks/                    # custom hooks (useNovels, useScrollToTop)
 ├── utils/                    # utility layer

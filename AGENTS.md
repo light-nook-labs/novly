@@ -158,7 +158,7 @@ Rules:
 
 - All routes use custom headers (`headerShown: false` in `app/_layout.tsx` Stack screens). Use `PageHeader` (`components/Header.tsx`) or `TabHeader` (`components/TabHeader.tsx`).
 - `PageHeader` props: `title`, `titleAppend`, `search`/`setSearch` (input mode), `onSearchPress`, `right`. Back button: short-press → `router.back()`, long-press → `router.replace("/(tabs)")`.
-- Registered Stack screens must stay in sync with actual routes (search, search/banners, novel/[id], author/[id], tag/[id], contest/[id], genre/[id], status/[id], settings — all `headerShown: false`).
+- Registered Stack screens must stay in sync with actual routes (search, search/banners, novels/[id], authors/[id], tags/[id], contests/[id], genres/[id], statuses/[id], booklists, booklists/[id], monthly/[ym], settings, about — all `headerShown: false`).
 
 ## Known Pitfalls & Fixed Bugs (don't regress)
 
@@ -205,7 +205,7 @@ Rules:
 | `components/NovelRow.tsx`                                                 | novel list row (cover, badges, rank, optional extended stats/tags)                                 |
 | `components/NovelFilterSheet.tsx`                                         | generic filter bottom sheet (`FilterState` interface; reuse for novels & bookshelf)                |
 | `components/Banner.tsx` / `BannerListItem.tsx` / `IndexBannerItem.tsx`    | home carousel & banner list items                                                                  |
-| `components/ConfirmDialog.tsx` / `AppInfoSheet.tsx` / `ImageLightbox.tsx` | reusable dialogs / lightbox                                                                        |
+| `components/InfoSheet.tsx` / `NoteCard.tsx` / `ConfirmDialog.tsx` / `ImageLightbox.tsx` | 说明弹层 / 提示卡 / 确认弹窗 / 图片灯箱                                        |
 | `hooks/useNovels.ts`                                                      | novel list query hook (filters + paging + whitelisted ORDER BY)                                    |
 | `hooks/useScrollToTop.ts`                                                 | back-to-top button behavior                                                                        |
 | `src-tauri/`                                                              | Tauri v2 desktop packaging (tauri.conf.json, nsis-hooks.nsh, icons)                                |
@@ -219,7 +219,7 @@ Version lives in MANY places — bump them ALL together, or Settings/About pages
 - `src-tauri/tauri.conf.json` → `version`
 - `src-tauri/Cargo.toml` → `version`
 - `android/app/build.gradle` → `versionCode` (+1) & `versionName`
-- **`constants/version.ts`** — `APP_VERSION` (single source for Settings/About display; update once)
+- **`constants/appInfo.ts`** — `APP_VERSION` (single source for Settings/About display; update once)
 - **`app/settings.tsx`** — footer text `vX.Y.Z` (uses APP_VERSION, easy to forget!)
 - **`app/about.tsx`** — logo section `<Text>vX.Y.Z</Text>` (easy to forget!)
 

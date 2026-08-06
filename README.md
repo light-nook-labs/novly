@@ -103,12 +103,12 @@ novim/
 │   │   ├── banners.tsx       #   背投图库
 │   │   ├── rankings.tsx      #   多维排行
 │   │   └── bookshelf.tsx     #   书架（grid 布局）
-│   ├── novel/[id].tsx        # 小说详情（分享/书架/跳转 SFACG）
-│   ├── author/[id].tsx       # 作者详情
-│   ├── tag/[id].tsx          # 标签详情
-│   ├── contest/[id].tsx      # 赛事详情
-│   ├── genre/[id].tsx        # 分类详情
-│   ├── status/[id].tsx       # 状态详情
+│   ├── novels/[id].tsx       # 小说详情（分享/书架/跳转 SFACG）
+│   ├── authors/[id].tsx      # 作者详情
+│   ├── tags/[id].tsx         # 标签详情
+│   ├── contests/[id].tsx     # 赛事详情
+│   ├── genres/[id].tsx       # 分类详情
+│   ├── statuses/[id].tsx     # 状态详情
 │   ├── authors.tsx           # 作者列表
 │   ├── tags.tsx              # 标签列表
 │   ├── contests.tsx          # 赛事列表
@@ -116,9 +116,11 @@ novim/
 │   ├── statuses.tsx          # 状态列表
 │   ├── booklists.tsx         # 书单列表（在线拉取，ID 搜索）
 │   ├── booklists/[id].tsx    # 书单详情（书单信息 + 小说列表）
+│   ├── monthly/[ym].tsx      # 月榜（月份列表 → 该月榜单：月票/新书/热销/对话月票）
 │   ├── search.tsx            # 全局搜索
 │   ├── search/banners.tsx    # 背投搜索
-│   └── settings.tsx          # 设置（主题切换/危险操作/关于）
+│   ├── settings.tsx          # 设置（主题切换/危险操作/关于）
+│   └── about.tsx             # 关于（Why Novly/支持项目）
 ├── components/               # 公共组件
 │   ├── ThemeProvider.tsx     #   主题系统（system/light/dark）
 │   ├── Header.tsx            #   PageHeader（返回/搜索/右侧按钮）
@@ -127,8 +129,8 @@ novim/
 │   ├── Banner*.tsx           #   轮播/背投组件
 │   ├── NovelFilterSheet.tsx  #   筛选弹窗
 │   ├── InfoSheet.tsx         #   底部说明弹层（Why Novly 等）
+│   ├── NoteCard.tsx          #   页面顶部提示卡（排序规则/数据含义说明）
 │   ├── ConfirmDialog.tsx     #   危险操作确认框
-│   ├── AppInfoSheet.tsx      #   关于信息弹窗
 │   └── ...
 ├── hooks/                    # 自定义 hooks（useNovels、useScrollToTop）
 ├── utils/                    # 工具层
