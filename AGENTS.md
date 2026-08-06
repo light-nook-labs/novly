@@ -34,21 +34,23 @@ Prereqs: enable "Developer options → USB debugging" on the phone, connect it v
 
 ```bash
 adb devices                            # confirm the device is online (status = device)
-cd android && ./gradlew assembleDebug  # build the debug APK (bundles the latest assets/chunks)
+cd android && ./gradlew assembleDebug  # build the debug APK (native shell only — data/assets are NOT bundled)
 adb install -r app/build/outputs/apk/debug/app-debug.apk  # install to the USB device
 ```
 
-Then start the dev server and expose it to the phone over USB:
+> **Don't rebuild debug repeatedly**: the debug APK does NOT bundle JS or data (`assets/chunks`) — everything is served by Metro at runtime, so rebuilding does NOT pick up data changes. Rebuild only when native code changes; for data/JS changes just restart/refresh Metro.
+
+Then start the dev server and expose it to the phone over USB. **`adb reverse` must be established MANUALLY** — it is not automatic; do it every time after (re)connecting the USB cable:
 
 ```bash
 npx expo start --clear          # 1) start Metro (add --clear when the cache is corrupted / deserialize errors)
-adb reverse tcp:8081 tcp:8081   # 2) phone reaches Metro on the PC over the USB reverse tunnel (debug JS/assets are served by Metro at runtime — reverse is mandatory)
+adb reverse tcp:8081 tcp:8081   # 2) REQUIRED manual step: phone reaches Metro on the PC over the USB reverse tunnel (debug JS/assets are served by Metro at runtime)
 adb shell pm clear com.lightnooklabs.novly  # 3) clear the old DB before verifying new data (e.g. after chunk rebuild), otherwise the stale merged DB persists
 ```
 
 Notes:
 
-- The debug build does **NOT** bundle the JS bundle or `assets/chunks` into the APK — they are fetched from Metro at runtime. Real-device testing requires `adb reverse` and a running dev server.
+- The debug build does **NOT** bundle the JS bundle or `assets/chunks` into the APK — they are fetched from Metro at runtime. Real-device testing requires a manually-established `adb reverse` and a running dev server.
 - **Don't run two dev servers at once** (port 8081 conflict).
 - App package name: `com.lightnooklabs.novly`.
 
