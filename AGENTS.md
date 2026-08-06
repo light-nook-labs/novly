@@ -182,6 +182,8 @@ Rules:
 
 13. **Large gz decompression must yield to event loop** — `readAsStringAsync` + `pako.inflate` on a 20MB gz file blocks the JS thread for ~50s. The `decompressAndWriteChunkStreaming` function uses 256KB push chunks with `setTimeout` yields every1MB to keep the UI responsive. Never read an entire gz file into memory in one shot on Android.
 
+14. **RN gradle asset task never cleans stale `res/raw` gz assets** — bundled assets are copied into `android/app/build/generated/res/react/release/raw/` on every build, but old files are only added, never removed. After changing the bundled data model (e.g. hot/cold chunk splitting), stale assets from earlier builds (like the old single `cold_chunk.sqlite.gz` / `warm_chunk.sqlite.gz`) keep getting packaged into every release APK, silently bloating it (once caused a 164MB APK; the fix was deleting `generated/res` + `intermediates/packaged_res` and rebuilding). If the APK size jumps for no code reason, check the res/raw contents first.
+
 ### Detail routes are variants of the novels route
 
 `app/tags/[id].tsx`、`app/contests/[id].tsx`、`app/genres/[id].tsx`、`app/statuses/[id].tsx` are all variants of `app/(tabs)/novels.tsx`:
