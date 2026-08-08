@@ -19,16 +19,9 @@ import { BackToTop } from "../components/BackToTop";
 import { ICONS } from "../constants/icons";
 import { useScrollToTop } from "../hooks/useScrollToTop";
 import { type Booklist } from "../types/models";
-import { parseBooklistItem } from "../utils/booklistApi";
+import { parseBooklistItem, BOOKLIST_API, BOOKLIST_EXPAND, BOOKLIST_KNOWN_TOTAL } from "../utils/booklistApi";
 
 // SFACG 书单在线接口(离线 DB 无书单数据,需网络拉取)
-// 列表页:actionName=/bookList/{id} + expand 返回用户头像/认证/等级等;详情页另用 /bookList/{id}/novel
-// 原生端(Android/iOS)fetch 无 CORS 限制;Web/Tauri WebView 若被 CORS 拦截,可将该地址换成代理
-const BOOKLIST_API = "https://pages.sfacg.com/api/HttpProxy";
-// 列表页 expand 字段(用户资料扩展)
-const BOOKLIST_EXPAND = "avatar,verifyType,vipLevel,nickName,growup";
-// 开发时二分探测确认 1~1272 全部有效;数量为近似值(sfacg 可能随时间新增),不写死为加载上限
-const BOOKLIST_KNOWN_TOTAL = 1272;
 const PAGE_SIZE = 10; // 分页大小(每批拉取的书单数)
 const CONCURRENCY = 8; // 并发请求数
 

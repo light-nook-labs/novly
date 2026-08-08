@@ -22,8 +22,8 @@ import { NovelRow, type NovelRowData } from "../../components/NovelRow";
 import { TabHeader } from "../../components/TabHeader";
 import { InfoSheet, InfoBody } from "../../components/InfoSheet";
 import { useTheme } from "../../components/ThemeProvider";
-import { type BannerNovel } from "../../types/models";
-import { groupMoeByYear } from "../../utils/moe";
+import { type BannerNovel, type Booklist } from "../../types/models";
+import { parseBooklistItem, BOOKLIST_API, BOOKLIST_EXPAND, BOOKLIST_KNOWN_TOTAL } from "../../utils/booklistApi";
 
 interface Stats {
   authors: number;
@@ -39,6 +39,8 @@ const NAV_ITEMS = [
   { key: "contests" as const, icon: ICONS.contest, label: "比赛", color: Colors.primary },
   { key: "genres" as const, icon: ICONS.genre, label: "分类", color: Colors.primary },
   { key: "statuses" as const, icon: "pulse-outline" as const, label: "状态", color: Colors.primary },
+  { key: "booklists" as const, icon: ICONS.booklist, label: "书单", color: Colors.primary },
+  { key: "moe" as const, icon: ICONS.star, label: "萌神", color: Colors.primary },
 ];
 
 const NAV_ROUTES: Record<string, string> = {
@@ -47,6 +49,8 @@ const NAV_ROUTES: Record<string, string> = {
   contests: "/contests",
   genres: "/genres",
   statuses: "/statuses",
+  booklists: "/booklists",
+  moe: "/moe",
 };
 
 const BANNER_COUNT = 6;
@@ -129,7 +133,7 @@ export default function HomeScreen() {
   const [bannerNovels, setBannerNovels] = useState<BannerNovel[]>([]);
   const [topNovels, setTopNovels] = useState<NovelRowData[]>([]);
   const [topTipVisible, setTopTipVisible] = useState(false); // 完本推荐说明弹层
-  const [moeGrouped, setMoeGrouped] = useState<{ year: string; novels: NovelRowData[] }[]>([]); // 萌神大赛(按年份分组)
+  const [recommendBooklists, setRecommendBooklists] = useState<Booklist[]>([]); // 书单推荐(在线随机 12 个)
   const [stats, setStats] = useState<Stats | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   // 防抖:防止快速多次点击导航按钮导致同一页面重复入栈
@@ -167,18 +171,7 @@ export default function HomeScreen() {
       );
       setTopNovels(top);
 
-      // 萌神大赛:获取所有 20xx萌神 标签的 novels(每年2本,按标签年份倒序)
-      const moeRows = await db.getAllAsync<NovelRowData & { tag_name: string }>(
-        `SELECT DISTINCT n.id, n.title, n.author, n.cover, n.click_num, n.status, n.genre, n.ptype, t.name as tag_name
-         FROM novels n
-         INNER JOIN novel_tags nt ON n.id = nt.novel_id
-         INNER JOIN tags t ON nt.tag_id = t.id
-         WHERE t.name LIKE '%萌神'
-         ORDER BY t.name DESC, n.click_num DESC`,
-      );
-      // 按年份分组(纯函数,见 utils/moe.ts)
-      const moeGrouped = groupMoeByYear(moeRows);
-      setMoeGrouped(moeGrouped);
+      loadBooklists(); // 书单推荐(在线随机 12 个)
 
       const [a, t, c, g, s] = await Promise.all([
         db.getFirstAsync<{ v: number }>("SELECT COUNT(*) as v FROM authors"),
@@ -235,6 +228,31 @@ export default function HomeScreen() {
     return [...pinned, ...random];
   }
 
+  // 书单推荐:从 1272 个书单中随机抽取 12 个(在线数据,每次加载随机变化)
+  const loadBooklists = useCallback(async () => {
+    try {
+      const ids = new Set<number>();
+      while (ids.size < 12) {
+        ids.add(Math.floor(Math.random() * BOOKLIST_KNOWN_TOTAL) + 1);
+      }
+      const results = await Promise.all(
+        [...ids].map(async (id) => {
+          try {
+            const url = `${BOOKLIST_API}?actionName=${encodeURIComponent(`/bookList/${id}`)}&expand=${encodeURIComponent(BOOKLIST_EXPAND)}`;
+            const res = await fetch(url);
+            if (!res.ok) return null;
+            return parseBooklistItem(await res.json(), id);
+          } catch {
+            return null;
+          }
+        }),
+      );
+      setRecommendBooklists(results.filter((b): b is Booklist => b !== null));
+    } catch (error) {
+      console.error("Failed to load booklist recommendations:", error);
+    }
+  }, []);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -246,6 +264,7 @@ export default function HomeScreen() {
         "SELECT id, title, author, cover, click_num, status, genre, ptype FROM novels WHERE status = 6 ORDER BY RANDOM() LIMIT 12",
       );
       setTopNovels(top);
+      loadBooklists();
     } catch (error) {
       console.error("Refresh failed:", error);
     } finally {
@@ -318,7 +337,7 @@ export default function HomeScreen() {
                     >
                       {item.label}
                     </Text>
-                    {stats && (
+                    {stats && stats[item.key as keyof Stats] !== undefined && (
                       <Text
                         style={[
                           styles.navCount,
@@ -333,7 +352,7 @@ export default function HomeScreen() {
                 ) : (
                   <>
                     <Text style={[styles.navLabel, { color: colors.text }]}>{item.label}</Text>
-                    {stats && (
+                    {stats && stats[item.key as keyof Stats] !== undefined && (
                       <Text style={[styles.navCount, { color: colors.textTertiary }]}>
                         {formatNumber(stats[item.key as keyof Stats] ?? 0)}
                       </Text>
@@ -344,22 +363,6 @@ export default function HomeScreen() {
             ))}
           </View>
         </View>
-
-        {/* 书单:在线数据,独立于导航容器,单独卡片 */}
-        <TouchableOpacity
-          style={[styles.booklistNavItem, { backgroundColor: colors.surface }]}
-          onPress={() => router.push("/booklists")}
-          activeOpacity={0.7}
-        >
-          <View style={[styles.booklistNavIconWrap, { backgroundColor: colors.primary + "15" }]}>
-            <Ionicons name={ICONS.booklist} size={22} color={colors.primary} />
-          </View>
-          <View style={styles.booklistNavTextWrap}>
-            <Text style={[styles.booklistNavLabel, { color: colors.text }]}>书单</Text>
-            <Text style={[styles.booklistNavSub, { color: colors.textSecondary }]}>来自 SFACG 的在线书单</Text>
-          </View>
-          <Ionicons name={ICONS.wifi} size={18} color={colors.textTertiary} />
-        </TouchableOpacity>
 
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
@@ -394,45 +397,63 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {/* 萌神大赛(按年份分组) */}
-        {moeGrouped.length > 0 && (
-          <>
-            <View style={[styles.sectionHeader, { marginTop: Spacing.xl }]}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>萌神大赛</Text>
-            </View>
-
-            {moeGrouped.map(({ year, novels }) => (
-              <View key={year} style={{ marginBottom: 16 }}>
-                <View style={[styles.sectionHeader, { marginTop: 0 }]}>
-                  <Text style={[styles.sectionSubTitle, { color: colors.textSecondary }]}>{year}</Text>
-                </View>
-                <View
-                  style={{
-                    flexDirection: numColumns > 1 ? "row" : "column",
-                    flexWrap: numColumns > 1 ? "wrap" : undefined,
-                  }}
-                >
-                  {novels.map((novel, index) => (
-                    <View
-                      key={novel.id}
-                      style={
-                        numColumns > 1
-                          ? {
-                              width: `${100 / numColumns}%`,
-                              paddingRight: (index + 1) % numColumns !== 0 ? 16 : 0,
-                              paddingBottom: 16,
-                            }
-                          : undefined
-                      }
-                    >
-                      <NovelRow novel={novel} unordered value={novel.click_num} valueLabel="点击" />
-                    </View>
-                  ))}
-                </View>
+        {/* 书单推荐(在线随机 12 个) */}
+        <View style={[styles.sectionHeader, { marginTop: Spacing.xl }]}>
+          <View style={styles.sectionTitleRow}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>书单推荐</Text>
+          </View>
+          <TouchableOpacity onPress={() => router.push("/booklists")} hitSlop={8}>
+            <Text style={[styles.seeAllText, { color: colors.primary }]}>全部</Text>
+          </TouchableOpacity>
+        </View>
+        {recommendBooklists.map((booklist) => (
+          <TouchableOpacity
+            key={booklist.bookListID}
+            style={[styles.recommendBooklistRow, { backgroundColor: colors.surface }]}
+            onPress={() => router.push(`/booklists/${booklist.bookListID}`)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.recommendBooklistTextWrap}>
+              <Text style={[styles.recommendBooklistTitle, { color: colors.text }]} numberOfLines={1}>
+                <Text style={[styles.recommendBooklistId, { color: colors.primary }]}>#{booklist.bookListID} </Text>
+                {booklist.title}
+              </Text>
+              {booklist.summary ? (
+                <Text style={[styles.recommendBooklistSummary, { color: colors.textSecondary }]} numberOfLines={2}>
+                  {booklist.summary}
+                </Text>
+              ) : null}
+              <View style={styles.recommendBooklistMetaRow}>
+                {booklist.avatar ? (
+                  <Image
+                    source={{ uri: booklist.avatar }}
+                    style={[styles.recommendBooklistAvatar, { backgroundColor: colors.surfaceBorder }]}
+                  />
+                ) : null}
+                {booklist.nickName ? (
+                  <Text style={[styles.recommendBooklistMetaText, { color: colors.textSecondary }]}>
+                    {booklist.nickName}
+                  </Text>
+                ) : null}
+                {booklist.vipLevel > 0 ? (
+                  <Text style={[styles.recommendBooklistMetaText, { color: colors.primary, fontWeight: "600" }]}>VIP</Text>
+                ) : null}
+                <Text style={[styles.recommendBooklistMetaText, { color: colors.textSecondary }]}>
+                  {booklist.novelNum} 部作品
+                </Text>
+                <Text style={[styles.recommendBooklistMetaText, { color: colors.textSecondary }]}>
+                  {formatNumber(booklist.markNum)} 收藏
+                </Text>
+                {booklist.recommendNum > 0 && (
+                  <Text style={[styles.recommendBooklistMetaText, { color: colors.textSecondary }]}>
+                    {formatNumber(booklist.recommendNum)} 推荐
+                  </Text>
+                )}
               </View>
-            ))}
-          </>
-        )}
+            </View>
+            <Ionicons name={ICONS.jump} size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+        ))}
 
         <View style={{ height: 32 }} />
       </ScrollView>
@@ -542,37 +563,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "flex-start",
   },
-  booklistNavItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.xl,
-    marginHorizontal: Platform.OS === "web" ? Spacing.lg : 0,
-    boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-    elevation: 2,
-  },
-  booklistNavIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: BorderRadius.lg,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  booklistNavTextWrap: {
-    flex: 1,
-  },
-  booklistNavLabel: {
-    fontSize: FontSize.md,
-    fontWeight: "700",
-  },
-  booklistNavSub: {
-    fontSize: FontSize.xs,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -602,5 +592,42 @@ const styles = StyleSheet.create({
   seeAllText: {
     fontSize: FontSize.sm,
     color: Colors.primary,
+  },
+  recommendBooklistRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    marginBottom: 1,
+  },
+  recommendBooklistTextWrap: {
+    flex: 1,
+  },
+  recommendBooklistId: {
+    fontWeight: "600",
+  },
+  recommendBooklistTitle: {
+    fontSize: FontSize.md,
+    fontWeight: "600",
+  },
+  recommendBooklistSummary: {
+    fontSize: FontSize.xs,
+    marginTop: 2,
+  },
+  recommendBooklistMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    marginTop: 4,
+    flexWrap: "wrap",
+  },
+  recommendBooklistAvatar: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+  },
+  recommendBooklistMetaText: {
+    fontSize: FontSize.xs,
   },
 });

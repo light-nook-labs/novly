@@ -2,6 +2,11 @@
 // 列表项:/bookList/{id};详情元数据:/bookList/{id};详情小说:/bookList/{id}/novel(data.items)
 import type { Booklist, BooklistMeta, BooklistNovel } from "../types/models";
 
+// 书单在线 API 常量(列表页与首页推荐共用)
+export const BOOKLIST_API = "https://pages.sfacg.com/api/HttpProxy";
+export const BOOKLIST_EXPAND = "avatar,verifyType,vipLevel,nickName,growup";
+export const BOOKLIST_KNOWN_TOTAL = 1272; // 已知书单总数(近似)
+
 /** 规整文本:合并连续换行为单个换行(禁止空行,避免破坏布局层次),去除首尾空白 */
 export function cleanText(s: string | null | undefined): string {
   if (!s) return "";
