@@ -34,7 +34,7 @@ export const ptypeMapping: Record<number, string> = {
   4: "VIP",
 };
 
-export function formatNumber(num: number | null): string {
+export function formatNumber(num: number | null | undefined): string {
   if (num === null || num === undefined) return "0";
   if (num >= 10000) {
     return (num / 10000).toFixed(1) + "万";

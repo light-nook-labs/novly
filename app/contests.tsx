@@ -1,4 +1,4 @@
-import { Contest } from "../types/models";
+import { Contest, CacheEntry } from "../types/models";
 import {
   View,
   Text,
@@ -107,9 +107,9 @@ export default function ContestsScreen() {
       // 1. Try cache first for instant first screen
       const cached = await AsyncStorage.getItem(CACHE_KEY);
       if (cached) {
-        const entry: CacheEntry = JSON.parse(cached);
+        const entry: CacheEntry<Contest[]> = JSON.parse(cached);
         if (Date.now() - entry.timestamp < CACHE_TTL) {
-          setContests(entry.contests);
+          setContests(entry.data);
           setLoading(false);
           return;
         }
@@ -127,7 +127,7 @@ export default function ContestsScreen() {
       setContests(results);
 
       // 3. Write cache
-      const entry: CacheEntry = { timestamp: Date.now(), contests: results };
+      const entry: CacheEntry<Contest[]> = { timestamp: Date.now(), data: results };
       await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(entry));
     } catch (error) {
       console.error("Failed to load contests:", error);

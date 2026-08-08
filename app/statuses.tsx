@@ -116,7 +116,7 @@ export default function StatusesScreen() {
       // 1. Try cache first for instant first screen
       const cached = await AsyncStorage.getItem(CACHE_KEY);
       if (cached) {
-        const entry: CacheEntry = JSON.parse(cached);
+        const entry: CacheEntry<StatusCount[]> = JSON.parse(cached);
         if (Date.now() - entry.timestamp < CACHE_TTL) {
           setStatuses(entry.data);
           setLoading(false);
@@ -145,7 +145,7 @@ export default function StatusesScreen() {
       setStatuses(results);
 
       // 3. Write cache
-      const entry: CacheEntry = { timestamp: Date.now(), data: results };
+      const entry: CacheEntry<StatusCount[]> = { timestamp: Date.now(), data: results };
       await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(entry));
     } catch (error) {
       console.error("Failed to load statuses:", error);

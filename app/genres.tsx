@@ -1,4 +1,4 @@
-import { GenreCount } from "../types/models";
+import { GenreCount, CacheEntry } from "../types/models";
 import {
   View,
   Text,
@@ -107,9 +107,9 @@ export default function GenresScreen() {
       // 1. Try cache first for instant first screen
       const cached = await AsyncStorage.getItem(CACHE_KEY);
       if (cached) {
-        const entry: CacheEntry = JSON.parse(cached);
+        const entry: CacheEntry<GenreCount[]> = JSON.parse(cached);
         if (Date.now() - entry.timestamp < CACHE_TTL) {
-          setGenres(entry.genres);
+          setGenres(entry.data);
           setLoading(false);
           return;
         }
@@ -123,7 +123,7 @@ export default function GenresScreen() {
       setGenres(results);
 
       // 3. Write cache
-      const entry: CacheEntry = { timestamp: Date.now(), genres: results };
+      const entry: CacheEntry<GenreCount[]> = { timestamp: Date.now(), data: results };
       await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(entry));
     } catch (error) {
       console.error("Failed to load genres:", error);

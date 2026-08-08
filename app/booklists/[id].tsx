@@ -103,7 +103,7 @@ export default function BooklistDetailScreen() {
               note: indentParagraphs(cleanText(it.summary)),
             };
           })
-          .filter((n): n is BooklistNovel => n !== null),
+          .filter((n: BooklistNovel | null): n is BooklistNovel => n !== null),
       );
     } catch {
       setError("书单数据来自 SFACG 在线接口,当前网络无法访问");

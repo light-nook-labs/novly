@@ -64,6 +64,7 @@ export interface AuthorStats {
   total_clicks: number;
   total_likes: number;
   total_praise: number;
+  novel_count?: number; // 作者详情页作品数(查询投影)
 }
 
 export interface CacheEntry<T> {

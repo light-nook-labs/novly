@@ -316,7 +316,7 @@ export default function RootLayout() {
     (async () => {
       // 预加载 hot .sqlite.gz:首次启动预提取到 cache(2-3s),之后 Asset.loadAsync 直接返回缓存
       const preloadedAssets = await Promise.all([Asset.loadAsync(require("../assets/chunks/hot_chunk.sqlite.gz"))]);
-      await initDatabase(preloadedAssets[0]);
+      await initDatabase({ localUri: preloadedAssets[0][0].localUri });
       if (!isFirstInit) {
         setReady(true);
         return;

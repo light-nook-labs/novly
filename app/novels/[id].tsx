@@ -238,7 +238,6 @@ export default function NovelDetailScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Cover + basic info */}
         <View style={styles.heroSection}>
-          {console.log(`[cover] id=${novel.id} url=${coverUrl(novel.cover)}`)}
           <ImageLightbox uri={coverUrl(novel.cover)}>
             <Cover cover={novel.cover} width={100} height={140} borderRadius={BorderRadius.md} />
           </ImageLightbox>

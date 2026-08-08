@@ -291,7 +291,7 @@ export default function RankingsScreen() {
 
       <FlatList
         ref={scrollRef}
-        data={selectedTab === "monthly" ? visibleMonths : novels}
+        data={(selectedTab === "monthly" ? visibleMonths : novels) as (string | Novel)[]}
         keyExtractor={(item) => (typeof item === "string" ? item : item.id.toString())}
         numColumns={selectedTab === "monthly" ? 1 : numColumns}
         key={`grid-${selectedTab === "monthly" ? 1 : numColumns}`}
@@ -313,14 +313,14 @@ export default function RankingsScreen() {
         windowSize={7}
         contentContainerStyle={styles.list}
         renderItem={({ item, index }) =>
-          selectedTab === "monthly" ? (
+          typeof item === "string" ? (
             <TouchableOpacity
               style={styles.monthRow}
               onPress={() => router.push(`/monthly/${item}`)}
               activeOpacity={0.7}
             >
               <Text style={[styles.monthText, { color: colors.text }]}>
-                {String(item).slice(0, 4)}年{Number(String(item).slice(4, 6))}月
+                {item.slice(0, 4)}年{Number(item.slice(4, 6))}月
               </Text>
               <Ionicons name={ICONS.jump} size={16} color={colors.textMuted} />
             </TouchableOpacity>
@@ -332,9 +332,9 @@ export default function RankingsScreen() {
               }}
             >
               <NovelRow
-                novel={item as Novel}
+                novel={item}
                 rank={index + 1}
-                value={(item as Novel)[selectedTab as keyof Novel] as number}
+                value={item[selectedTab as keyof Novel] as number}
                 valueLabel={currentTab?.label}
               />
             </View>

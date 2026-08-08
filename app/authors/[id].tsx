@@ -118,7 +118,7 @@ export default function AuthorDetailScreen() {
             {/* Author Stats Card */}
             <View style={styles.statsCard}>
               <View style={styles.statsRow}>
-                <StatItem icon="library-outline" label="作品" value={author.novel_count} />
+                <StatItem icon="library-outline" label="作品" value={author.novel_count ?? 0} />
                 <View style={styles.statDivider} />
                 <StatItem icon="flash-outline" label="总点击" value={author.total_clicks} />
                 <View style={styles.statDivider} />

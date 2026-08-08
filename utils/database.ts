@@ -300,9 +300,10 @@ async function mergeChunkIntoDb(
 
   dbLog(`Merging novels from ${alias}...`);
   const t1 = Date.now();
-  const { maxId } = await targetDb.getFirstAsync<{ maxId: number }>(
+  const row = await targetDb.getFirstAsync<{ maxId: number }>(
     `SELECT COALESCE(MAX(id), 0) as maxId FROM ${alias}.novels`,
   );
+  const maxId = row?.maxId ?? 0;
   dbLog(`novels maxId=${maxId} query: ${Date.now() - t1}ms`);
   const t1b = Date.now();
   const BATCH = 5000; // 更小的批次,更频繁 yield
@@ -609,7 +610,7 @@ async function mergeColdInBackground(
 
       if (i === 0) {
         // 第一个 cold part: 直接作为 coldDb
-        coldDb = await SQLite.openDatabaseAsync(coldPath, { readOnly: false });
+        coldDb = await SQLite.openDatabaseAsync(coldPath);
       } else {
         // 后续 cold parts: ATTACH coldTmpPath 到 coldDb 合并
         setInitProgress(`正在合并冷数据 ${i + 1}/3...`);

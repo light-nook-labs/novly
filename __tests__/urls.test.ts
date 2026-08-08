@@ -1,3 +1,4 @@
+import { describe, expect, it } from "@jest/globals";
 import { coverUrl, bannerUrl } from "../utils/urls";
 
 const DEFAULT_COVER = "https://rs.sfacg.com/web/novel/images/NovelCover/Big/default.jpg";

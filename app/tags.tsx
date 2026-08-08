@@ -113,7 +113,7 @@ export default function TagsScreen() {
       // 1. Try cache first for instant first screen
       const cached = await AsyncStorage.getItem(CACHE_KEY);
       if (cached) {
-        const entry: CacheEntry = JSON.parse(cached);
+        const entry: CacheEntry<Tag[]> = JSON.parse(cached);
         if (Date.now() - entry.timestamp < CACHE_TTL) {
           setTags(entry.data);
           setLoading(false);
@@ -133,7 +133,7 @@ export default function TagsScreen() {
       setTags(results);
 
       // 3. Write cache
-      const entry: CacheEntry = { timestamp: Date.now(), data: results };
+      const entry: CacheEntry<Tag[]> = { timestamp: Date.now(), data: results };
       await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(entry));
     } catch (error) {
       console.error("Failed to load tags:", error);
