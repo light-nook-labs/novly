@@ -24,6 +24,7 @@ import { InfoSheet, InfoBody } from "../../components/InfoSheet";
 import { useTheme } from "../../components/ThemeProvider";
 import { type BannerNovel, type Booklist } from "../../types/models";
 import { parseBooklistItem, BOOKLIST_API, BOOKLIST_EXPAND, BOOKLIST_KNOWN_TOTAL } from "../../utils/booklistApi";
+import { buildCountQuery, buildRandomCompletedQuery, buildNovelsByIdsQuery } from "../../utils/sql";
 
 interface Stats {
   authors: number;
@@ -168,17 +169,16 @@ export default function HomeScreen() {
       const banners = await loadBanners(db);
       setBannerNovels(banners);
 
-      const top = await db.getAllAsync<NovelRowData>(
-        "SELECT id, title, author, cover, click_num, status, genre, ptype FROM novels WHERE status = 6 ORDER BY RANDOM() LIMIT 12",
-      );
+      const { query: topQuery, params: topParams } = buildRandomCompletedQuery(12);
+      const top = await db.getAllAsync<NovelRowData>(topQuery, topParams);
       setTopNovels(top);
 
       loadBooklists(); // 书单推荐(在线随机 12 个)
 
       const [a, t, c, g, s] = await Promise.all([
-        db.getFirstAsync<{ v: number }>("SELECT COUNT(*) as v FROM authors"),
-        db.getFirstAsync<{ v: number }>("SELECT COUNT(*) as v FROM tags"),
-        db.getFirstAsync<{ v: number }>("SELECT COUNT(*) as v FROM contests"),
+        db.getFirstAsync<{ v: number }>(buildCountQuery("authors")),
+        db.getFirstAsync<{ v: number }>(buildCountQuery("tags")),
+        db.getFirstAsync<{ v: number }>(buildCountQuery("contests")),
         // 分类：DB 实际不同的 genre 值（生成 db 时已删除"其他"）
         db.getFirstAsync<{ v: number }>("SELECT COUNT(DISTINCT genre) as v FROM novels"),
         // 状态：与 statuses 页一致，归并 A 变体并排除"其他"/"下架"
@@ -206,11 +206,8 @@ export default function HomeScreen() {
     // 1. Fetch pinned banners
     let pinned: BannerNovel[] = [];
     if (PINNED_BANNER_IDS.length > 0) {
-      const placeholders = PINNED_BANNER_IDS.map(() => "?").join(",");
-      pinned = await db.getAllAsync<BannerNovel>(
-        `SELECT id, title, author FROM novels WHERE id IN (${placeholders})`,
-        PINNED_BANNER_IDS,
-      );
+      const built = buildNovelsByIdsQuery(PINNED_BANNER_IDS, "id, title, author");
+      pinned = await db.getAllAsync<BannerNovel>(built.query, built.params);
     }
 
     // 2. Fetch random banners, excluding pinned IDs
@@ -262,9 +259,8 @@ export default function HomeScreen() {
       const banners = await loadBanners(db);
       setBannerNovels(banners);
       // 下拉刷新同时刷新完本推荐(完结A 随机 12 本,每次刷新随机变化)
-      const top = await db.getAllAsync<NovelRowData>(
-        "SELECT id, title, author, cover, click_num, status, genre, ptype FROM novels WHERE status = 6 ORDER BY RANDOM() LIMIT 12",
-      );
+      const { query: topQuery, params: topParams } = buildRandomCompletedQuery(12);
+      const top = await db.getAllAsync<NovelRowData>(topQuery, topParams);
       setTopNovels(top);
       loadBooklists();
     } catch (error) {

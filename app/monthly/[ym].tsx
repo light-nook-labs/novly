@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { buildNovelsByIdsQuery } from "../../utils/sql";
 import { NovelRow } from "../../components/NovelRow";
 import { PageHeader } from "../../components/Header";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
@@ -76,7 +77,7 @@ export default function MonthlyRankScreen() {
         cover: string | null;
       }[] = [];
       if (ids.length > 0) {
-        const placeholders = ids.map(() => "?").join(",");
+        const built = buildNovelsByIdsQuery(ids);
         rows = await db.getAllAsync<{
           id: number;
           title: string;
@@ -85,7 +86,7 @@ export default function MonthlyRankScreen() {
           status: number;
           ptype: number;
           cover: string | null;
-        }>(`SELECT id, title, author, genre, status, ptype, cover FROM novels WHERE id IN (${placeholders})`, ids);
+        }>(built.query, built.params);
       }
       const rowMap = new Map(rows.map((r) => [r.id, r]));
       setNovels(

@@ -1,4 +1,5 @@
 import { Novel, Tag, Contest } from "../../types/models";
+import { NOVEL_DETAIL_QUERY } from "../../utils/sql";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, Platform, Alert, Share } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
@@ -122,7 +123,7 @@ export default function NovelDetailScreen() {
     try {
       const db = await getDatabase();
 
-      const result = await db.getFirstAsync<Novel>("SELECT * FROM novels WHERE id = ?", [Number(id)]);
+      const result = await db.getFirstAsync<Novel>(NOVEL_DETAIL_QUERY, [Number(id)]);
       setNovel(result);
 
       if (result) {

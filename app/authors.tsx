@@ -17,6 +17,7 @@ import { formatNumber } from "../utils/mappings";
 import { useScrollToTop } from "../hooks/useScrollToTop";
 import { FontSize, Spacing } from "../constants/theme";
 import { PAGE_SIZE } from "../constants/pagination";
+import { buildCountQuery } from "../utils/sql";
 import { useTheme } from "../components/ThemeProvider";
 import { BackToTop } from "../components/BackToTop";
 import { NoteCard, NoteStrong } from "../components/NoteCard";
@@ -124,7 +125,7 @@ export default function AuthorsScreen() {
   async function loadCount() {
     try {
       const db = await getDatabase();
-      const result = await db.getFirstAsync<{ v: number }>("SELECT COUNT(*) as v FROM authors");
+      const result = await db.getFirstAsync<{ v: number }>(buildCountQuery("authors"));
       setTotalCount(result?.v ?? 0);
     } catch (error) {
       console.error("Failed to load author count:", error);

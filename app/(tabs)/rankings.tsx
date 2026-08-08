@@ -17,6 +17,7 @@ import { TabHeader } from "../../components/TabHeader";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
 import { FontSize, Spacing } from "../../constants/theme";
 import { PAGE_SIZE } from "../../constants/pagination";
+import { buildRankingsQuery } from "../../utils/sql";
 import { useTheme } from "../../components/ThemeProvider";
 import { BackToTop } from "../../components/BackToTop";
 import { Loading, LoadingFooter } from "../../components/Loading";
@@ -119,14 +120,8 @@ export default function RankingsScreen() {
 
   async function fetchRankings(limit: number, offset: number) {
     const db = await getDatabase();
-    return db.getAllAsync<Novel>(
-      `SELECT id, title, author, genre, status, ptype, word_num, click_num, like_num, praise_num, review_num, comment_num, cover, contest_id, has_banner, last_update
-       FROM novels
-       WHERE ${selectedTab} > 0
-       ORDER BY ${selectedTab} DESC
-       LIMIT ? OFFSET ?`,
-      [limit, offset],
-    );
+    const { query, params } = buildRankingsQuery(selectedTab, limit, offset);
+    return db.getAllAsync<Novel>(query, params);
   }
 
   async function loadRankings(reset = false) {

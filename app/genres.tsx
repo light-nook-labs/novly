@@ -6,6 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../utils/database";
 import { genreMapping } from "../utils/mappings";
+import { buildGroupCountQuery } from "../utils/sql";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { useTheme } from "../components/ThemeProvider";
 import { PageHeader } from "../components/Header";
@@ -111,7 +112,7 @@ export default function GenresScreen() {
       // 2. Load all genres from DB (data is small)
       const db = await getDatabase();
       const results = await db.getAllAsync<GenreCount>(
-        "SELECT genre, COUNT(*) as count FROM novels GROUP BY genre ORDER BY count DESC",
+        buildGroupCountQuery("novels", "genre", undefined, "v DESC", "count"),
       );
       setGenres(results);
 

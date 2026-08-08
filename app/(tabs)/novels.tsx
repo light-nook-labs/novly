@@ -1,4 +1,5 @@
 import { FilterState } from "../../types/models";
+import { buildCountQuery, buildGroupCountQuery } from "../../utils/sql";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Platform, useWindowDimensions } from "react-native";
 import { useState, useEffect } from "react";
 import { useLocalSearchParams } from "expo-router";
@@ -95,10 +96,10 @@ export default function NovelsScreen() {
       if (filters.year !== null) conds.push(`last_update LIKE '${filters.year}%'`);
       if (filters.minWordNum !== null) conds.push(`word_num >= ${filters.minWordNum}`);
       if (filters.maxWordNum !== null) conds.push(`word_num < ${filters.maxWordNum}`);
-      const where = conds.length > 0 ? ` WHERE ${conds.join(" AND ")}` : "";
-      const total = await db.getFirstAsync<{ v: number }>(`SELECT COUNT(*) as v FROM novels${where}`);
+      const where = conds.length > 0 ? conds.join(" AND ") : "";
+      const total = await db.getFirstAsync<{ v: number }>(buildCountQuery("novels", where));
       const rows = await db.getAllAsync<{ ptype: number; v: number }>(
-        `SELECT ptype, COUNT(*) as v FROM novels${where} GROUP BY ptype`,
+        buildGroupCountQuery("novels", "ptype", where),
       );
       const map: Record<string, number> = { all: total?.v ?? 0 };
       rows.forEach((r) => {
