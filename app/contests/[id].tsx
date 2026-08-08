@@ -105,6 +105,7 @@ export default function ContestDetailScreen() {
 
   useEffect(() => {
     loadContest();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的 id 变化执行)
   }, [id]);
 
   async function loadContest() {
@@ -126,6 +127,7 @@ export default function ContestDetailScreen() {
   // head tab 切换(selectedPtype)时重新加载,实现分类过滤
   useEffect(() => {
     loadCounts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的筛选变化执行)
   }, [selectedPtype, filters]);
 
   async function loadCounts() {

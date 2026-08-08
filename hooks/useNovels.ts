@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { getDatabase } from "../utils/database";
 import { type NovelRowData } from "../components/NovelRow";
+import { buildNovelQuery } from "../utils/novelQuery";
 
 interface UseNovelsOptions {
   ptype?: number | null;
@@ -43,46 +44,22 @@ export function useNovels({
   const [error, setError] = useState<string | null>(null);
 
   const buildQuery = useCallback(
-    (pageNum: number) => {
-      let query = `SELECT id, title, author, cover, click_num, word_num, status, genre, ptype ${fromClause ?? "FROM novels"}`;
-      const conditions: string[] = [...(extraWhere ?? [])];
-      const params: any[] = [...(extraParams ?? [])];
-
-      if (ptype !== null) {
-        conditions.push("ptype = ?");
-        params.push(ptype);
-      }
-      if (status !== null) {
-        conditions.push("status = ?");
-        params.push(status);
-      }
-      if (genre !== null) {
-        conditions.push("genre = ?");
-        params.push(genre);
-      }
-      if (year !== null) {
-        conditions.push("SUBSTR(last_update, 1, 4) = ?");
-        params.push(String(year));
-      }
-      if (minWordNum !== null) {
-        conditions.push("word_num >= ?");
-        params.push(minWordNum);
-      }
-      if (maxWordNum !== null) {
-        conditions.push("word_num < ?");
-        params.push(maxWordNum);
-      }
-
-      if (conditions.length > 0) {
-        query += " WHERE " + conditions.join(" AND ");
-      }
-
-      const orderField = SORT_WHITELIST.has(sortBy) ? sortBy : "click_num";
-      query += ` ORDER BY ${orderField} ${descending ? "DESC" : "ASC"} LIMIT ? OFFSET ?`;
-      params.push(pageSize, pageNum * pageSize);
-
-      return { query, params };
-    },
+    (pageNum: number) =>
+      buildNovelQuery(pageNum, {
+        ptype,
+        status,
+        genre,
+        year,
+        minWordNum,
+        maxWordNum,
+        sortBy,
+        descending,
+        pageSize,
+        fromClause,
+        extraWhere,
+        extraParams,
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的记忆化)
     [ptype, status, genre, year, minWordNum, maxWordNum, sortBy, descending, pageSize],
   );
 
@@ -112,12 +89,14 @@ export function useNovels({
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 条件/排序变化时重置列表状态(有意为之)
     setLoading(true);
     setNovels([]);
     setPage(0);
     setHasMore(true);
     setError(null);
     loadPage(0, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的条件变化执行)
   }, [ptype, status, genre, year, minWordNum, maxWordNum, sortBy, descending]);
 
   const loadMore = useCallback(() => {

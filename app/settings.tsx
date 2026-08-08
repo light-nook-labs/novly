@@ -37,6 +37,7 @@ export default function SettingsScreen() {
   const [reinitState, setReinitState] = useState<string | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability -- React Compiler 规则标记既有加载模式,数据更新为有意为之
     loadStats();
   }, []);
 

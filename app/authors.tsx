@@ -118,6 +118,7 @@ export default function AuthorsScreen() {
   useEffect(() => {
     loadCount();
     loadAuthors(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的挂载执行)
   }, []);
 
   async function loadCount() {
@@ -135,6 +136,7 @@ export default function AuthorsScreen() {
       loadAuthors(true);
     }, 300);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的输入防抖)
   }, [query]);
 
   const loadingRef = useRef(false);

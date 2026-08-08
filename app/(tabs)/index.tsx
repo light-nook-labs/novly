@@ -23,6 +23,7 @@ import { TabHeader } from "../../components/TabHeader";
 import { InfoSheet, InfoBody } from "../../components/InfoSheet";
 import { useTheme } from "../../components/ThemeProvider";
 import { type BannerNovel } from "../../types/models";
+import { groupMoeByYear } from "../../utils/moe";
 
 interface Stats {
   authors: number;
@@ -143,6 +144,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的挂载执行)
   }, []);
 
   // cold 合并完成(全量库就位)后,重新加载首页数据(nav 统计/排行/banner)
@@ -150,6 +152,7 @@ export default function HomeScreen() {
     return subscribeDbReady(() => {
       loadData();
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的挂载执行)
   }, []);
 
   async function loadData() {
@@ -173,17 +176,8 @@ export default function HomeScreen() {
          WHERE t.name LIKE '%萌神'
          ORDER BY t.name DESC, n.click_num DESC`,
       );
-      // 按年份分组:tag_name -> novels[]
-      const moeGrouped: { year: string; novels: NovelRowData[] }[] = [];
-      const moeMap = new Map<string, NovelRowData[]>();
-      for (const row of moeRows) {
-        const year = row.tag_name.replace("萌神", "");
-        if (!moeMap.has(year)) {
-          moeMap.set(year, []);
-          moeGrouped.push({ year, novels: moeMap.get(year)! });
-        }
-        moeMap.get(year)!.push(row);
-      }
+      // 按年份分组(纯函数,见 utils/moe.ts)
+      const moeGrouped = groupMoeByYear(moeRows);
       setMoeGrouped(moeGrouped);
 
       const [a, t, c, g, s] = await Promise.all([

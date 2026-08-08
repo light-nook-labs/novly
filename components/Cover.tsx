@@ -20,9 +20,15 @@ export function Cover({ cover, width = 48, height = 64, borderRadius = BorderRad
   const [ready, setReady] = useState(false);
 
   // 人为延迟加载(便于测试加载动画);上线置 0 后立即 ready
+  // uri 变化时重置加载状态(渲染期调整,React 19 推荐替代 effect 内 setState)
+  const [prevUri, setPrevUri] = useState(uri);
+  if (prevUri !== uri) {
+    setPrevUri(uri);
+    setReady(false);
+  }
+
   useEffect(() => {
     let cancelled = false;
-    setReady(false);
     if (!uri) return;
     delayImageLoad().then(() => {
       if (!cancelled) setReady(true);

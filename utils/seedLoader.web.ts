@@ -3,5 +3,6 @@
 // 因此 seed.sql.gz 不会进入 Android/iOS bundle,避免 APK 冗余 ~60MB。
  
 export function getSeedAsset(): any {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- Metro 资产打包必需
   return require("../assets/seed.sql.gz");
 }

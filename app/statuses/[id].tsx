@@ -131,11 +131,13 @@ export default function StatusDetailScreen() {
 
   useEffect(() => {
     loadCounts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的参数变化执行)
   }, [id, selectedPtype]);
 
   // head tab 切换(selectedPtype)时重新加载,实现分类过滤
   useEffect(() => {
     loadCounts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的筛选变化执行)
   }, [selectedPtype, filters]);
 
   async function loadCounts() {

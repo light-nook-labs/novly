@@ -80,7 +80,9 @@ export default function NovelsScreen() {
     !filters.descending;
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability -- React Compiler 规则标记既有加载模式,数据更新为有意为之
     loadCounts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadCounts 为稳定闭包,依赖已覆盖
   }, [filters]);
 
   // 初始化(冷合并)完成、全量库就位后,重新加载 head tab 的 ptype 计数
@@ -88,6 +90,7 @@ export default function NovelsScreen() {
     return subscribeDbReady(() => {
       loadCounts();
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的挂载执行)
   }, []);
 
   async function loadCounts() {

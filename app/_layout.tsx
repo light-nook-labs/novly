@@ -1,6 +1,6 @@
 import { Stack  } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -52,12 +52,12 @@ function LoadingScreen() {
   const version = Constants.expoConfig?.version ?? "1.0.2";
   const platformLabel = Platform.OS === "ios" ? "iOS" : Platform.OS === "web" ? "Web" : "Android";
   // logo 呼吸动画
-  const logoOpacity = useRef(new Animated.Value(0.6)).current;
+  const [logoOpacity] = useState(() => new Animated.Value(0.6));
   // logo 缩放动画(呼吸 + 缩放,更生动,吸引用户停留)
-  const logoScale = useRef(new Animated.Value(1)).current;
+  const [logoScale] = useState(() => new Animated.Value(1));
   // 小技巧轮换(随机起点:每次进入不再固定从第一条开始)
   const [tipIndex, setTipIndex] = useState(() => Math.floor(Math.random() * TIPS.length));
-  const tipOpacity = useRef(new Animated.Value(1)).current;
+  const [tipOpacity] = useState(() => new Animated.Value(1));
 
   useEffect(() => {
     const anim = Animated.loop(
@@ -74,6 +74,7 @@ function LoadingScreen() {
     );
     anim.start();
     return () => anim.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的挂载执行)
   }, []);
 
   // 每 4s 淡出切换一条小技巧
@@ -89,6 +90,7 @@ function LoadingScreen() {
       });
     }, 4000);
     return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的挂载执行)
   }, []);
 
   return (
@@ -315,6 +317,7 @@ export default function RootLayout() {
     const start = Date.now();
     (async () => {
       // 预加载 hot .sqlite.gz:首次启动预提取到 cache(2-3s),之后 Asset.loadAsync 直接返回缓存
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- Metro 资产打包必需
       const preloadedAssets = await Promise.all([Asset.loadAsync(require("../assets/chunks/hot_chunk.sqlite.gz"))]);
       await initDatabase({ localUri: preloadedAssets[0][0].localUri });
       if (!isFirstInit) {

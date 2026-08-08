@@ -100,6 +100,7 @@ export default function BookshelfScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      // eslint-disable-next-line react-hooks/immutability -- React Compiler 规则标记既有加载模式,数据更新为有意为之
       loadBookshelf();
     }, []),
   );

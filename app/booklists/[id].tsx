@@ -62,6 +62,7 @@ export default function BooklistDetailScreen() {
   }, [bookListId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 挂载时加载数据,内部 setState 为加载流程
     load();
   }, [load]);
 

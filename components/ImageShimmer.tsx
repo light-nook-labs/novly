@@ -1,5 +1,5 @@
 import { Animated, View } from "react-native";
-import { useRef, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "./ThemeProvider";
 
 interface ImageShimmerProps {
@@ -15,7 +15,7 @@ interface ImageShimmerProps {
  */
 export function ImageShimmer({ width, height, borderRadius = 8 }: ImageShimmerProps) {
   const { colors, mode } = useTheme();
-  const translateX = useRef(new Animated.Value(-width)).current;
+  const [translateX] = useState(() => new Animated.Value(-width));
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -27,6 +27,7 @@ export function ImageShimmer({ width, height, borderRadius = 8 }: ImageShimmerPr
     );
     loop.start();
     return () => loop.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的 width 变化执行)
   }, [width]);
 
   // 渐变光带:12 条竖条,透明度按正弦曲线渐变(伪 LinearGradient)

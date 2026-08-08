@@ -84,6 +84,7 @@ export default function SearchScreen() {
     }, 300);
 
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的输入防抖)
   }, [query]);
 
   return (

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Text, TouchableOpacity, StyleSheet, View, useWindowDimensions, Animated } from "react-native";
 import { router } from "expo-router";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
@@ -109,15 +109,21 @@ export function BannerItem({ id, title, author, width, height }: BannerItemProps
   const containerWidth = width ?? winWidth;
   const [loadError, setLoadError] = useState(false);
   const [ready, setReady] = useState(false);
-  const imgOpacity = useRef(new Animated.Value(0)).current;
+  const [imgOpacity] = useState(() => new Animated.Value(0));
 
   const uri = BANNER_PREFIX + id + ".jpg";
 
   // 人为延迟加载(便于测试加载动画);上线置 0 后立即 ready
-  useEffect(() => {
-    let cancelled = false;
+  // uri 变化时重置加载状态(渲染期调整,React 19 推荐替代 effect 内 setState)
+  const [prevUri, setPrevUri] = useState(uri);
+  if (prevUri !== uri) {
+    setPrevUri(uri);
     setLoadError(false);
     setReady(false);
+  }
+
+  useEffect(() => {
+    let cancelled = false;
     imgOpacity.setValue(0);
     delayImageLoad().then(() => {
       if (!cancelled) setReady(true);
@@ -125,6 +131,7 @@ export function BannerItem({ id, title, author, width, height }: BannerItemProps
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的 uri 变化执行)
   }, [uri]);
 
   const fixedHeight = height ?? containerWidth * 0.45;

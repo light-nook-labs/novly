@@ -45,6 +45,7 @@ export default function BannersScreen() {
 
   useEffect(() => {
     loadBanners(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的挂载执行)
   }, []);
 
   async function loadBanners(reset = false) {
@@ -83,6 +84,7 @@ export default function BannersScreen() {
   // reverse 切换时按新方向重新分页加载(正序 DESC / 倒序 ASC)
   useEffect(() => {
     loadBanners(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的参数变化执行)
   }, [reversed]);
 
   // reverse 时查询方向已取反,无需再 useMemo 反转;数据即排序结果

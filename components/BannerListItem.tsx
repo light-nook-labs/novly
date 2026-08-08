@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Text, Image, TouchableOpacity, StyleSheet, View, Platform, Animated, Modal, Pressable } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -34,8 +34,8 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
   const [ready, setReady] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
   const [measuredW, setMeasuredW] = useState(0);
-  const pulseAnim = useRef(new Animated.Value(0.3)).current;
-  const imgOpacity = useRef(new Animated.Value(0)).current;
+  const [pulseAnim] = useState(() => new Animated.Value(0.3));
+  const [imgOpacity] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     const anim = Animated.loop(
@@ -46,16 +46,23 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
     );
     anim.start();
     return () => anim.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的挂载执行)
   }, []);
 
   const uri = BANNER_PREFIX + id + ".jpg";
   const containerWidth = width ?? measuredW;
   const fixedHeight = height ?? getBannerHeight(containerWidth || 1);
 
-  useEffect(() => {
-    let cancelled = false;
+  // uri 变化时重置加载状态(渲染期调整,React 19 推荐替代 effect 内 setState)
+  const [prevUri, setPrevUri] = useState(uri);
+  if (prevUri !== uri) {
+    setPrevUri(uri);
     setLoadError(false);
     setReady(false);
+  }
+
+  useEffect(() => {
+    let cancelled = false;
     imgOpacity.setValue(0);
     // 人为延迟加载(便于测试加载动画);上线置 0 后立即 ready
     delayImageLoad().then(() => {
@@ -64,6 +71,7 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的 uri 变化执行)
   }, [uri]);
 
   function handleLongPress() {

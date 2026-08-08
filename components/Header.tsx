@@ -20,11 +20,10 @@ export function PageHeader({ title, titleAppend, search, setSearch, onSearchPres
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [searchVisible, setSearchVisible] = useState(false);
-  const [initText, setInitText] = useState<string | null>(null);
+  const [initText, setInitText] = useState<string | null>(initProgress);
 
   // 数据库后台初始化(如解压冷数据)时,在 header 底部显示进度;完成后恢复普通 header
   useEffect(() => {
-    setInitText(initProgress);
     return subscribeInitProgress(setInitText);
   }, []);
 

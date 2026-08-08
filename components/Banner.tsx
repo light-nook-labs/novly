@@ -86,7 +86,7 @@ export function Banner({
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
-  const scrollX = useRef(new Animated.Value(0)).current;
+  const [scrollX] = useState(() => new Animated.Value(0));
   // 扩展索引(0=fake last, 1..n=真实项, n+1=fake first),始终单向递增
   const [extIndex, setExtIndex] = useState(1);
   const isTransitioning = useRef(false);
@@ -187,6 +187,7 @@ export function Banner({
 
   // Handle momentum scroll end — detect current page and handle infinite loop jumps
   const handleMomentumEnd = useCallback(
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization -- 手动记忆化依赖已覆盖,忽略编译器建议
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       if (items.length <= 1 || isTransitioning.current) return;
 
@@ -216,6 +217,7 @@ export function Banner({
         setExtIndex(rawIdx);
       }
     },
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization -- 手动记忆化依赖已覆盖,忽略编译器建议
     [items.length, extendedCount, itemW],
   );
 

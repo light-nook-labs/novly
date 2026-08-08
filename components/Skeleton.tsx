@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Animated, StyleSheet, View, type ViewStyle, type StyleProp } from "react-native";
 import { BorderRadius, Spacing } from "../constants/theme";
 import { useTheme } from "./ThemeProvider";
@@ -16,7 +16,7 @@ export function SkeletonBlock({
   style?: StyleProp<ViewStyle>;
 }) {
   const { colors } = useTheme();
-  const opacity = useRef(new Animated.Value(0.4)).current;
+  const [opacity] = useState(() => new Animated.Value(0.4));
 
   useEffect(() => {
     const anim = Animated.loop(
@@ -27,6 +27,7 @@ export function SkeletonBlock({
     );
     anim.start();
     return () => anim.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的挂载执行)
   }, []);
 
   return (

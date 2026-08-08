@@ -10,7 +10,7 @@ import {
   Pressable,
   Platform,
 } from "react-native";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import Toast from "react-native-toast-message";
@@ -294,13 +294,8 @@ function createStyles(colors: ThemeColors) {
 export default function AboutScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [showContribute, setShowContribute] = useState(false);
+  const [showContribute, setShowContribute] = useState(true);
   const [whyVisible, setWhyVisible] = useState(false); // Why Novly? 说明弹层
-
-  // 进入 About 路由时弹出贡献提示(鼓励 star / PR / issue)
-  useEffect(() => {
-    setShowContribute(true);
-  }, []);
 
   return (
     <View style={styles.container}>

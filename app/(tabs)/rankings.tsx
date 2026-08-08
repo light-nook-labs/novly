@@ -62,6 +62,7 @@ export default function RankingsScreen() {
     if (listHeight > 0 && contentHeight > 0 && contentHeight <= listHeight && hasMore && !loading) {
       loadRankings(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(自动填充逻辑)
   }, [novels, listHeight, contentHeight, hasMore, loading]);
 
   const styles = useMemo(
@@ -176,6 +177,7 @@ export default function RankingsScreen() {
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- tab 切换时重置列表状态(有意为之)
     setNovels([]);
     setPage(0);
     setHasMore(true);
@@ -188,6 +190,7 @@ export default function RankingsScreen() {
     }
     setLoading(true);
     loadRankings(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的 tab 切换执行)
   }, [selectedTab]);
 
   async function fetchRankings(limit: number, offset: number) {

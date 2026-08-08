@@ -76,6 +76,7 @@ export function NovelFilterSheet({ visible, filters, onApply, onClose }: NovelFi
 
   useEffect(() => {
     if (visible) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 打开时从 props 同步本地筛选状态(有意为之)
       setGenre(filters.genre);
       setStatus(filters.status);
       setYear(filters.year);
@@ -87,6 +88,7 @@ export function NovelFilterSheet({ visible, filters, onApply, onClose }: NovelFi
   }, [visible, filters]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability -- React Compiler 规则标记既有加载模式,数据更新为有意为之
     loadYears();
   }, []);
 

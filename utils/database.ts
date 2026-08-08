@@ -536,6 +536,7 @@ async function initDatabaseInternal(preloadedHot?: { localUri: string | null }):
 
   // hot 直接解压到最终路径(前台,~3s)
   const tHot0 = Date.now();
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- Metro 资产打包必需
   await decompressAndWriteChunk(require("../assets/chunks/hot_chunk.sqlite.gz"), hotPath, 0, 100, preloadedHot);
   dbLog(`hot: ${Date.now() - tHot0}ms`);
 
@@ -594,8 +595,11 @@ async function mergeColdInBackground(
     // 1. 逐个解压 cold_1/2/3 并合并到 coldDb
     //    关键: coldDb 使用 coldPath, 后续 part 解压到 coldTmpPath 避免文件冲突
     const coldModules = [
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- Metro 资产打包必需
       require("../assets/chunks/cold_1_chunk.sqlite.gz"),
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- Metro 资产打包必需
       require("../assets/chunks/cold_2_chunk.sqlite.gz"),
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- Metro 资产打包必需
       require("../assets/chunks/cold_3_chunk.sqlite.gz"),
     ];
 
