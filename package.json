@@ -48,6 +48,7 @@
     "web": "expo start --web",
     "test": "jest",
     "lint": "expo lint",
+    "ci": "pnpm lint && pnpm test && npx tsc --noEmit",
     "format": "prettier --write \"app/**/*.{ts,tsx}\" \"components/**/*.{ts,tsx}\" \"hooks/**/*.{ts,tsx}\" \"utils/**/*.{ts,tsx}\" \"constants/**/*.{ts,tsx}\" \"*.{json,md}\""
   },
   "jest": {
