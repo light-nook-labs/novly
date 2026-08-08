@@ -69,10 +69,7 @@ export default function BooklistDetailScreen() {
 
       const novels = parseBooklistNovels(detailJson);
       setNovels(novels);
-      await AsyncStorage.setItem(
-        cacheKey,
-        JSON.stringify({ timestamp: Date.now(), data: { meta, novels } }),
-      );
+      await AsyncStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: { meta, novels } }));
     } catch {
       setError("书单数据来自 SFACG 在线接口,当前网络无法访问");
     } finally {

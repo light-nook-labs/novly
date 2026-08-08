@@ -67,7 +67,7 @@ Novly 支持打包为 Windows 桌面应用(Tauri v2),与 Web 版同源,离线优
 pnpm tauri build
 ```
 
-产物:`src-tauri/target/release/bundle/nsis/Novly_1.2.0_x64-setup.exe`
+产物:`src-tauri/target/release/bundle/nsis/Novly_1.2.1_x64-setup.exe`
 
 ### 安装行为
 

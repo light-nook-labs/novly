@@ -18,7 +18,6 @@ import { FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { PAGE_SIZE } from "../../constants/pagination";
 import { useTheme, type ThemeColors } from "../../components/ThemeProvider";
 
-
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     gridRow: {

@@ -98,9 +98,7 @@ export default function NovelsScreen() {
       if (filters.maxWordNum !== null) conds.push(`word_num < ${filters.maxWordNum}`);
       const where = conds.length > 0 ? conds.join(" AND ") : "";
       const total = await db.getFirstAsync<{ v: number }>(buildCountQuery("novels", where));
-      const rows = await db.getAllAsync<{ ptype: number; v: number }>(
-        buildGroupCountQuery("novels", "ptype", where),
-      );
+      const rows = await db.getAllAsync<{ ptype: number; v: number }>(buildGroupCountQuery("novels", "ptype", where));
       const map: Record<string, number> = { all: total?.v ?? 0 };
       rows.forEach((r) => {
         map[String(r.ptype)] = r.v;

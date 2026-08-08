@@ -12,7 +12,13 @@ import { ICONS } from "../constants/icons";
 import { useScrollToTop } from "../hooks/useScrollToTop";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { type Booklist, type CacheEntry } from "../types/models";
-import { parseBooklistItem, BOOKLIST_API, BOOKLIST_EXPAND, BOOKLIST_CACHE_TTL, BOOKLIST_KNOWN_TOTAL } from "../utils/booklistApi";
+import {
+  parseBooklistItem,
+  BOOKLIST_API,
+  BOOKLIST_EXPAND,
+  BOOKLIST_CACHE_TTL,
+  BOOKLIST_KNOWN_TOTAL,
+} from "../utils/booklistApi";
 
 // SFACG 书单在线接口(离线 DB 无书单数据,需网络拉取)
 const CONCURRENCY = 8; // 并发请求数

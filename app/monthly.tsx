@@ -12,7 +12,6 @@ import { useTheme } from "../components/ThemeProvider";
 import { BackToTop } from "../components/BackToTop";
 import { currentYm, generateMonthsFrom, FIRST_MONTH } from "../utils/months";
 
-
 export default function MonthlyListScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -72,11 +71,7 @@ export default function MonthlyListScreen() {
         scrollEventThrottle={16}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.monthRow}
-            onPress={() => router.push(`/monthly/${item}`)}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.monthRow} onPress={() => router.push(`/monthly/${item}`)} activeOpacity={0.7}>
             <Text style={[styles.monthText, { color: colors.text }]}>
               {item.slice(0, 4)}年{Number(item.slice(4, 6))}月
             </Text>

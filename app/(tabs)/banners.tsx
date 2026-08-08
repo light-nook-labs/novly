@@ -23,7 +23,6 @@ import { useTheme } from "../../components/ThemeProvider";
 import { BackToTop } from "../../components/BackToTop";
 import { LoadingFooter } from "../../components/Loading";
 
-
 export default function BannersScreen() {
   const { colors } = useTheme();
   const { width: winWidth } = useWindowDimensions();

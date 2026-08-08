@@ -20,11 +20,7 @@ export function buildGroupCountQuery(
 }
 
 // 排行榜查询:某数字字段 > 0,按该字段降序分页
-export function buildRankingsQuery(
-  field: string,
-  limit: number,
-  offset: number,
-): { query: string; params: number[] } {
+export function buildRankingsQuery(field: string, limit: number, offset: number): { query: string; params: number[] } {
   return {
     query: `SELECT id, title, author, genre, status, ptype, word_num, click_num, like_num, praise_num, review_num, comment_num, cover, contest_id, has_banner, last_update
      FROM novels

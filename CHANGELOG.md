@@ -2,6 +2,19 @@
 
 All notable changes to Novly are documented here.
 
+## [1.2.1] - 2026-08-08
+
+### Added
+
+- 月榜独立路由页(`/monthly`):月份列表(搜索/加载更多/回到最新),首页导航第二行新增「月榜」入口;rankings 移除月榜 head tab(纯 DB 榜单)
+- 在线数据本地缓存(24h TTL):月榜榜单、书单列表项、书单详情命中免重复请求,弱网可看旧数据
+- 深链支持:Android 新增 `novly://` scheme 的 VIEW intent-filter(深链可直接打开对应路由)
+
+### Improved
+
+- 分页大小集中到 `constants/pagination.ts`(PAGE_SIZE),8 处本地定义统一
+- 常用 SQL 封装为 `utils/sql.ts` 纯函数(计数/分组计数/排行榜/按 id 批量/完本推荐/banner/详情),消除重复手写 SQL,含 10 个单元测试
+
 ## [1.2.0] - 2026-08-08
 
 ### Added
