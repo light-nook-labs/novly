@@ -1,0 +1,15 @@
+appId: com.lightnooklabs.novly
+---
+# 启动 + 首页导航网格 + 底部 tab 栏
+- launchApp
+- extendedWaitUntil:
+    visible: "作者"
+    timeout: 20000
+- assertVisible: "标签"
+- assertVisible: "比赛"
+- assertVisible: "分类"
+- assertVisible: "状态"
+- assertVisible: "首页"
+- assertVisible: "小说"
+- assertVisible: "排行"
+- assertVisible: "书架"

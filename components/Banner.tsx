@@ -21,7 +21,6 @@ import { useTheme } from "./ThemeProvider";
 import { FontSize, Spacing } from "../constants/theme";
 
 const AUTOPLAY_INTERVAL = 3500;
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const QQ_GROUP = "881041631";
 

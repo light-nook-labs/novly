@@ -1,0 +1,15 @@
+appId: com.lightnooklabs.novly
+---
+# 月榜:排行 → 月榜 tab → 月份列表 → 月份详情 head tabs(在线拉取,需网络)
+- launchApp
+- extendedWaitUntil:
+    visible: "排行"
+    timeout: 20000
+- tapOn: "排行"
+- tapOn: "月榜"
+- assertVisible: ".*年.*月"
+- tapOn: ".*年.*月"
+- assertVisible: "月票榜"
+- assertVisible: "新书榜"
+- assertVisible: "热销榜"
+- assertVisible: "对话月票"

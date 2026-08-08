@@ -5,12 +5,10 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
-  Dimensions,
   Platform,
   useWindowDimensions,
 } from "react-native";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
 import { BannerListItem, type BannerNovel } from "../../components/BannerListItem";
@@ -19,7 +17,6 @@ import { LoadingFooter } from "../../components/Loading";
 import { FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { useTheme, type ThemeColors } from "../../components/ThemeProvider";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const PAGE_SIZE = 10;
 
 function createStyles(colors: ThemeColors) {

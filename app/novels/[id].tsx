@@ -1,11 +1,10 @@
-import { Novel, Tag, Contest } from "../types/models";
+import { Novel, Tag, Contest } from "../../types/models";
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   Linking,
   Platform,
   Alert,
@@ -108,7 +107,7 @@ export default function NovelDetailScreen() {
         try {
           await navigator.share({ title, text: title, url });
           return;
-        } catch (e) {
+        } catch {
           // User cancelled or share unavailable — fall through to copy
         }
       }

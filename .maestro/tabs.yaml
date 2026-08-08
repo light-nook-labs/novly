@@ -1,0 +1,15 @@
+appId: com.lightnooklabs.novly
+---
+# 底部 tab 切换:小说(head tabs)→ 排行(head tabs)→ 书架
+- launchApp
+- extendedWaitUntil:
+    visible: "小说"
+    timeout: 20000
+- tapOn: "小说"
+- assertVisible: "全部"
+- assertVisible: "VIP"
+- tapOn: "排行"
+- assertVisible: "点击"
+- assertVisible: "月榜"
+- tapOn: "书架"
+- assertVisible: "首页"

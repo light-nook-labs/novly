@@ -6,7 +6,6 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  useWindowDimensions,
   Platform,
 } from "react-native";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -91,8 +90,6 @@ async function fetchBatch(ids: number[]): Promise<Booklist[]> {
 
 export default function BooklistsScreen() {
   const { colors } = useTheme();
-  const { width: winWidth } = useWindowDimensions();
-  const isWide = winWidth >= 1024;
   const [booklists, setBooklists] = useState<Booklist[]>([]);
   const [nextId, setNextId] = useState(1); // 下一个待拉取的 id
   const [startId, setStartId] = useState(1); // 列表起始 id(search/回到#1 重置)

@@ -1,10 +1,9 @@
-import { Stack } from "expo-router";
+import { Stack  } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
-  DevSettings,
   Platform,
   ActivityIndicator,
   StyleSheet,
@@ -14,7 +13,7 @@ import {
   Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+
 import Constants from "expo-constants";
 import { APP_NAME, APP_SLOGAN, APP_AUTHOR, APP_FOOTER, APP_GITHUB_URL } from "../constants/appInfo";
 import { initDatabase, isFirstInit, subscribeColdMerged, subscribeInitProgress } from "../utils/database";
@@ -207,15 +206,6 @@ function LoadingScreen() {
         </Text>
       </View>
     </View>
-  );
-}
-
-function BackButton() {
-  const { colors } = useTheme();
-  return (
-    <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 8 }}>
-      <Ionicons name="chevron-back" size={24} color={colors.primary} />
-    </TouchableOpacity>
   );
 }
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Modal, Pressable, View, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { Modal, Pressable, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 interface ImageLightboxProps {

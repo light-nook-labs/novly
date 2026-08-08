@@ -3,9 +3,7 @@ import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   Platform,
   useWindowDimensions,
 } from "react-native";

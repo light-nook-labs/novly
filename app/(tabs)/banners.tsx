@@ -2,15 +2,13 @@ import {
   View,
   FlatList,
   StyleSheet,
-  ActivityIndicator,
   TouchableOpacity,
-  Text,
   useWindowDimensions,
   Platform,
   type NativeSyntheticEvent,
   type NativeScrollEvent,
 } from "react-native";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ICONS } from "../../constants/icons";
@@ -19,7 +17,7 @@ import { BannerListItem, type BannerNovel } from "../../components/BannerListIte
 import { EmptyState } from "../../components/EmptyState";
 import { TabHeader } from "../../components/TabHeader";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
-import { Colors, FontSize, Spacing } from "../../constants/theme";
+import { Colors, Spacing } from "../../constants/theme";
 import { useTheme } from "../../components/ThemeProvider";
 import { BackToTop } from "../../components/BackToTop";
 import { LoadingFooter } from "../../components/Loading";
@@ -32,9 +30,6 @@ export default function BannersScreen() {
   // web 按窗口宽度动态列数(与其他列表页一致);手机单列
   const numColumns =
     Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
-  // 列表项宽度:多列时按列数均分(含列间距),单列时占满容器
-  const itemW =
-    numColumns > 1 ? (winWidth - Spacing.lg * 2 - 16 * (numColumns - 1)) / numColumns : winWidth - Spacing.lg * 2;
   const [allBanners, setAllBanners] = useState<BannerNovel[]>([]);
   const [loading, setLoading] = useState(true);
   const [reversed, setReversed] = useState(false);

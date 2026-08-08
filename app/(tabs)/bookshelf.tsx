@@ -3,15 +3,13 @@ import {
   View,
   Text,
   ScrollView,
-  FlatList,
   TouchableOpacity,
   StyleSheet,
   Alert,
   Platform,
-  useWindowDimensions,
 } from "react-native";
 import { Link, useFocusEffect } from "expo-router";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import {
   getBookshelf,
@@ -36,11 +34,8 @@ const DEFAULT_FILTER: FilterState = {
 
 const SORT_WHITELIST = new Set(["added_at", "click_num", "word_num", "like_num", "praise_num", "last_update"]);
 
-const NUM_COLUMNS = 3;
-
 export default function BookshelfScreen() {
   const { colors } = useTheme();
-  const { width: winWidth } = useWindowDimensions();
   // 封面固定高度,宽度按 3:4 比例自适应(容器尺寸可控)
   const coverHeight = 154;
   const itemWidth = Math.round(coverHeight * 0.75);

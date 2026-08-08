@@ -1,9 +1,9 @@
 import * as SQLite from "expo-sqlite";
 import { Asset } from "expo-asset";
 import { Platform } from "react-native";
+import { getSeedAsset } from "./seedLoader";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pako = require("pako");
-import { getSeedAsset } from "./seedLoader";
 
 let currentDb: SQLite.SQLiteDatabase | null = null;
 // 初始化 promise 缓存:防止多个页面并发 getDatabase() 导致重复初始化(重复解压/合并)

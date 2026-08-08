@@ -18,6 +18,7 @@ Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before 
 pnpm install       # install deps
 pnpm start         # dev server (interactive platform picker)
 pnpm run web       # web (fastest iteration)
+pnpm test          # jest unit tests (mappings/urls/months/badge colors)
 npx tsc --noEmit   # ALWAYS run type check before finishing / committing — must pass
 pnpm tauri build  # build Windows desktop installer (NSIS)
 ```

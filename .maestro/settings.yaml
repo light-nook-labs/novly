@@ -1,0 +1,10 @@
+appId: com.lightnooklabs.novly
+---
+# 设置:首页右上角设置按钮 → Settings 页 + Reinit 危险操作
+- launchApp
+- extendedWaitUntil:
+    visible: "作者"
+    timeout: 20000
+- tapOn: "设置"
+- assertVisible: "Settings"
+- assertVisible: "Reinit"

@@ -7,7 +7,7 @@ import { ID } from "./ID";
 import { StatusBadge, Badge, tagColor } from "./Badge";
 import { Cover } from "./Cover";
 import { formatNumber, statusMapping, genreMapping, ptypeMapping } from "../utils/mappings";
-import { FontSize, Spacing, BorderRadius } from "../constants/theme";
+import { FontSize, Spacing } from "../constants/theme";
 import { useTheme } from "./ThemeProvider";
 import { type NovelRowData } from "../types/models";
 

@@ -95,7 +95,7 @@ pnpm run ios        # iOS
 ## 项目结构
 
 ```
-novim/
+novly/
 ├── app/                      # expo-router 路由（页面）
 │   ├── (tabs)/               # 底部 tab：首页/小说/背投/排行/书架
 │   │   ├── index.tsx         #   首页（banner + 导航网格 + 完本推荐/萌神大赛 + 书单入口）
@@ -140,8 +140,15 @@ novim/
 │   └── urls.ts               #   封面/背投 URL 生成
 ├── types/models.ts           # 统一数据模型类型(Author/Novel/Booklist/FilterState 等)
 ├── constants/theme.ts        # 配色方案（light/dark）+ 尺寸常量
+├── __tests__/                # Jest 单元测试(mappings/urls/months/badge 颜色)
+├── .maestro/                 # Maestro e2e 流程(launch/tabs/monthly/settings)
 └── assets/                   # 图标、seed.sql.gz
 ```
+
+## 测试
+
+- **单元测试**(Jest):`pnpm test` — 覆盖纯逻辑:数据映射(`utils/mappings.ts`)、URL 生成(`utils/urls.ts`)、月榜月份生成(`utils/months.ts`)、badge 颜色绑定(`components/Badge.tsx`)
+- **e2e**(Maestro):安装 [Maestro](https://maestro.mobile.dev/) 后,确保真机/模拟器已安装 debug 构建且 Metro 运行(8081 + `adb reverse tcp:8081 tcp:8081`),执行 `maestro test .maestro/`(流程:launch / tabs / monthly / settings)
 
 ## 二次开发
 
@@ -160,7 +167,7 @@ novim/
 
 ## 许可证
 
-[MIT](./LICENSE) © light-nook-labs
+[MIT](./LICENSE) ©2026 light-nook-labs
 
 ---
 

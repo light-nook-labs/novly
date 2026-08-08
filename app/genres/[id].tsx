@@ -4,33 +4,24 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  ActivityIndicator,
   TouchableOpacity,
   Platform,
   useWindowDimensions,
 } from "react-native";
-import { useLocalSearchParams, router } from "expo-router";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useLocalSearchParams } from "expo-router";
+import { useState, useEffect, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
 import { genreMapping } from "../../utils/mappings";
 import { FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { useTheme } from "../../components/ThemeProvider";
 import { BackToTop } from "../../components/BackToTop";
-import { Loading } from "../../components/Loading";
 import { PageHeader } from "../../components/Header";
 import { PtypeTabs } from "../../components/PtypeTabs";
 import { NovelFilterSheet } from "../../components/NovelFilterSheet";
 import { useNovels } from "../../hooks/useNovels";
-import { NovelRow, type NovelRowData } from "../../components/NovelRow";
+import { NovelRow } from "../../components/NovelRow";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
-
-const PTYPES = [
-  { key: null, label: "全部", icon: "list-outline" as const },
-  { key: 2, label: "免费", icon: "gift-outline" as const },
-  { key: 3, label: "签约", icon: "ribbon-outline" as const },
-  { key: 4, label: "VIP", icon: "diamond-outline" as const },
-];
 
 const DEFAULT_FILTER: FilterState = {
   genre: null,

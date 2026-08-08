@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Text, Image, TouchableOpacity, StyleSheet, View, useWindowDimensions, Animated } from "react-native";
+import { Text, TouchableOpacity, StyleSheet, View, useWindowDimensions, Animated } from "react-native";
 import { router } from "expo-router";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { useTheme } from "./ThemeProvider";

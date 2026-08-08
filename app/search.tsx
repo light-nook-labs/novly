@@ -17,7 +17,7 @@ import { formatNumber } from "../utils/mappings";
 import { PageHeader } from "../components/Header";
 import { LoadingFooter } from "../components/Loading";
 import { useTheme } from "../components/ThemeProvider";
-import { Colors, FontSize, Spacing, BorderRadius } from "../constants/theme";
+import { Spacing } from "../constants/theme";
 
 export default function SearchScreen() {
   const { colors } = useTheme();

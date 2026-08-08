@@ -10,17 +10,17 @@ import {
   useWindowDimensions,
   Image,
 } from "react-native";
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { ICONS } from "../../constants/icons";
 import { getDatabase, subscribeDbReady } from "../../utils/database";
-import { formatNumber, genreMapping, statusMapping, ptypeMapping } from "../../utils/mappings";
+import { formatNumber } from "../../utils/mappings";
 import { Colors, FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { Banner, DEFAULT_PINNED, type PinnedBanner } from "../../components/Banner";
 import { NovelRow, type NovelRowData } from "../../components/NovelRow";
 import { TabHeader } from "../../components/TabHeader";
-import { InfoSheet, InfoBody, InfoItem } from "../../components/InfoSheet";
+import { InfoSheet, InfoBody } from "../../components/InfoSheet";
 import { useTheme } from "../../components/ThemeProvider";
 import { type BannerNovel } from "../../types/models";
 
@@ -276,7 +276,7 @@ export default function HomeScreen() {
         <TabHeader
           placeholder="搜索小说..."
           right={
-            <TouchableOpacity onPress={openSettings} style={styles.settingsBtn}>
+            <TouchableOpacity onPress={openSettings} style={styles.settingsBtn} accessibilityLabel="设置">
               <Ionicons name="settings-outline" size={22} color={colors.textSecondary} />
             </TouchableOpacity>
           }

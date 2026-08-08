@@ -13,6 +13,7 @@ import { useState, useEffect, useMemo } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
+import { currentYm, generateMonthsFrom, FIRST_MONTH } from "../../utils/months";
 import { NovelRow } from "../../components/NovelRow";
 import { type Novel } from "../../types/models";
 import { TabHeader } from "../../components/TabHeader";
@@ -33,29 +34,7 @@ const RANKING_TABS = [
   { key: "monthly", label: "月榜", icon: ICONS.wifi }, // 月份列表,点击进入该月榜单页(在线)
 ];
 
-// 月榜数据最早可追溯到 2013-03(实测:2013-02 及更早月份无数据),每月一期
-const FIRST_YM = "201303";
 const MONTH_PAGE_SIZE = 10; // 月榜分页大小(手动加载更多)
-function firstIssueYm(): string {
-  return FIRST_YM;
-}
-function currentYm(): string {
-  const now = new Date();
-  return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
-// 从 start(YYYYMM) 起往前生成到第一期(含)
-function generateMonthsFrom(start: string): string[] {
-  const list: string[] = [];
-  const first = firstIssueYm();
-  let cur = start;
-  while (cur >= first) {
-    list.push(cur);
-    const y = Number(cur.slice(0, 4));
-    const m = Number(cur.slice(4, 6));
-    cur = m === 1 ? `${y - 1}12` : `${y}${String(m - 1).padStart(2, "0")}`;
-  }
-  return list;
-}
 
 export default function RankingsScreen() {
   const { colors } = useTheme();
@@ -265,7 +244,7 @@ export default function RankingsScreen() {
     setMonthQuery("");
     if (!/^\d{4}$/.test(q) && !/^\d{6}$/.test(q)) return;
     const ym = q.length === 4 ? `${q}12` : q; // yyyy 是 yyyy12 的简写
-    const first = firstIssueYm();
+    const first = FIRST_MONTH;
     if (ym <= currentYm() && ym >= first) {
       setMonthStart(ym);
       setMonthPage(1);

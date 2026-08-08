@@ -85,7 +85,7 @@ On first launch, `assets/seed.sql.gz` is automatically decompressed to initializ
 ## Project Structure
 
 ```
-novim/
+novly/
 ├── app/                      # expo-router routes (pages)
 │   ├── (tabs)/               # bottom tabs: Home/Novels/Banners/Rankings/Bookshelf
 │   │   ├── index.tsx         #   home (banner + nav grid + recommended/moe sections + booklist entry)
@@ -130,8 +130,15 @@ novim/
 │   └── urls.ts               #   cover / banner URL helpers
 ├── types/models.ts           # centralized data-model types (Author/Novel/Booklist/FilterState etc.)
 ├── constants/theme.ts        # color schemes (light/dark) + size constants
+├── __tests__/                # Jest unit tests (mappings/urls/months/badge colors)
+├── .maestro/                 # Maestro e2e flows (launch/tabs/monthly/settings)
 └── assets/                   # icons, seed.sql.gz
 ```
+
+## Testing
+
+- **Unit tests** (Jest): `pnpm test` — covers pure logic: data mappings (`utils/mappings.ts`), URL helpers (`utils/urls.ts`), monthly-month generation (`utils/months.ts`), badge color bindings (`components/Badge.tsx`)
+- **E2E** (Maestro): install [Maestro](https://maestro.mobile.dev/), make sure a debug build is installed on a device/emulator with Metro running (port 8081 + `adb reverse tcp:8081 tcp:8081`), then run `maestro test .maestro/` (flows: launch / tabs / monthly / settings)
 
 ## For Developers
 
@@ -150,7 +157,7 @@ The full development guide lives in **[AGENTS.md](./AGENTS.md)**, covering:
 
 ## License
 
-[MIT](./LICENSE) © light-nook-labs
+[MIT](./LICENSE) ©2026 light-nook-labs
 
 ---
 
