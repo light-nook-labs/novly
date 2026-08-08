@@ -3,27 +3,41 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
+import { PAGE_SIZE } from "../constants/pagination";
 import { useTheme } from "../components/ThemeProvider";
 import { PageHeader } from "../components/Header";
 import { Loading, LoadingFooter } from "../components/Loading";
 import { BackToTop } from "../components/BackToTop";
 import { ICONS } from "../constants/icons";
 import { useScrollToTop } from "../hooks/useScrollToTop";
-import { type Booklist } from "../types/models";
-import { parseBooklistItem, BOOKLIST_API, BOOKLIST_EXPAND, BOOKLIST_KNOWN_TOTAL } from "../utils/booklistApi";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { type Booklist, type CacheEntry } from "../types/models";
+import { parseBooklistItem, BOOKLIST_API, BOOKLIST_EXPAND, BOOKLIST_CACHE_TTL, BOOKLIST_KNOWN_TOTAL } from "../utils/booklistApi";
 
 // SFACG 书单在线接口(离线 DB 无书单数据,需网络拉取)
-const PAGE_SIZE = 10; // 分页大小(每批拉取的书单数)
 const CONCURRENCY = 8; // 并发请求数
 
 /** 规整文本:合并连续换行为单个换行(禁止空行,避免破坏布局层次),去除首尾空白 */
 async function fetchBooklist(id: number): Promise<Booklist | null> {
   try {
+    // 本地缓存(24h TTL):命中则跳过在线请求
+    const cacheKey = `booklist_item_${id}`;
+    const cached = await AsyncStorage.getItem(cacheKey);
+    if (cached) {
+      const entry: CacheEntry<Booklist> = JSON.parse(cached);
+      if (Date.now() - entry.timestamp < BOOKLIST_CACHE_TTL) {
+        return entry.data;
+      }
+    }
     const url = `${BOOKLIST_API}?actionName=${encodeURIComponent(`/bookList/${id}`)}&expand=${encodeURIComponent(BOOKLIST_EXPAND)}`;
     const res = await fetch(url);
     if (!res.ok) return null;
     const json = await res.json();
-    return parseBooklistItem(json, id);
+    const item = parseBooklistItem(json, id);
+    if (item) {
+      await AsyncStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: item }));
+    }
+    return item;
   } catch {
     return null;
   }

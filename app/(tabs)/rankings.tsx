@@ -4,22 +4,19 @@ import {
   TouchableOpacity,
   StyleSheet,
   Text,
-  TextInput,
   ScrollView,
   Platform,
   useWindowDimensions,
 } from "react-native";
 import { useState, useEffect, useMemo } from "react";
-import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
-import { currentYm, generateMonthsFrom, FIRST_MONTH } from "../../utils/months";
 import { NovelRow } from "../../components/NovelRow";
 import { type Novel } from "../../types/models";
 import { TabHeader } from "../../components/TabHeader";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
-import { FontSize, Spacing, BorderRadius } from "../../constants/theme";
-import { ICONS } from "../../constants/icons";
+import { FontSize, Spacing } from "../../constants/theme";
+import { PAGE_SIZE } from "../../constants/pagination";
 import { useTheme } from "../../components/ThemeProvider";
 import { BackToTop } from "../../components/BackToTop";
 import { Loading, LoadingFooter } from "../../components/Loading";
@@ -31,10 +28,7 @@ const RANKING_TABS = [
   { key: "praise_num", label: "点赞", icon: "thumbs-up-outline" as const },
   { key: "review_num", label: "长评", icon: "reader-outline" as const },
   { key: "comment_num", label: "短评", icon: "chatbubble-outline" as const },
-  { key: "monthly", label: "月榜", icon: ICONS.wifi }, // 月份列表,点击进入该月榜单页(在线)
 ];
-
-const MONTH_PAGE_SIZE = 10; // 月榜分页大小(手动加载更多)
 
 export default function RankingsScreen() {
   const { colors } = useTheme();
@@ -44,16 +38,9 @@ export default function RankingsScreen() {
     Platform.OS === "web" ? (winWidth >= 1800 ? 4 : winWidth >= 1200 ? 3 : winWidth >= 800 ? 2 : 1) : 1;
   const [novels, setNovels] = useState<Novel[]>([]);
   const [selectedTab, setSelectedTab] = useState("click_num");
-  // 月榜月份列表:起始月 + 分页 + 搜索
-  const [monthQuery, setMonthQuery] = useState("");
-  const [monthStart, setMonthStart] = useState(() => currentYm());
-  const [monthPage, setMonthPage] = useState(1);
-  const allMonths = useMemo(() => generateMonthsFrom(monthStart), [monthStart]);
-  const visibleMonths = allMonths.slice(0, monthPage * MONTH_PAGE_SIZE);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const PAGE_SIZE = 10;
   const { scrollRef, showButton, onScroll, scrollToTop } = useScrollToTop();
   const [listHeight, setListHeight] = useState(0);
   const [contentHeight, setContentHeight] = useState(0);
@@ -116,62 +103,6 @@ export default function RankingsScreen() {
           alignSelf: "stretch",
           textAlign: "center",
         },
-        monthSearch: {
-          flexDirection: "row",
-          alignItems: "center",
-          gap: Spacing.xs,
-          marginHorizontal: Spacing.md,
-          marginTop: Spacing.sm,
-          marginBottom: Spacing.xs,
-          paddingHorizontal: Spacing.sm,
-          height: 36,
-          borderRadius: BorderRadius.sm,
-        },
-        monthSearchInput: {
-          flex: 1,
-          padding: 0,
-          fontSize: FontSize.md,
-        },
-        footerArea: {
-          alignItems: "center",
-          paddingBottom: Spacing.lg,
-        },
-        endText: {
-          fontSize: FontSize.sm,
-          fontWeight: "600",
-          color: colors.textTertiary,
-          paddingVertical: Spacing.md,
-        },
-        footerBtns: {
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: Spacing.xl,
-        },
-        footerBtnText: {
-          fontSize: FontSize.md,
-          fontWeight: "600",
-        },
-        backToLatestBtn: {
-          paddingVertical: Spacing.lg,
-        },
-        loadMoreBtn: {
-          alignItems: "center",
-          paddingVertical: Spacing.lg,
-        },
-        monthRow: {
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          paddingHorizontal: Spacing.md,
-          paddingVertical: Spacing.md,
-          backgroundColor: colors.surface,
-          marginBottom: 1,
-        },
-        monthText: {
-          fontSize: FontSize.md,
-          fontWeight: "600",
-        },
       }),
     [colors],
   );
@@ -181,13 +112,6 @@ export default function RankingsScreen() {
     setNovels([]);
     setPage(0);
     setHasMore(true);
-    if (selectedTab === "monthly") {
-      // 月榜:月份列表(分页 + 搜索起始月),榜单数据在月份页(monthly/[ym])内按需拉取
-      setMonthStart(currentYm());
-      setMonthPage(1);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     loadRankings(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的 tab 切换执行)
@@ -206,7 +130,6 @@ export default function RankingsScreen() {
   }
 
   async function loadRankings(reset = false) {
-    if (selectedTab === "monthly") return; // 月榜为月份列表,不走榜单查询
     try {
       setLoading(true);
       const currentPage = reset ? 0 : page;
@@ -231,29 +154,6 @@ export default function RankingsScreen() {
 
   const currentTab = RANKING_TABS.find((t) => t.key === selectedTab);
 
-  // 月榜月份列表:回到最新月(重置起始月与分页)
-  const backToLatest = () => {
-    setMonthStart(currentYm());
-    setMonthPage(1);
-  };
-
-  // 月榜搜索:支持 YYYY(4位,视为 YYYY12 简写)或 YYYYMM(6位),提交后列表从该月起重新分页
-  const handleMonthInput = (v: string) => {
-    setMonthQuery(v.replace(/[^0-9]/g, "").slice(0, 6));
-  };
-
-  const searchMonth = () => {
-    const q = monthQuery;
-    setMonthQuery("");
-    if (!/^\d{4}$/.test(q) && !/^\d{6}$/.test(q)) return;
-    const ym = q.length === 4 ? `${q}12` : q; // yyyy 是 yyyy12 的简写
-    const first = FIRST_MONTH;
-    if (ym <= currentYm() && ym >= first) {
-      setMonthStart(ym);
-      setMonthPage(1);
-    }
-  };
-
   return (
     <View style={styles.container}>
       <TabHeader />
@@ -276,28 +176,12 @@ export default function RankingsScreen() {
         </ScrollView>
       </View>
 
-      {selectedTab === "monthly" && (
-        <View style={[styles.monthSearch, { backgroundColor: colors.surfaceBorder }]}>
-          <Ionicons name={ICONS.search} size={16} color={colors.textTertiary} />
-          <TextInput
-            style={[styles.monthSearchInput, { color: colors.text }]}
-            placeholder="输入月份,如 202506 或 2025"
-            placeholderTextColor={colors.textTertiary}
-            value={monthQuery}
-            onChangeText={handleMonthInput}
-            keyboardType="number-pad"
-            returnKeyType="go"
-            onSubmitEditing={searchMonth}
-          />
-        </View>
-      )}
-
       <FlatList
         ref={scrollRef}
-        data={(selectedTab === "monthly" ? visibleMonths : novels) as (string | Novel)[]}
-        keyExtractor={(item) => (typeof item === "string" ? item : item.id.toString())}
-        numColumns={selectedTab === "monthly" ? 1 : numColumns}
-        key={`grid-${selectedTab === "monthly" ? 1 : numColumns}`}
+        data={novels}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={numColumns}
+        key={`grid-${numColumns}`}
         columnWrapperStyle={numColumns > 1 ? { gap: 16, marginBottom: 16 } : undefined}
         onScroll={onScroll}
         onLayout={(e) => {
@@ -315,55 +199,24 @@ export default function RankingsScreen() {
         maxToRenderPerBatch={10}
         windowSize={7}
         contentContainerStyle={styles.list}
-        renderItem={({ item, index }) =>
-          typeof item === "string" ? (
-            <TouchableOpacity
-              style={styles.monthRow}
-              onPress={() => router.push(`/monthly/${item}`)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.monthText, { color: colors.text }]}>
-                {item.slice(0, 4)}年{Number(item.slice(4, 6))}月
-              </Text>
-              <Ionicons name={ICONS.jump} size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-          ) : (
-            <View
-              style={{
-                width:
-                  numColumns > 1 ? `${(100 - ((numColumns - 1) * 16 * 100) / (winWidth || 1)) / numColumns}%` : "100%",
-              }}
-            >
-              <NovelRow
-                novel={item}
-                rank={index + 1}
-                value={item[selectedTab as keyof Novel] as number}
-                valueLabel={currentTab?.label}
-              />
-            </View>
-          )
-        }
+        renderItem={({ item, index }) => (
+          <View
+            style={{
+              width:
+                numColumns > 1 ? `${(100 - ((numColumns - 1) * 16 * 100) / (winWidth || 1)) / numColumns}%` : "100%",
+            }}
+          >
+            <NovelRow
+              novel={item}
+              rank={index + 1}
+              value={item[selectedTab as keyof Novel] as number}
+              valueLabel={currentTab?.label}
+            />
+          </View>
+        )}
         ListEmptyComponent={loading ? <Loading /> : null}
         ListFooterComponent={
-          selectedTab === "monthly" ? (
-            <View style={styles.footerArea}>
-              {visibleMonths.length >= allMonths.length && <Text style={styles.endText}>已是最后一期</Text>}
-              <View style={styles.footerBtns}>
-                <TouchableOpacity style={styles.backToLatestBtn} onPress={backToLatest} activeOpacity={0.7}>
-                  <Text style={[styles.footerBtnText, { color: colors.textSecondary }]}>回到最新</Text>
-                </TouchableOpacity>
-                {visibleMonths.length < allMonths.length && (
-                  <TouchableOpacity
-                    style={styles.loadMoreBtn}
-                    onPress={() => setMonthPage((p) => p + 1)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.footerBtnText, { color: colors.primary }]}>加载更多</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-          ) : loading && novels.length > 0 ? (
+          loading && novels.length > 0 ? (
             <LoadingFooter />
           ) : !hasMore && novels.length > 0 ? (
             <View style={styles.footer}>

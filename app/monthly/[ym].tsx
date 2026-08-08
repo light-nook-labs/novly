@@ -3,10 +3,11 @@ import { useLocalSearchParams } from "expo-router";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NovelRow } from "../../components/NovelRow";
 import { PageHeader } from "../../components/Header";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
-import { type RankNovel } from "../../types/models";
+import { type CacheEntry, type RankNovel } from "../../types/models";
 import { parseMonthlyRank, type MonthlyRankItem } from "../../utils/monthlyApi";
 import { FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { ICONS } from "../../constants/icons";
@@ -22,6 +23,8 @@ const MONTHLY_TABS = [
   { key: "hotsale", rank: 3, label: "热销榜", valueLabel: "票数" },
   { key: "dialogue", rank: 4, label: "对话月票", valueLabel: "月票" },
 ];
+
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 月榜数据缓存 24h(榜单按日/月更新,缓存期内免重复请求)
 
 export default function MonthlyRankScreen() {
   const { colors } = useTheme();
@@ -40,11 +43,25 @@ export default function MonthlyRankScreen() {
     setError(null);
     try {
       const tab = MONTHLY_TABS[tabIndex];
-      const res = await fetch(
-        `https://pages.sfacg.com/ajax/act/MonthlyBoy.ashx?op=getRanks&date=${apiDate}&rank=${tab.rank}`,
-      );
-      const json = await res.json();
-      const items = parseMonthlyRank(json);
+      const cacheKey = `monthly_rank_${apiDate}_${tab.rank}`;
+
+      // 本地缓存(24h TTL):命中则跳过在线请求
+      let items: MonthlyRankItem[] | null = null;
+      const cached = await AsyncStorage.getItem(cacheKey);
+      if (cached) {
+        const entry: CacheEntry<MonthlyRankItem[]> = JSON.parse(cached);
+        if (Date.now() - entry.timestamp < CACHE_TTL) {
+          items = entry.data;
+        }
+      }
+      if (!items) {
+        const res = await fetch(
+          `https://pages.sfacg.com/ajax/act/MonthlyBoy.ashx?op=getRanks&date=${apiDate}&rank=${tab.rank}`,
+        );
+        const json = await res.json();
+        items = parseMonthlyRank(json);
+        await AsyncStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: items }));
+      }
 
       // 用本地 DB 补充元数据(状态/分类/封面等)
       const db = await getDatabase();

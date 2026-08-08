@@ -10,8 +10,9 @@ import { BackToTop } from "../../components/BackToTop";
 import { Cover } from "../../components/Cover";
 import { ICONS } from "../../constants/icons";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
-import { type BooklistMeta, type BooklistNovel } from "../../types/models";
-import { parseBooklistMeta, parseBooklistNovels } from "../../utils/booklistApi";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { type CacheEntry, type BooklistMeta, type BooklistNovel } from "../../types/models";
+import { parseBooklistMeta, parseBooklistNovels, BOOKLIST_CACHE_TTL } from "../../utils/booklistApi";
 
 // SFACG 书单在线接口(详情页:actionName=/bookList/{id}/novel 返回书单内小说列表)
 // 原生端 fetch 无 CORS 限制;Web/Tauri WebView 被 CORS 拦截时可将该地址换成代理
@@ -42,6 +43,19 @@ export default function BooklistDetailScreen() {
     setLoading(true);
     setError(null);
     try {
+      const cacheKey = `booklist_detail_${bookListId}`;
+
+      // 本地缓存(24h TTL):命中则跳过在线请求
+      const cached = await AsyncStorage.getItem(cacheKey);
+      if (cached) {
+        const entry: CacheEntry<{ meta: BooklistMeta | null; novels: BooklistNovel[] }> = JSON.parse(cached);
+        if (Date.now() - entry.timestamp < BOOKLIST_CACHE_TTL) {
+          if (entry.data.meta) setMeta(entry.data.meta);
+          setNovels(entry.data.novels);
+          return;
+        }
+      }
+
       const metaUrl = `${BOOKLIST_API}?actionName=${encodeURIComponent(`/bookList/${bookListId}`)}&expand=${encodeURIComponent(META_EXPAND)}`;
       const detailUrl = `${BOOKLIST_API}?actionName=${encodeURIComponent(`/bookList/${bookListId}/novel`)}&expand=${encodeURIComponent(DETAIL_EXPAND)}`;
       const [metaRes, detailRes] = await Promise.all([fetch(metaUrl), fetch(detailUrl)]);
@@ -53,7 +67,12 @@ export default function BooklistDetailScreen() {
         setMeta(meta);
       }
 
-      setNovels(parseBooklistNovels(detailJson));
+      const novels = parseBooklistNovels(detailJson);
+      setNovels(novels);
+      await AsyncStorage.setItem(
+        cacheKey,
+        JSON.stringify({ timestamp: Date.now(), data: { meta, novels } }),
+      );
     } catch {
       setError("书单数据来自 SFACG 在线接口,当前网络无法访问");
     } finally {

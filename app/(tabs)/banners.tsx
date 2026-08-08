@@ -18,11 +18,11 @@ import { EmptyState } from "../../components/EmptyState";
 import { TabHeader } from "../../components/TabHeader";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
 import { Colors, Spacing } from "../../constants/theme";
+import { PAGE_SIZE } from "../../constants/pagination";
 import { useTheme } from "../../components/ThemeProvider";
 import { BackToTop } from "../../components/BackToTop";
 import { LoadingFooter } from "../../components/Loading";
 
-const PAGE_SIZE = 10;
 
 export default function BannersScreen() {
   const { colors } = useTheme();

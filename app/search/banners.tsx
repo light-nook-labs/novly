@@ -15,9 +15,9 @@ import { BannerListItem, type BannerNovel } from "../../components/BannerListIte
 import { PageHeader } from "../../components/Header";
 import { LoadingFooter } from "../../components/Loading";
 import { FontSize, Spacing, BorderRadius } from "../../constants/theme";
+import { PAGE_SIZE } from "../../constants/pagination";
 import { useTheme, type ThemeColors } from "../../components/ThemeProvider";
 
-const PAGE_SIZE = 10;
 
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({

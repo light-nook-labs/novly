@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getDatabase } from "../utils/database";
 import { type NovelRowData } from "../components/NovelRow";
 import { buildNovelQuery } from "../utils/novelQuery";
+import { PAGE_SIZE } from "../constants/pagination";
 
 interface UseNovelsOptions {
   ptype?: number | null;
@@ -32,7 +33,7 @@ export function useNovels({
   maxWordNum = null,
   sortBy = "click_num",
   descending = true,
-  pageSize = 10,
+  pageSize = PAGE_SIZE,
   fromClause,
   extraWhere,
   extraParams,

@@ -18,6 +18,7 @@ import { PageHeader } from "../components/Header";
 import { LoadingFooter } from "../components/Loading";
 import { useTheme } from "../components/ThemeProvider";
 import { Spacing } from "../constants/theme";
+import { PAGE_SIZE } from "../constants/pagination";
 
 export default function SearchScreen() {
   const { colors } = useTheme();
@@ -29,7 +30,6 @@ export default function SearchScreen() {
   const [results, setResults] = useState<SearchNovel[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const PAGE_SIZE = 10;
   const [listHeight, setListHeight] = useState(0);
   const [loading, setLoading] = useState(false);
 

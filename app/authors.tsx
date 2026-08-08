@@ -16,6 +16,7 @@ import { getDatabase } from "../utils/database";
 import { formatNumber } from "../utils/mappings";
 import { useScrollToTop } from "../hooks/useScrollToTop";
 import { FontSize, Spacing } from "../constants/theme";
+import { PAGE_SIZE } from "../constants/pagination";
 import { useTheme } from "../components/ThemeProvider";
 import { BackToTop } from "../components/BackToTop";
 import { NoteCard, NoteStrong } from "../components/NoteCard";
@@ -33,7 +34,6 @@ export default function AuthorsScreen() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const PAGE_SIZE = 10;
   const { scrollRef, showButton, onScroll, scrollToTop } = useScrollToTop();
   const [listHeight, setListHeight] = useState(0);
 

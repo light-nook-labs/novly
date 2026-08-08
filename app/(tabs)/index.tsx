@@ -41,6 +41,7 @@ const NAV_ITEMS = [
   { key: "statuses" as const, icon: "pulse-outline" as const, label: "状态", color: Colors.primary },
   { key: "booklists" as const, icon: ICONS.booklist, label: "书单", color: Colors.primary },
   { key: "moe" as const, icon: ICONS.star, label: "萌神", color: Colors.primary },
+  { key: "monthly" as const, icon: ICONS.wifi, label: "月榜", color: Colors.primary },
 ];
 
 const NAV_ROUTES: Record<string, string> = {
@@ -51,6 +52,7 @@ const NAV_ROUTES: Record<string, string> = {
   statuses: "/statuses",
   booklists: "/booklists",
   moe: "/moe",
+  monthly: "/monthly",
 };
 
 const BANNER_COUNT = 6;

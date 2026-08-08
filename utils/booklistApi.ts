@@ -6,6 +6,7 @@ import type { Booklist, BooklistMeta, BooklistNovel } from "../types/models";
 export const BOOKLIST_API = "https://pages.sfacg.com/api/HttpProxy";
 export const BOOKLIST_EXPAND = "avatar,verifyType,vipLevel,nickName,growup";
 export const BOOKLIST_KNOWN_TOTAL = 1272; // 已知书单总数(近似)
+export const BOOKLIST_CACHE_TTL = 24 * 60 * 60 * 1000; // 书单数据缓存 24h(命中免重复请求)
 
 /** 规整文本:合并连续换行为单个换行(禁止空行,避免破坏布局层次),去除首尾空白 */
 export function cleanText(s: string | null | undefined): string {
