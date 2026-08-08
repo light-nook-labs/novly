@@ -11,6 +11,7 @@ import { Cover } from "../../components/Cover";
 import { ICONS } from "../../constants/icons";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
 import { type BooklistMeta, type BooklistNovel } from "../../types/models";
+import { parseBooklistMeta, parseBooklistNovels } from "../../utils/booklistApi";
 
 // SFACG 书单在线接口(详情页:actionName=/bookList/{id}/novel 返回书单内小说列表)
 // 原生端 fetch 无 CORS 限制;Web/Tauri WebView 被 CORS 拦截时可将该地址换成代理
@@ -21,23 +22,6 @@ const DETAIL_EXPAND = "bigNovelCover,typeName,intropointCount,tags,sysTags";
 const META_EXPAND = "avatar,verifyType,vipLevel,nickName,growup";
 
 /** 规整文本:合并连续换行为单个换行(禁止空行),去除首尾空白 */
-function cleanText(s: string | null | undefined): string | null {
-  if (!s) return null;
-  return s
-    .replace(/\r\n/g, "\n")
-    .replace(/\n{2,}/g, "\n")
-    .trim();
-}
-
-/** 每段首行缩进2个全角空格(中文排版习惯),空行不缩进 */
-function indentParagraphs(s: string | null | undefined): string | null {
-  if (!s) return null;
-  return s
-    .split("\n")
-    .map((line) => (line.trim() ? "\u3000\u3000" + line : line))
-    .join("\n");
-}
-
 function formatNum(n: number): string {
   if (n >= 10000) return (n / 10000).toFixed(1) + "万";
   return String(n);
@@ -64,47 +48,12 @@ export default function BooklistDetailScreen() {
       const metaJson = await metaRes.json();
       const detailJson = await detailRes.json();
 
-      const md = metaJson?.data;
-      if (md && md.bookListID) {
-        setMeta({
-          bookListID: md.bookListID,
-          title: cleanText(md.title) || `书单 #${bookListId}`,
-          summary: indentParagraphs(cleanText(md.summary)),
-          markNum: md.markNum ?? 0,
-          recommendNum: md.recommendNum ?? 0,
-          novelNum: md.novelNum ?? 0,
-          nickName: md.user?.nickName ?? "",
-        });
+      const meta = parseBooklistMeta(metaJson, bookListId);
+      if (meta) {
+        setMeta(meta);
       }
 
-      const items = detailJson?.data?.items ?? [];
-      setNovels(
-        items
-          .map((it: any): BooklistNovel | null => {
-            const nv = it?.novels;
-            if (!nv || !nv.novelId) return null;
-            const ex = nv?.expand ?? {};
-            const sysTags = Array.isArray(ex.sysTags)
-              ? ex.sysTags.map((t: any) => t?.tagName).filter((x: any) => typeof x === "string" && x.length > 0)
-              : [];
-            const tags = Array.isArray(ex.tags) ? ex.tags.filter((x: any) => typeof x === "string") : [];
-            return {
-              novelId: nv.novelId,
-              novelName: nv.novelName ?? "",
-              authorName: nv.authorName ?? "",
-              novelCover: ex.bigNovelCover ?? nv.novelCover ?? null,
-              typeName: ex.typeName ?? null,
-              tags,
-              sysTags,
-              charCount: nv.charCount ?? 0,
-              markCount: nv.markCount ?? 0,
-              viewTimes: nv.viewTimes ?? 0,
-              isFinish: nv.isFinish ?? 0,
-              note: indentParagraphs(cleanText(it.summary)),
-            };
-          })
-          .filter((n: BooklistNovel | null): n is BooklistNovel => n !== null),
-      );
+      setNovels(parseBooklistNovels(detailJson));
     } catch {
       setError("书单数据来自 SFACG 在线接口,当前网络无法访问");
     } finally {

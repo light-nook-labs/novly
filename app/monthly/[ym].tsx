@@ -7,6 +7,7 @@ import { NovelRow } from "../../components/NovelRow";
 import { PageHeader } from "../../components/Header";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
 import { type RankNovel } from "../../types/models";
+import { parseMonthlyRank, type MonthlyRankItem } from "../../utils/monthlyApi";
 import { FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { ICONS } from "../../constants/icons";
 import { useTheme } from "../../components/ThemeProvider";
@@ -43,11 +44,11 @@ export default function MonthlyRankScreen() {
         `https://pages.sfacg.com/ajax/act/MonthlyBoy.ashx?op=getRanks&date=${apiDate}&rank=${tab.rank}`,
       );
       const json = await res.json();
-      const items: any[] = Array.isArray(json?.data) ? json.data : [];
+      const items = parseMonthlyRank(json);
 
       // 用本地 DB 补充元数据(状态/分类/封面等)
       const db = await getDatabase();
-      const ids = items.map((s: any) => Number(s.nid)).filter((n: number) => Number.isInteger(n));
+      const ids = items.map((s) => s.nid);
       let rows: {
         id: number;
         title: string;
@@ -71,12 +72,12 @@ export default function MonthlyRankScreen() {
       }
       const rowMap = new Map(rows.map((r) => [r.id, r]));
       setNovels(
-        items.map((s: any): RankNovel => {
-          const dbRow = rowMap.get(Number(s.nid));
+        items.map((s: MonthlyRankItem): RankNovel => {
+          const dbRow = rowMap.get(s.nid);
           return {
-            id: Number(s.nid),
-            title: dbRow?.title ?? s.name ?? "",
-            author: dbRow?.author ?? s.authorName ?? null,
+            id: s.nid,
+            title: dbRow?.title ?? s.name,
+            author: dbRow?.author ?? s.authorName,
             genre: dbRow?.genre ?? 0,
             status: dbRow?.status ?? 0,
             ptype: dbRow?.ptype ?? 0,
@@ -86,8 +87,8 @@ export default function MonthlyRankScreen() {
             praise_num: 0,
             review_num: 0,
             comment_num: 0,
-            cover: dbRow?.cover ?? s.cover ?? null,
-            ticket_num: s.ticketNum ?? 0,
+            cover: dbRow?.cover ?? s.cover,
+            ticket_num: s.ticketNum,
           };
         }),
       );

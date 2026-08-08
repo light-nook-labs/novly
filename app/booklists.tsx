@@ -19,6 +19,7 @@ import { BackToTop } from "../components/BackToTop";
 import { ICONS } from "../constants/icons";
 import { useScrollToTop } from "../hooks/useScrollToTop";
 import { type Booklist } from "../types/models";
+import { parseBooklistItem } from "../utils/booklistApi";
 
 // SFACG 书单在线接口(离线 DB 无书单数据,需网络拉取)
 // 列表页:actionName=/bookList/{id} + expand 返回用户头像/认证/等级等;详情页另用 /bookList/{id}/novel
@@ -32,43 +33,13 @@ const PAGE_SIZE = 10; // 分页大小(每批拉取的书单数)
 const CONCURRENCY = 8; // 并发请求数
 
 /** 规整文本:合并连续换行为单个换行(禁止空行,避免破坏布局层次),去除首尾空白 */
-function cleanText(s: string | null | undefined): string | null {
-  if (!s) return null;
-  return s
-    .replace(/\r\n/g, "\n")
-    .replace(/\n{2,}/g, "\n")
-    .trim();
-}
-
-/** 每段首行缩进2个全角空格(中文排版习惯),空行不缩进 */
-function indentParagraphs(s: string | null | undefined): string | null {
-  if (!s) return null;
-  return s
-    .split("\n")
-    .map((line) => (line.trim() ? "\u3000\u3000" + line : line))
-    .join("\n");
-}
-
 async function fetchBooklist(id: number): Promise<Booklist | null> {
   try {
     const url = `${BOOKLIST_API}?actionName=${encodeURIComponent(`/bookList/${id}`)}&expand=${encodeURIComponent(BOOKLIST_EXPAND)}`;
     const res = await fetch(url);
     if (!res.ok) return null;
     const json = await res.json();
-    const d = json?.data;
-    if (!d || !d.bookListID) return null;
-    return {
-      bookListID: d.bookListID,
-      title: cleanText(d.title) || `书单 #${id}`,
-      summary: indentParagraphs(cleanText(d.summary)),
-      markNum: d.markNum ?? 0,
-      recommendNum: d.recommendNum ?? 0,
-      novelNum: d.novelNum ?? 0,
-      nickName: d.user?.nickName ?? "",
-      avatar: d.user?.expand?.avatar ?? null,
-      vipLevel: d.user?.expand?.vipLevel ?? 0,
-      lastUpdate: d.lastUpdateDateTime ? String(d.lastUpdateDateTime).slice(0, 10) : null,
-    };
+    return parseBooklistItem(json, id);
   } catch {
     return null;
   }
