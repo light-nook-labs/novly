@@ -1,12 +1,5 @@
 import { AuthorStats } from "../../types/models";
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  Platform,
-  useWindowDimensions,
-} from "react-native";
+import { View, Text, FlatList, StyleSheet, Platform, useWindowDimensions } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import { getDatabase } from "../../utils/database";

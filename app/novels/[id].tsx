@@ -1,15 +1,5 @@
 import { Novel, Tag, Contest } from "../../types/models";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Linking,
-  Platform,
-  Alert,
-  Share,
-} from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, Platform, Alert, Share } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";

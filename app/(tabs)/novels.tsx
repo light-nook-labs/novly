@@ -1,13 +1,5 @@
 import { FilterState } from "../../types/models";
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  Platform,
-  useWindowDimensions,
-} from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Platform, useWindowDimensions } from "react-native";
 import { useState, useEffect } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";

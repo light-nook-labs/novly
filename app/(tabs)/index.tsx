@@ -270,7 +270,7 @@ export default function HomeScreen() {
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [loadBooklists]);
 
   return (
     <>
@@ -436,7 +436,9 @@ export default function HomeScreen() {
                   </Text>
                 ) : null}
                 {booklist.vipLevel > 0 ? (
-                  <Text style={[styles.recommendBooklistMetaText, { color: colors.primary, fontWeight: "600" }]}>VIP</Text>
+                  <Text style={[styles.recommendBooklistMetaText, { color: colors.primary, fontWeight: "600" }]}>
+                    VIP
+                  </Text>
                 ) : null}
                 <Text style={[styles.recommendBooklistMetaText, { color: colors.textSecondary }]}>
                   {booklist.novelNum} 部作品

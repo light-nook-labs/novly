@@ -1,13 +1,5 @@
 import { FilterState } from "../../types/models";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  Platform,
-} from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform } from "react-native";
 import { Link, useFocusEffect } from "expo-router";
 import { useState, useCallback, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";

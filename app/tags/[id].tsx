@@ -1,12 +1,4 @@
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  Platform,
-  useWindowDimensions,
-} from "react-native";
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Platform, useWindowDimensions } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";

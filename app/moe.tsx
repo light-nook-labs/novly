@@ -38,6 +38,7 @@ export default function MoeScreen() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 挂载时加载数据,内部 setState 为加载流程
     load();
   }, [load]);
 
@@ -65,13 +66,7 @@ export default function MoeScreen() {
                 <Text style={[styles.yearText, { color: colors.textSecondary }]}>{item.year}</Text>
               </View>
               {item.novels.map((novel) => (
-                <NovelRow
-                  key={novel.id}
-                  novel={novel}
-                  unordered
-                  value={novel.click_num}
-                  valueLabel="点击"
-                />
+                <NovelRow key={novel.id} novel={novel} unordered value={novel.click_num} valueLabel="点击" />
               ))}
             </View>
           )}

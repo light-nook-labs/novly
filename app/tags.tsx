@@ -1,12 +1,4 @@
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  useWindowDimensions,
-  Platform,
-} from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, useWindowDimensions, Platform } from "react-native";
 import { Link } from "expo-router";
 import { useState, useEffect, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";

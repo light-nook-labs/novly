@@ -2,6 +2,26 @@
 
 All notable changes to Novly are documented here.
 
+## [1.2.0] - 2026-08-08
+
+### Added
+
+- 萌神大赛独立路由页(`/moe`):按年份分组展示历年萌神小说(每年 2 本),首页导航入口
+- 首页导航网格第二行:新增「书单」与「萌神」入口(书单不再为独立卡片,第二行不标注统计数)
+- 首页「书单推荐」分区(完本推荐下方):从 1272 个在线书单中随机抽取 12 个,富样式行(id 标题/简介/创建者头像/VIP/收藏/推荐),每次加载随机变化
+- 测试与质量基础设施:Jest 单元测试(46 个,覆盖数据映射/URL/月份生成/徽章颜色/月榜与书单 API 解析/萌神分组/SQL 构造/书架 DB)、GitHub Actions CI(推送自动跑 lint+test+tsc)、ESLint 冗余规则(lint 全绿)
+
+### Fixed
+
+- 修复渲染崩溃:ImageShimmer/Skeleton 重构为 useState 后未导入导致 ReferenceError(首页 banner、rankings 等含封面组件页面),补导入
+- 书单列表/详情页缓存字段统一为 `data`(CacheEntry 泛型),导入路径修正
+
+### Improved
+
+- 书单 API 常量(BOOKLIST_API/EXPAND/KNOWN_TOTAL)集中到 `utils/booklistApi.ts`,列表页与首页推荐共用
+- react-hooks warnings 消化(86→0):refs 改用 useState 惰性初始化、setState 渲染期调整、既有模式带理由 disable
+- 在线 API 解析纯函数化(月榜 `utils/monthlyApi.ts`、书单 `utils/booklistApi.ts`)、萌神分组纯函数化(`utils/moe.ts`)、SQL 构造纯函数化(`utils/novelQuery.ts`)
+
 ## [1.1.0] - 2026-08-06
 
 稳定版发布(自 1.1.0a/1.1.0b pre-release 正式转正)。

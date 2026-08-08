@@ -15,6 +15,7 @@ jest.mock("expo-sqlite", () => ({
   },
 }));
 
+// eslint-disable-next-line import/first -- jest.mock 需先于被测模块导入(工厂引用上方 mock 变量)
 import {
   addToBookshelf,
   clearBookshelf,
