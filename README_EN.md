@@ -57,7 +57,7 @@ Novly can be packaged as a Windows desktop app (Tauri v2), same source as the We
 pnpm tauri build
 ```
 
-Output: `src-tauri/target/release/bundle/nsis/Novly_1.2.2_x64-setup.exe`
+Output: `src-tauri/target/release/bundle/nsis/Novly_1.3.0_x64-setup.exe`
 
 ### Install behavior
 

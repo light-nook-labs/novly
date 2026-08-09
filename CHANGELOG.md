@@ -2,6 +2,39 @@
 
 All notable changes to Novly are documented here.
 
+## [1.3.0] - 2026-08-09
+
+### Added
+
+- 月榜独立路由页(`/monthly`):月份列表(搜索/加载更多/回到最新),首页导航第二行新增「月榜」入口;rankings 移除月榜 head tab(纯 DB 榜单)
+- 萌神大赛独立路由页(`/moe`)与首页导航入口,书单推荐分区(在线随机 12 个富样式行)
+- 在线数据本地缓存(24h TTL):月榜榜单、书单列表项、书单详情命中免重复请求
+- 深链支持:Android `novly://` scheme 的 VIEW intent-filter
+- 版本更新检查:直连 GitHub 失败自动回退加速镜像,检测最快镜像优先下载;发现新版本时设置页红点提示(结果缓存 24h)
+- 测试与质量:Jest 64 个单元测试(含 SQL 构建/更新检查/分页)、CI 自动校验、ESLint 0 problems
+
+### Fixed
+
+- FlatList 无限列表页分页并发重复追加(重复 key):useNovels/rankings/search 改用 ref 同步锁(见 docs/pitfalls.md #15)
+- genres 分组计数 ORDER BY 引用不存在的别名导致列表查不到
+
+### Improved
+
+- 常用 SQL 封装为纯函数(`utils/sql.ts`),分页常量集中化(`constants/pagination.ts`)
+- appinfo/图标集中化(`constants/appInfo.ts`/`constants/icons.ts`),Why 内容内联化,settings 界面全中文化
+- react-hooks warnings 消化(lint 全绿),在线 API 解析纯函数化
+
+## [1.2.2] - 2026-08-09
+
+### Added
+
+- 版本更新检查支持 GitHub 加速镜像:直连 api.github.com 失败自动回退镜像(ghfast/ghproxy 等),检测最快可用镜像优先从镜像下载 APK;检查结果缓存 24h
+- 设置页发现新版本时「检查更新」行显示红点提示(挂载时静默检查,跨会话持久)
+
+### Improved
+
+- settings 界面全中文化(数据库统计/外观/危险操作区/主题/清空书架/重新初始化/开发缘由/更新日志/数据源等)
+
 ## [1.2.1] - 2026-08-08
 
 ### Added

@@ -3,7 +3,7 @@
 import { ICONS } from "./icons";
 
 // 版本号(统一管理,发布时只改这一处)
-export const APP_VERSION = "1.2.2";
+export const APP_VERSION = "1.3.0";
 
 export const APP_NAME = "Novly";
 export const APP_SLOGAN = "离线优先的轻小说元数据浏览器";
