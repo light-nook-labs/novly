@@ -26,6 +26,18 @@ export const ICONS = {
   tip: "help-circle-outline", // 小提示/说明(展开 why 解释,如完本推荐抽取逻辑)
   booklist: "bookmarks-outline", // 书单(sfacg 在线书单入口)
   wifi: "wifi-outline", // 在线/需网络(书单数据在线拉取)
+  mail: "mail-outline", // 联系邮箱(about)
+  pr: "git-pull-request-outline", // PR/贡献(about)
+  theme: "contrast-outline", // 主题切换(settings 操作项)
+  warning: "alert-circle-outline", // 危险操作警告(重置/清除数据)
+  offline: "cloud-offline-outline", // 离线优先(about feature)
+  podium: "podium-outline", // 多排行榜(about feature)
+  bookmark: "bookmark-outline", // 本地书架(about feature)
+  library: "library-outline", // 全量库(about feature/统计)
+  systemMode: "phone-portrait-outline", // 跟随系统(主题选项)
+  lightMode: "sunny-outline", // 浅色模式(主题选项)
+  darkMode: "moon-outline", // 深色模式(主题选项)
+  download: "download-outline", // 检查更新/下载(settings)
   // 底部 tab 图标(RN tab bar)
   home: "home",
   novels: "book",

@@ -8,7 +8,7 @@ import {
   Platform,
   useWindowDimensions,
 } from "react-native";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
 import { NovelRow } from "../../components/NovelRow";
@@ -45,6 +45,9 @@ export default function RankingsScreen() {
   const { scrollRef, showButton, onScroll, scrollToTop } = useScrollToTop();
   const [listHeight, setListHeight] = useState(0);
   const [contentHeight, setContentHeight] = useState(0);
+  // 分页加载同步锁:FlatList 多触发源(onLayout/onContentSizeChange/onEndReached)并发调用 loadRankings 时,
+  // loading 状态异步生效无法阻止同页重复追加(重复 key),用 ref 同步锁防重
+  const loadingRef = useRef(false);
   // 大屏:内容不足视口时自动填充(rankings 用 loadRankings)
   useEffect(() => {
     if (listHeight > 0 && contentHeight > 0 && contentHeight <= listHeight && hasMore && !loading) {
@@ -125,6 +128,8 @@ export default function RankingsScreen() {
   }
 
   async function loadRankings(reset = false) {
+    if (!reset && loadingRef.current) return;
+    if (!reset) loadingRef.current = true;
     try {
       setLoading(true);
       const currentPage = reset ? 0 : page;
@@ -143,6 +148,7 @@ export default function RankingsScreen() {
     } catch (error) {
       console.error("Failed to load rankings:", error);
     } finally {
+      loadingRef.current = false;
       setLoading(false);
     }
   }

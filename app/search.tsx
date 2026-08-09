@@ -9,7 +9,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Link } from "expo-router";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../utils/database";
 import { type SearchNovel } from "../types/models";
@@ -32,6 +32,8 @@ export default function SearchScreen() {
   const [hasMore, setHasMore] = useState(true);
   const [listHeight, setListHeight] = useState(0);
   const [loading, setLoading] = useState(false);
+  // 分页加载同步锁:防 onEndReached/onContentSizeChange 并发触发 search 导致同页重复追加(重复 key)
+  const loadingRef = useRef(false);
 
   const search = useCallback(
     async (searchQuery: string, reset = false) => {
@@ -43,6 +45,10 @@ export default function SearchScreen() {
         setHasMore(true);
         return;
       }
+
+      // 分页加载同步锁:防并发重复追加
+      if (!reset && loadingRef.current) return;
+      if (!reset) loadingRef.current = true;
 
       try {
         setLoading(true);
@@ -73,6 +79,9 @@ export default function SearchScreen() {
         setHasMore(results.length === PAGE_SIZE);
       } catch (error) {
         console.error("Search failed:", error);
+      } finally {
+        loadingRef.current = false;
+        setLoading(false);
       }
     },
     [page],

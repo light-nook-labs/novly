@@ -21,3 +21,14 @@
 13. **Large gz decompression must yield to event loop** — `readAsStringAsync` + `pako.inflate` on a 20MB gz file blocks the JS thread for ~50s. The `decompressAndWriteChunkStreaming` function uses 256KB push chunks with `setTimeout` yields every1MB to keep the UI responsive. Never read an entire gz file into memory in one shot on Android.
 
 14. **RN gradle asset task never cleans stale `res/raw` gz assets** — bundled assets are copied into `android/app/build/generated/res/react/release/raw/` on every build, but old files are only added, never removed. After changing the bundled data model (e.g. hot/cold chunk splitting), stale assets from earlier builds (like the old single `cold_chunk.sqlite.gz` / `warm_chunk.sqlite.gz`) keep getting packaged into every release APK, silently bloating it (once caused a 164MB APK; the fix was deleting `generated/res` + `intermediates/packaged_res` and rebuilding). If the APK size jumps for no code reason, check the res/raw contents first.
+
+15. **FlatList infinite-scroll pages can double-append the same page (duplicate keys)** — every list page that loads more data has multiple pagination triggers (`onLayout`, `onContentSizeChange`, `onEndReached`, auto-fill effects) which can fire in the same render cycle. A `loading` **state** guard is async (`setState` is batched), so concurrent calls all see `loading === false` and append the same page's rows twice → React console error "Encountered two children with the same key" (key = novel id). This affects ALL infinite list pages (novels / tags/[id] / contests/[id] / statuses/[id] / genres/[id] via `useNovels`, plus rankings / search / banners), so new list pages must NOT rely on a state guard. Always guard with a synchronous **ref lock**:
+    ```ts
+    const loadingRef = useRef(false);
+    async function loadMore(reset = false) {
+      if (!reset && loadingRef.current) return;
+      if (!reset) loadingRef.current = true;
+      try { /* query + append */ } finally { loadingRef.current = false; }
+    }
+    ```
+    The `reset` path (tab switch / refresh / new query) bypasses the lock so a fresh load always runs. Manual button-driven pagination (booklists, monthly month list) has no concurrent triggers and needs no lock. Reference implementations: `useNovels.loadMore`, `rankings.loadRankings`, `search.search`; `authors.loadAuthors` / `banners.loadBanners` already followed this pattern.

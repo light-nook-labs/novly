@@ -112,7 +112,7 @@ export default function GenresScreen() {
       // 2. Load all genres from DB (data is small)
       const db = await getDatabase();
       const results = await db.getAllAsync<GenreCount>(
-        buildGroupCountQuery("novels", "genre", undefined, "v DESC", "count"),
+        buildGroupCountQuery("novels", "genre", undefined, "count DESC", "count"),
       );
       setGenres(results);
 

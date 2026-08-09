@@ -11,14 +11,16 @@ import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { PageHeader } from "../components/Header";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { InfoSheet, InfoBody, InfoItem } from "../components/InfoSheet";
+import { loadWhyText, parseWhyMarkdown, type WhyBlock } from "../utils/whyContent";
+import { fetchLatestRelease, compareVersions } from "../utils/updateApi";
 import { ICONS } from "../constants/icons";
 import { useTheme, type ThemeColors, type ThemeMode } from "../components/ThemeProvider";
-import { APP_VERSION, APP_GITHUB_URL } from "../constants/appInfo";
+import { APP_VERSION, APP_GITHUB_URL, APP_LICENSE_URL, APP_NOVEL_HUB_URL, APP_NOVEL_HUB_MOBILE_URL, APP_SLOGAN_EN, APP_NAME, APP_GITHUB_ORG, ghShortUrl } from "../constants/appInfo";
 
 const THEME_OPTIONS: { key: ThemeMode; label: string; icon: string }[] = [
-  { key: "system", label: "跟随系统", icon: "phone-portrait-outline" },
-  { key: "light", label: "浅色模式", icon: "sunny-outline" },
-  { key: "dark", label: "深色模式", icon: "moon-outline" },
+  { key: "system", label: "跟随系统", icon: ICONS.systemMode },
+  { key: "light", label: "浅色模式", icon: ICONS.lightMode },
+  { key: "dark", label: "深色模式", icon: ICONS.darkMode },
 ];
 
 export default function SettingsScreen() {
@@ -32,7 +34,11 @@ export default function SettingsScreen() {
   });
   const [themeVisible, setThemeVisible] = useState(false);
   const [whyVisible, setWhyVisible] = useState(false);
+  // Why 内容:从 WHY_TEXT 常量解析(纯文本维护,改 whyContent.ts 即可)
+  const [whyBlocks] = useState<WhyBlock[]>(() => parseWhyMarkdown(loadWhyText()));
   const [confirmTarget, setConfirmTarget] = useState<"bookshelf" | "reset" | null>(null);
+  // 版本更新检查弹窗:new=有新版本(latest tag + release url),latest=已最新,error=拉取失败
+  const [updateDialog, setUpdateDialog] = useState<{ kind: "new" | "latest" | "error"; tag?: string; url?: string } | null>(null);
   const [reinitializing, setReinitializing] = useState(false);
   const [reinitState, setReinitState] = useState<string | null>(null);
 
@@ -116,11 +122,35 @@ export default function SettingsScreen() {
     Linking.openURL(url);
   }
 
+  // 检查更新:从 GitHub Release 拉取最新版本并与本地版本比较
+  const handleCheckUpdate = async () => {
+    try {
+      const release = await fetchLatestRelease();
+      if (!release || !release.tagName) {
+        setUpdateDialog({ kind: "error" });
+        return;
+      }
+      const latestTag = release.tagName.replace(/^v/i, "");
+      if (compareVersions(APP_VERSION, latestTag) < 0) {
+        setUpdateDialog({
+          kind: "new",
+          tag: release.tagName,
+          url: `${APP_GITHUB_URL}/releases/tag/${release.tagName}`,
+        });
+      } else {
+        setUpdateDialog({ kind: "latest", tag: APP_VERSION });
+      }
+    } catch (error) {
+      console.error("Check update failed:", error);
+      setUpdateDialog({ kind: "error" });
+    }
+  };
+
   const statRows = [
-    { label: "Novels", value: stats.novels, icon: "library-outline" as const },
-    { label: "Authors", value: stats.authors, icon: "person-outline" as const },
-    { label: "Tags", value: stats.tags, icon: "pricetag-outline" as const },
-    { label: "Contests", value: stats.contests, icon: "trophy-outline" as const },
+    { label: "Novels", value: stats.novels, icon: ICONS.library },
+    { label: "Authors", value: stats.authors, icon: ICONS.author },
+    { label: "Tags", value: stats.tags, icon: ICONS.tag },
+    { label: "Contests", value: stats.contests, icon: ICONS.contest },
   ];
 
   return (
@@ -158,14 +188,14 @@ export default function SettingsScreen() {
           <Text style={styles.sectionTitle}>APPEARANCE</Text>
           <View style={styles.card}>
             <TouchableOpacity style={styles.actionRow} onPress={() => setThemeVisible(true)} activeOpacity={0.6}>
-              <Ionicons name="contrast-outline" size={22} color={colors.primary} style={styles.actionIcon} />
+              <Ionicons name={ICONS.theme} size={22} color={colors.primary} style={styles.actionIcon} />
               <View style={styles.actionInfo}>
                 <Text style={styles.actionLabel}>Theme</Text>
                 <Text style={styles.actionSubtitle}>
                   {THEME_OPTIONS.find((o) => o.key === mode)?.label ?? "跟随系统"}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              <Ionicons name={ICONS.jump} size={18} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
         </View>
@@ -179,12 +209,12 @@ export default function SettingsScreen() {
               onPress={handleClearBookshelf}
               activeOpacity={0.6}
             >
-              <Ionicons name="trash-outline" size={22} color={colors.danger} style={styles.actionIcon} />
+              <Ionicons name={ICONS.trash} size={22} color={colors.danger} style={styles.actionIcon} />
               <View style={styles.actionInfo}>
                 <Text style={styles.actionLabelDanger}>Clear Bookshelf</Text>
                 <Text style={styles.actionSubtitle}>Permanently remove all saved novels</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              <Ionicons name={ICONS.jump} size={18} color={colors.textMuted} />
             </TouchableOpacity>
 
             {Platform.OS !== "web" && <View style={styles.dangerDivider} />}
@@ -194,12 +224,12 @@ export default function SettingsScreen() {
               onPress={handleResetData}
               activeOpacity={0.6}
             >
-              <Ionicons name="alert-circle-outline" size={22} color={colors.danger} style={styles.actionIcon} />
+              <Ionicons name={ICONS.warning} size={22} color={colors.danger} style={styles.actionIcon} />
               <View style={styles.actionInfo}>
                 <Text style={styles.actionLabelDanger}>Reinit</Text>
                 <Text style={styles.actionSubtitle}>Clear cache, bookshelf and reinitialize data</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              <Ionicons name={ICONS.jump} size={18} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
           {reinitState && <Text style={styles.reinitStatus}>{reinitState}</Text>}
@@ -215,10 +245,22 @@ export default function SettingsScreen() {
               activeOpacity={0.6}
             >
               <View style={styles.aboutInfo}>
-                <Text style={styles.aboutAppName}>Novly</Text>
-                <Text style={styles.aboutVersion}>v{APP_VERSION} · Offline-first browser for novel metadata</Text>
+                <Text style={styles.aboutAppName}>{APP_NAME}</Text>
+                <Text style={styles.aboutVersion}>v{APP_VERSION} · {APP_SLOGAN_EN}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              <Ionicons name={ICONS.jump} size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.aboutRow, Platform.OS === "web" ? { width: "100%", paddingBottom: 16 } : null]}
+              onPress={handleCheckUpdate}
+              activeOpacity={0.6}
+            >
+              <View style={styles.aboutInfo}>
+                <Text style={[styles.aboutAppName, { color: colors.text }]}>检查更新</Text>
+                <Text style={styles.aboutVersion}>从 GitHub Release 拉取最新版本</Text>
+              </View>
+              <Ionicons name={ICONS.download} size={18} color={colors.textMuted} />
             </TouchableOpacity>
 
             {Platform.OS !== "web" && <View style={styles.divider} />}
@@ -233,7 +275,7 @@ export default function SettingsScreen() {
                 <Text style={styles.actionLabel}>Why Novly?</Text>
                 <Text style={styles.actionSubtitle}>Why this project exists (SFACG data problems)</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              <Ionicons name={ICONS.jump} size={18} color={colors.textMuted} />
             </TouchableOpacity>
 
             {Platform.OS !== "web" && <View style={styles.divider} />}
@@ -255,13 +297,13 @@ export default function SettingsScreen() {
 
             <TouchableOpacity
               style={[styles.linkRow, Platform.OS === "web" ? { width: "50%", paddingRight: 16 } : null]}
-              onPress={() => handleOpenUrl("https://github.com/light-nook-labs/novel_hub")}
+              onPress={() => handleOpenUrl(APP_NOVEL_HUB_URL)}
               activeOpacity={0.6}
             >
               <Ionicons name="git-branch-outline" size={22} color={colors.primary} style={styles.linkIcon} />
               <View style={styles.linkInfo}>
                 <Text style={styles.linkLabel}>Data Source</Text>
-                <Text style={styles.linkSubtitle}>light-nook-labs/novel_hub</Text>
+                <Text style={styles.linkSubtitle}>{ghShortUrl(APP_NOVEL_HUB_URL)}</Text>
               </View>
               <Ionicons name="open-outline" size={18} color={colors.textMuted} />
             </TouchableOpacity>
@@ -270,13 +312,13 @@ export default function SettingsScreen() {
 
             <TouchableOpacity
               style={[styles.linkRow, Platform.OS === "web" ? { width: "50%", paddingRight: 16 } : null]}
-              onPress={() => handleOpenUrl("https://github.com/light-nook-labs/NovelHubMobile")}
+              onPress={() => handleOpenUrl(APP_NOVEL_HUB_MOBILE_URL)}
               activeOpacity={0.6}
             >
               <Ionicons name="phone-portrait-outline" size={22} color={colors.primary} style={styles.linkIcon} />
               <View style={styles.linkInfo}>
                 <Text style={styles.linkLabel}>Flutter Version</Text>
-                <Text style={styles.linkSubtitle}>light-nook-labs/NovelHubMobile</Text>
+                <Text style={styles.linkSubtitle}>{ghShortUrl(APP_NOVEL_HUB_MOBILE_URL)}</Text>
               </View>
               <Ionicons name="open-outline" size={18} color={colors.textMuted} />
             </TouchableOpacity>
@@ -285,13 +327,13 @@ export default function SettingsScreen() {
 
             <TouchableOpacity
               style={[styles.linkRow, Platform.OS === "web" ? { width: "50%", paddingRight: 16 } : null]}
-              onPress={() => handleOpenUrl("https://github.com/light-nook-labs/novly")}
+              onPress={() => handleOpenUrl(APP_GITHUB_URL)}
               activeOpacity={0.6}
             >
               <Ionicons name="logo-github" size={22} color={colors.primary} style={styles.linkIcon} />
               <View style={styles.linkInfo}>
                 <Text style={styles.linkLabel}>This Project</Text>
-                <Text style={styles.linkSubtitle}>light-nook-labs/novly</Text>
+                <Text style={styles.linkSubtitle}>{ghShortUrl(APP_GITHUB_URL)}</Text>
               </View>
               <Ionicons name="open-outline" size={18} color={colors.textMuted} />
             </TouchableOpacity>
@@ -300,7 +342,7 @@ export default function SettingsScreen() {
 
             <TouchableOpacity
               style={[styles.linkRow, Platform.OS === "web" ? { width: "50%", paddingRight: 16 } : null]}
-              onPress={() => handleOpenUrl("https://github.com/light-nook-labs/novly/blob/master/LICENSE")}
+              onPress={() => handleOpenUrl(APP_LICENSE_URL)}
               activeOpacity={0.6}
             >
               <Ionicons name="shield-checkmark-outline" size={22} color={colors.primary} style={styles.linkIcon} />
@@ -315,23 +357,20 @@ export default function SettingsScreen() {
         {/* Copyright */}
         <View style={styles.copyright}>
           <Text textBreakStrategy="simple" style={styles.copyrightText}>
-            © {new Date().getFullYear()} light-nook-labs
+            © {new Date().getFullYear()} {APP_GITHUB_ORG}
           </Text>
         </View>
       </ScrollView>
 
-      {/* Why Novly? 说明弹层 */}
-      <InfoSheet visible={whyVisible} onClose={() => setWhyVisible(false)} title="为什么开发 Novly?">
-        <InfoBody>我是一名在 SFACG 看了 5 年书的用户,非常喜欢在这里看书。</InfoBody>
-        <InfoBody>但这些年,我遇到过不少困扰:</InfoBody>
-        <InfoItem>有些好书因为年代久远,封面和一些元信息已经丢失</InfoItem>
-        <InfoItem>搜索与推荐机制不佳,一些好书永远不会被人发现</InfoItem>
-        <InfoItem>不同平台(PC / 移动端 / App)数据不一致,同一本书各处信息都对不上</InfoItem>
-        <InfoBody>这些让找书、追书变得非常困难。</InfoBody>
-        <InfoBody>所以我希望帮助和我遇到同样问题的书友,提供一个更好的检索平台:</InfoBody>
-        <InfoItem>离线优先:内置稳定元数据,无需网络即可浏览</InfoItem>
-        <InfoItem>数据修复:找回丢失的封面、作者与书籍信息</InfoItem>
-        <InfoItem>更好的搜索与浏览:让好书不再被埋没</InfoItem>
+      {/* Why Novly? 说明弹层(内容来自 assets/content/why.txt) */}
+      <InfoSheet visible={whyVisible} onClose={() => setWhyVisible(false)} title={`为什么开发 ${APP_NAME}?`}>
+        {whyBlocks.map((block, i) =>
+          block.bullet ? (
+            <InfoItem key={i}>{block.text}</InfoItem>
+          ) : (
+            <InfoBody key={i}>{block.text}</InfoBody>
+          ),
+        )}
       </InfoSheet>
       {/* Theme picker modal */}
       <Modal visible={themeVisible} transparent animationType="fade" onRequestClose={() => setThemeVisible(false)}>
@@ -394,6 +433,33 @@ export default function SettingsScreen() {
           setConfirmTarget(null);
         }}
         onCancel={() => setConfirmTarget(null)}
+      />
+
+      {/* 版本更新检查对话框 */}
+      <ConfirmDialog
+        visible={updateDialog !== null}
+        title={
+          updateDialog?.kind === "new"
+            ? `发现新版本 ${updateDialog.tag}`
+            : updateDialog?.kind === "error"
+              ? "检查更新失败"
+              : "已是最新版本"
+        }
+        message={
+          updateDialog?.kind === "new"
+            ? `当前版本 v${APP_VERSION},最新版本 ${updateDialog.tag}。前往 GitHub Release 下载更新?`
+            : updateDialog?.kind === "error"
+              ? "无法连接 GitHub,请检查网络后重试"
+              : `当前已是最新版本 v${APP_VERSION}`
+        }
+        confirmText={updateDialog?.kind === "new" ? "前往下载" : "好的"}
+        onConfirm={() => {
+          if (updateDialog?.kind === "new" && updateDialog.url) {
+            Linking.openURL(updateDialog.url);
+          }
+          setUpdateDialog(null);
+        }}
+        onCancel={() => setUpdateDialog(null)}
       />
     </View>
   );

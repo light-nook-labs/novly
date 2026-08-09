@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getDatabase } from "../utils/database";
 import { type NovelRowData } from "../components/NovelRow";
 import { buildNovelQuery } from "../utils/novelQuery";
@@ -43,6 +43,9 @@ export function useNovels({
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // 分页加载同步锁:FlatList 的 onLayout/onContentSizeChange/onEndReached 会连续触发 loadMore,
+  // loading 状态异步生效无法阻止同一页面并发重复追加(导致重复 key),用 ref 同步锁防重
+  const loadingRef = useRef(false);
 
   const buildQuery = useCallback(
     (pageNum: number) =>
@@ -101,10 +104,13 @@ export function useNovels({
   }, [ptype, status, genre, year, minWordNum, maxWordNum, sortBy, descending]);
 
   const loadMore = useCallback(() => {
-    if (!hasMore || loading) return;
+    if (!hasMore || loadingRef.current) return;
+    loadingRef.current = true;
     setLoading(true);
-    loadPage(page, false);
-  }, [hasMore, loading, page, loadPage]);
+    loadPage(page, false).finally(() => {
+      loadingRef.current = false;
+    });
+  }, [hasMore, page, loadPage]);
 
   const refresh = useCallback(() => {
     setLoading(true);
