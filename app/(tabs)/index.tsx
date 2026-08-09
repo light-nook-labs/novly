@@ -25,6 +25,9 @@ import { useTheme } from "../../components/ThemeProvider";
 import { type BannerNovel, type Booklist } from "../../types/models";
 import { parseBooklistItem, BOOKLIST_API, BOOKLIST_EXPAND, BOOKLIST_KNOWN_TOTAL } from "../../utils/booklistApi";
 import { buildCountQuery, buildRandomCompletedQuery, buildNovelsByIdsQuery } from "../../utils/sql";
+// 猜你喜欢(已注释):推荐机制不科学,见 utils/recommend.ts 说明
+// import { getBookshelf } from "../../utils/bookshelfDb";
+// import { buildPreferences, pickForYou } from "../../utils/recommend";
 
 interface Stats {
   authors: number;
@@ -137,6 +140,7 @@ export default function HomeScreen() {
   const [topNovels, setTopNovels] = useState<NovelRowData[]>([]);
   const [topTipVisible, setTopTipVisible] = useState(false); // 完本推荐说明弹层
   const [recommendBooklists, setRecommendBooklists] = useState<Booklist[]>([]); // 书单推荐(在线随机 12 个)
+  // const [forYouNovels, setForYouNovels] = useState<NovelRowData[]>([]); // 猜你喜欢(基于书架偏好,已注释)
   const [stats, setStats] = useState<Stats | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   // 防抖:防止快速多次点击导航按钮导致同一页面重复入栈
@@ -174,6 +178,7 @@ export default function HomeScreen() {
       setTopNovels(top);
 
       loadBooklists(); // 书单推荐(在线随机 12 个)
+      // loadForYou(); // 猜你喜欢(已注释)
 
       const [a, t, c, g, s] = await Promise.all([
         db.getFirstAsync<{ v: number }>(buildCountQuery("authors")),
@@ -252,6 +257,54 @@ export default function HomeScreen() {
     }
   }, []);
 
+  /* 猜你喜欢(已注释):推荐机制不科学,待科学方案后恢复
+  // 猜你喜欢:基于书架小说的 genre/tag 偏好,本地匹配推荐(离线可用)
+  const loadForYou = useCallback(async () => {
+    try {
+      const shelf = await getBookshelf();
+      if (shelf.length === 0) return;
+      const shelfIds = shelf.map((n) => n.id);
+      const db = await getDatabase();
+      const shelfTagRows = await db.getAllAsync<{ novel_id: number; name: string }>(
+        `SELECT nt.novel_id, t.name FROM novel_tags nt JOIN tags t ON nt.tag_id = t.id WHERE nt.novel_id IN (${shelfIds.map(() => "?").join(",")})`,
+        shelfIds,
+      );
+      const tagsByNovel = new Map<number, string[]>();
+      for (const r of shelfTagRows) {
+        const arr = tagsByNovel.get(r.novel_id) ?? [];
+        arr.push(r.name);
+        tagsByNovel.set(r.novel_id, arr);
+      }
+      const prefs = buildPreferences(
+        shelf,
+        [...tagsByNovel].map(([novelId, tags]) => ({ novelId, tags })),
+      );
+      // 候选:热度 Top 60,排除已收藏
+      const candidates = await db.getAllAsync<NovelRowData>(
+        `SELECT id, title, author, cover, click_num, status, genre, ptype FROM novels
+         WHERE id NOT IN (${shelfIds.map(() => "?").join(",")}) ORDER BY click_num DESC LIMIT 60`,
+        shelfIds,
+      );
+      if (candidates.length === 0) return;
+      const candTagRows = await db.getAllAsync<{ novel_id: number; name: string }>(
+        `SELECT nt.novel_id, t.name FROM novel_tags nt JOIN tags t ON nt.tag_id = t.id WHERE nt.novel_id IN (${candidates.map(() => "?").join(",")})`,
+        candidates.map((n) => n.id),
+      );
+      const candTags = new Map<number, string[]>();
+      for (const r of candTagRows) {
+        const arr = candTags.get(r.novel_id) ?? [];
+        arr.push(r.name);
+        candTags.set(r.novel_id, arr);
+      }
+      const withTags = candidates.map((n) => ({ novel: n, tags: candTags.get(n.id) ?? [] }));
+      const picked = pickForYou(withTags, prefs, 8);
+      setForYouNovels(picked.map((p) => p.novel));
+    } catch (error) {
+      console.error("Failed to load for-you:", error);
+    }
+  }, []);
+  */
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -263,6 +316,7 @@ export default function HomeScreen() {
       const top = await db.getAllAsync<NovelRowData>(topQuery, topParams);
       setTopNovels(top);
       loadBooklists();
+      // loadForYou(); // 猜你喜欢(已注释)
     } catch (error) {
       console.error("Refresh failed:", error);
     } finally {
@@ -394,6 +448,8 @@ export default function HomeScreen() {
             </View>
           ))}
         </View>
+
+        {/* 猜你喜欢(已注释):推荐机制不科学,待科学方案后恢复 */}
 
         {/* 书单推荐(在线随机 12 个) */}
         <View style={[styles.sectionHeader, { marginTop: Spacing.xl }]}>

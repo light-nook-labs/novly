@@ -1,4 +1,7 @@
 import { Novel, Tag, Contest } from "../../types/models";
+// 相似推荐(已注释):推荐机制不科学,待 nookdata 补充简介等数据后做 NLP/机器学习
+// import { NovelRow, type NovelRowData } from "../../components/NovelRow";
+// import { pickSimilar } from "../../utils/recommend";
 import { NOVEL_DETAIL_QUERY } from "../../utils/sql";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, Platform, Alert, Share } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
@@ -39,6 +42,7 @@ export default function NovelDetailScreen() {
   const { id } = useLocalSearchParams();
   const [novel, setNovel] = useState<Novel | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
+  // const [similarNovels, setSimilarNovels] = useState<NovelRowData[]>([]); // 相似推荐(已注释)
   const [contest, setContest] = useState<Contest | null>(null);
   const [authorId, setAuthorId] = useState<number | null>(null);
   const [isInBookshelf, setIsInBookshelf] = useState(false);
@@ -144,6 +148,37 @@ export default function NovelDetailScreen() {
           [Number(id)],
         );
         setTags(tagRows);
+
+        /* 相似推荐(已注释):推荐机制不科学,待机器学习方案后恢复
+        // 相似推荐:同 genre 或同 tag 的候选(本地计算,权重见 utils/recommend.ts)
+        if (tagRows.length > 0) {
+          const tagIds = tagRows.map((t) => t.id);
+          const tagPh = tagIds.map(() => "?").join(",");
+          const candidateRows = await db.getAllAsync<NovelRowData>(
+            `SELECT id, title, author, cover, click_num, status, genre, ptype FROM novels
+             WHERE genre = ? OR id IN (SELECT novel_id FROM novel_tags WHERE tag_id IN (${tagPh}))
+             ORDER BY click_num DESC LIMIT 40`,
+            [result.genre, ...tagIds],
+          );
+          if (candidateRows.length > 0) {
+            const candidateIds = candidateRows.map((n) => n.id);
+            const idPh = candidateIds.map(() => "?").join(",");
+            const candidateTags = await db.getAllAsync<{ novel_id: number; name: string }>(
+              `SELECT nt.novel_id, t.name FROM novel_tags nt JOIN tags t ON nt.tag_id = t.id WHERE nt.novel_id IN (${idPh})`,
+              candidateIds,
+            );
+            const tagsByNovel = new Map<number, string[]>();
+            for (const r of candidateTags) {
+              const arr = tagsByNovel.get(r.novel_id) ?? [];
+              arr.push(r.name);
+              tagsByNovel.set(r.novel_id, arr);
+            }
+            const withTags = candidateRows.map((n) => ({ novel: n, tags: tagsByNovel.get(n.id) ?? [] }));
+            const picked = pickSimilar(withTags, result.genre, tagRows.map((t) => t.name), Number(id), 6);
+            setSimilarNovels(picked.map((p) => p.novel));
+          }
+        }
+        */
 
         // Contest
         if (result.contest_id) {
@@ -376,6 +411,8 @@ export default function NovelDetailScreen() {
             </View>
           )}
         </View>
+
+        {/* 相似推荐(已注释):推荐机制不科学,待机器学习方案后恢复 */}
       </ScrollView>
     </View>
   );
@@ -624,6 +661,16 @@ function createStyles(colors: ThemeColors) {
       padding: Spacing.lg,
       gap: Spacing.sm,
     },
+    // similarWrap: { // 相似推荐(已注释)
+    //   marginHorizontal: Spacing.lg,
+    //   marginTop: Spacing.lg,
+    //   marginBottom: Spacing.xl,
+    // },
+    // similarTitle: {
+    //   fontSize: FontSize.md,
+    //   fontWeight: "600",
+    //   marginBottom: Spacing.sm,
+    // },
     metaRow: {
       flexDirection: "row",
       justifyContent: "space-between",
