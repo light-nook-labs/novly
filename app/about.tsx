@@ -418,7 +418,7 @@ export default function AboutScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-      {/* Why {APP_NAME} 弹窗(复用 InfoSheet 组件,内容来自 assets/content/why.txt) */}
+      {/* Why {APP_NAME} 弹窗(复用 InfoSheet 组件,内容来自 utils/whyContent.ts 的 WHY_TEXT 常量) */}
       <InfoSheet visible={whyVisible} onClose={() => setWhyVisible(false)} title={`为什么开发 ${APP_NAME}?`}>
         {whyBlocks.map((block, i) =>
           block.bullet ? (
