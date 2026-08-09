@@ -12,10 +12,10 @@ import { PageHeader } from "../components/Header";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { InfoSheet, InfoBody, InfoItem } from "../components/InfoSheet";
 import { loadWhyText, parseWhyMarkdown, type WhyBlock } from "../utils/whyContent";
-import { fetchLatestRelease, compareVersions } from "../utils/updateApi";
+import { fetchLatestRelease, compareVersions, detectFastestMirror, getCachedUpdate, setCachedUpdate, buildDownloadUrl } from "../utils/updateApi";
 import { ICONS } from "../constants/icons";
 import { useTheme, type ThemeColors, type ThemeMode } from "../components/ThemeProvider";
-import { APP_VERSION, APP_GITHUB_URL, APP_LICENSE_URL, APP_NOVEL_HUB_URL, APP_NOVEL_HUB_MOBILE_URL, APP_SLOGAN_EN, APP_NAME, APP_GITHUB_ORG, ghShortUrl } from "../constants/appInfo";
+import { APP_VERSION, APP_GITHUB_URL, APP_LICENSE_URL, APP_NOVEL_HUB_URL, APP_NOVEL_HUB_MOBILE_URL, APP_SLOGAN, APP_NAME, APP_GITHUB_ORG, ghShortUrl } from "../constants/appInfo";
 
 const THEME_OPTIONS: { key: ThemeMode; label: string; icon: string }[] = [
   { key: "system", label: "跟随系统", icon: ICONS.systemMode },
@@ -39,6 +39,28 @@ export default function SettingsScreen() {
   const [confirmTarget, setConfirmTarget] = useState<"bookshelf" | "reset" | null>(null);
   // 版本更新检查弹窗:new=有新版本(latest tag + release url),latest=已最新,error=拉取失败
   const [updateDialog, setUpdateDialog] = useState<{ kind: "new" | "latest" | "error"; tag?: string; url?: string } | null>(null);
+  const [hasUpdate, setHasUpdate] = useState(false); // 发现新版本时检查更新行显示红点
+
+  // 静默检查更新(挂载时):缓存命中则直接用,否则拉取最新 release 并缓存(24h)
+  useEffect(() => {
+    (async () => {
+      const cached = await getCachedUpdate();
+      if (cached) {
+        if (compareVersions(APP_VERSION, cached.latestTag) < 0) setHasUpdate(true);
+        return;
+      }
+      try {
+        const release = await fetchLatestRelease();
+        if (release && release.tagName) {
+          const latestTag = release.tagName.replace(/^v/i, "");
+          await setCachedUpdate({ timestamp: Date.now(), latestTag, downloadUrl: release.downloadUrl });
+          if (compareVersions(APP_VERSION, latestTag) < 0) setHasUpdate(true);
+        }
+      } catch {
+        // 静默失败:不打扰用户,下次进入再试
+      }
+    })();
+  }, []);
   const [reinitializing, setReinitializing] = useState(false);
   const [reinitState, setReinitState] = useState<string | null>(null);
 
@@ -94,7 +116,7 @@ export default function SettingsScreen() {
   async function doClearBookshelf() {
     try {
       await clearBookshelf();
-      Alert.alert("Done", "Bookshelf has been cleared.");
+      Alert.alert("完成", "书架已清空。");
     } catch (error) {
       console.error("Failed to clear bookshelf:", error);
     }
@@ -131,13 +153,18 @@ export default function SettingsScreen() {
         return;
       }
       const latestTag = release.tagName.replace(/^v/i, "");
+      await setCachedUpdate({ timestamp: Date.now(), latestTag, downloadUrl: release.downloadUrl });
       if (compareVersions(APP_VERSION, latestTag) < 0) {
+        // 检测最快可用镜像,优先从镜像下载资产(直连失败场景加速)
+        const mirror = await detectFastestMirror();
+        setHasUpdate(true);
         setUpdateDialog({
           kind: "new",
           tag: release.tagName,
-          url: `${APP_GITHUB_URL}/releases/tag/${release.tagName}`,
+          url: buildDownloadUrl(mirror, release.downloadUrl, release.tagName),
         });
       } else {
+        setHasUpdate(false);
         setUpdateDialog({ kind: "latest", tag: APP_VERSION });
       }
     } catch (error) {
@@ -147,19 +174,19 @@ export default function SettingsScreen() {
   };
 
   const statRows = [
-    { label: "Novels", value: stats.novels, icon: ICONS.library },
-    { label: "Authors", value: stats.authors, icon: ICONS.author },
-    { label: "Tags", value: stats.tags, icon: ICONS.tag },
-    { label: "Contests", value: stats.contests, icon: ICONS.contest },
+    { label: "小说", value: stats.novels, icon: ICONS.library },
+    { label: "作者", value: stats.authors, icon: ICONS.author },
+    { label: "标签", value: stats.tags, icon: ICONS.tag },
+    { label: "比赛", value: stats.contests, icon: ICONS.contest },
   ];
 
   return (
     <View style={styles.container}>
-      <PageHeader title="Settings" />
+      <PageHeader title="设置" />
       <ScrollView contentContainerStyle={styles.content}>
         {/* Database Statistics */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>DATABASE STATISTICS</Text>
+          <Text style={styles.sectionTitle}>数据库统计</Text>
           <View style={[styles.card, Platform.OS === "web" ? { flexDirection: "row", flexWrap: "wrap" } : null]}>
             {statRows.map((item, index) => (
               <View
@@ -185,12 +212,12 @@ export default function SettingsScreen() {
 
         {/* Appearance */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>APPEARANCE</Text>
+          <Text style={styles.sectionTitle}>外观</Text>
           <View style={styles.card}>
             <TouchableOpacity style={styles.actionRow} onPress={() => setThemeVisible(true)} activeOpacity={0.6}>
               <Ionicons name={ICONS.theme} size={22} color={colors.primary} style={styles.actionIcon} />
               <View style={styles.actionInfo}>
-                <Text style={styles.actionLabel}>Theme</Text>
+                <Text style={styles.actionLabel}>主题</Text>
                 <Text style={styles.actionSubtitle}>
                   {THEME_OPTIONS.find((o) => o.key === mode)?.label ?? "跟随系统"}
                 </Text>
@@ -202,7 +229,7 @@ export default function SettingsScreen() {
 
         {/* Dangerous Area */}
         <View style={styles.section}>
-          <Text style={styles.dangerSectionTitle}>DANGEROUS AREA</Text>
+          <Text style={styles.dangerSectionTitle}>危险操作区</Text>
           <View style={[styles.dangerCard, Platform.OS === "web" ? { flexDirection: "row", flexWrap: "wrap" } : null]}>
             <TouchableOpacity
               style={[styles.actionRow, Platform.OS === "web" ? { width: "50%", paddingRight: 16 } : null]}
@@ -211,8 +238,8 @@ export default function SettingsScreen() {
             >
               <Ionicons name={ICONS.trash} size={22} color={colors.danger} style={styles.actionIcon} />
               <View style={styles.actionInfo}>
-                <Text style={styles.actionLabelDanger}>Clear Bookshelf</Text>
-                <Text style={styles.actionSubtitle}>Permanently remove all saved novels</Text>
+                <Text style={styles.actionLabelDanger}>清空书架</Text>
+                <Text style={styles.actionSubtitle}>永久移除所有已保存的小说</Text>
               </View>
               <Ionicons name={ICONS.jump} size={18} color={colors.textMuted} />
             </TouchableOpacity>
@@ -226,8 +253,8 @@ export default function SettingsScreen() {
             >
               <Ionicons name={ICONS.warning} size={22} color={colors.danger} style={styles.actionIcon} />
               <View style={styles.actionInfo}>
-                <Text style={styles.actionLabelDanger}>Reinit</Text>
-                <Text style={styles.actionSubtitle}>Clear cache, bookshelf and reinitialize data</Text>
+                <Text style={styles.actionLabelDanger}>重新初始化</Text>
+                <Text style={styles.actionSubtitle}>清除缓存、书架并重新初始化数据</Text>
               </View>
               <Ionicons name={ICONS.jump} size={18} color={colors.textMuted} />
             </TouchableOpacity>
@@ -237,7 +264,7 @@ export default function SettingsScreen() {
 
         {/* About */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ABOUT</Text>
+          <Text style={styles.sectionTitle}>关于</Text>
           <View style={[styles.card, Platform.OS === "web" ? { flexDirection: "row", flexWrap: "wrap" } : null]}>
             <TouchableOpacity
               style={[styles.aboutRow, Platform.OS === "web" ? { width: "100%", paddingBottom: 16 } : null]}
@@ -246,7 +273,7 @@ export default function SettingsScreen() {
             >
               <View style={styles.aboutInfo}>
                 <Text style={styles.aboutAppName}>{APP_NAME}</Text>
-                <Text style={styles.aboutVersion}>v{APP_VERSION} · {APP_SLOGAN_EN}</Text>
+                <Text style={styles.aboutVersion}>v{APP_VERSION} · {APP_SLOGAN}</Text>
               </View>
               <Ionicons name={ICONS.jump} size={18} color={colors.textMuted} />
             </TouchableOpacity>
@@ -257,7 +284,12 @@ export default function SettingsScreen() {
               activeOpacity={0.6}
             >
               <View style={styles.aboutInfo}>
-                <Text style={[styles.aboutAppName, { color: colors.text }]}>检查更新</Text>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Text style={[styles.aboutAppName, { color: colors.text }]}>检查更新</Text>
+                  {hasUpdate && (
+                    <View style={{ width: 8, height: 8, borderRadius: 4, marginLeft: 6, backgroundColor: colors.danger }} />
+                  )}
+                </View>
                 <Text style={styles.aboutVersion}>从 GitHub Release 拉取最新版本</Text>
               </View>
               <Ionicons name={ICONS.download} size={18} color={colors.textMuted} />
@@ -272,8 +304,8 @@ export default function SettingsScreen() {
             >
               <Ionicons name={ICONS.tip} size={22} color={colors.primary} style={styles.actionIcon} />
               <View style={styles.actionInfo}>
-                <Text style={styles.actionLabel}>Why Novly?</Text>
-                <Text style={styles.actionSubtitle}>Why this project exists (SFACG data problems)</Text>
+                <Text style={styles.actionLabel}>开发缘由</Text>
+                <Text style={styles.actionSubtitle}>这个项目为什么存在(解决 SFACG 数据问题)</Text>
               </View>
               <Ionicons name={ICONS.jump} size={18} color={colors.textMuted} />
             </TouchableOpacity>
@@ -287,8 +319,8 @@ export default function SettingsScreen() {
             >
               <Ionicons name="document-text-outline" size={22} color={colors.primary} style={styles.actionIcon} />
               <View style={styles.actionInfo}>
-                <Text style={styles.actionLabel}>Changelog</Text>
-                <Text style={styles.actionSubtitle}>View version changes and bug fixes</Text>
+                <Text style={styles.actionLabel}>更新日志</Text>
+                <Text style={styles.actionSubtitle}>查看版本变更与 bug 修复</Text>
               </View>
               <Ionicons name="open-outline" size={18} color={colors.textMuted} />
             </TouchableOpacity>
@@ -302,7 +334,7 @@ export default function SettingsScreen() {
             >
               <Ionicons name="git-branch-outline" size={22} color={colors.primary} style={styles.linkIcon} />
               <View style={styles.linkInfo}>
-                <Text style={styles.linkLabel}>Data Source</Text>
+                <Text style={styles.linkLabel}>数据源</Text>
                 <Text style={styles.linkSubtitle}>{ghShortUrl(APP_NOVEL_HUB_URL)}</Text>
               </View>
               <Ionicons name="open-outline" size={18} color={colors.textMuted} />
@@ -317,7 +349,7 @@ export default function SettingsScreen() {
             >
               <Ionicons name="phone-portrait-outline" size={22} color={colors.primary} style={styles.linkIcon} />
               <View style={styles.linkInfo}>
-                <Text style={styles.linkLabel}>Flutter Version</Text>
+                <Text style={styles.linkLabel}>Flutter 版本</Text>
                 <Text style={styles.linkSubtitle}>{ghShortUrl(APP_NOVEL_HUB_MOBILE_URL)}</Text>
               </View>
               <Ionicons name="open-outline" size={18} color={colors.textMuted} />
@@ -332,7 +364,7 @@ export default function SettingsScreen() {
             >
               <Ionicons name="logo-github" size={22} color={colors.primary} style={styles.linkIcon} />
               <View style={styles.linkInfo}>
-                <Text style={styles.linkLabel}>This Project</Text>
+                <Text style={styles.linkLabel}>本项目</Text>
                 <Text style={styles.linkSubtitle}>{ghShortUrl(APP_GITHUB_URL)}</Text>
               </View>
               <Ionicons name="open-outline" size={18} color={colors.textMuted} />
@@ -347,7 +379,7 @@ export default function SettingsScreen() {
             >
               <Ionicons name="shield-checkmark-outline" size={22} color={colors.primary} style={styles.linkIcon} />
               <View style={styles.linkInfo}>
-                <Text style={styles.linkLabel}>MIT License</Text>
+                <Text style={styles.linkLabel}>MIT 许可证</Text>
               </View>
               <Ionicons name="open-outline" size={18} color={colors.textMuted} />
             </TouchableOpacity>
