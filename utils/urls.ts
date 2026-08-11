@@ -18,3 +18,13 @@ export function coverUrl(cover: string | null): string | null {
 export function bannerUrl(novelId: number): string {
   return BANNER_PREFIX + novelId + ".jpg";
 }
+
+export const SURVEY_URL = "https://forms.cloud.microsoft/r/JfeiiwEYaA";
+
+export function novelDetailUrl(id: number): string {
+  return `https://book.sfacg.com/Novel/${id}/`;
+}
+
+export function monthlyApiUrl(date: string, rank: number): string {
+  return `https://pages.sfacg.com/ajax/act/MonthlyBoy.ashx?op=getRanks&date=${date}&rank=${rank}`;
+}

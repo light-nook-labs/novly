@@ -12,11 +12,10 @@ import { ICONS } from "../../constants/icons";
 import { useScrollToTop } from "../../hooks/useScrollToTop";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { type CacheEntry, type BooklistMeta, type BooklistNovel } from "../../types/models";
-import { parseBooklistMeta, parseBooklistNovels, BOOKLIST_CACHE_TTL } from "../../utils/booklistApi";
+import { parseBooklistMeta, parseBooklistNovels, BOOKLIST_CACHE_TTL, BOOKLIST_API } from "../../utils/booklistApi";
 
 // SFACG 书单在线接口(详情页:actionName=/bookList/{id}/novel 返回书单内小说列表)
 // 原生端 fetch 无 CORS 限制;Web/Tauri WebView 被 CORS 拦截时可将该地址换成代理
-const BOOKLIST_API = "https://pages.sfacg.com/api/HttpProxy";
 // 详情页 expand(小说大封面/类型名/简介字数/标签等)
 const DETAIL_EXPAND = "bigNovelCover,typeName,intropointCount,tags,sysTags";
 // 书单元数据 expand(用户头像/认证/等级等)

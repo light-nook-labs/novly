@@ -14,7 +14,7 @@ import { useMemo, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import Toast from "react-native-toast-message";
-import { FontSize, Spacing, BorderRadius } from "../constants/theme";
+import { FontSize, Spacing, BorderRadius, Layout } from "../constants/theme";
 import { PageHeader } from "../components/Header";
 import { InfoSheet, InfoBody, InfoItem } from "../components/InfoSheet";
 import { ICONS } from "../constants/icons";
@@ -54,8 +54,8 @@ function createStyles(colors: ThemeColors) {
       gap: Spacing.xs,
     },
     logo: {
-      width: 72,
-      height: 72,
+      width: Layout.iconLg,
+      height: Layout.iconLg,
       borderRadius: BorderRadius.lg,
       marginBottom: Spacing.sm,
     },
@@ -190,7 +190,6 @@ function createStyles(colors: ThemeColors) {
     },
     contributeBackdrop: {
       flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
       justifyContent: "center",
       alignItems: "center",
       paddingHorizontal: Spacing.xl,
@@ -334,7 +333,7 @@ export default function AboutScreen() {
             </TouchableOpacity>
             <View style={styles.supportDivider} />
             <TouchableOpacity style={styles.supportItem} onPress={() => Linking.openURL(APP_GITHUB_URL)} activeOpacity={0.7}>
-              <Ionicons name={ICONS.star} size={18} color="#F5A623" />
+              <Ionicons name={ICONS.star} size={18} color={colors.starGold} />
               <Text style={styles.supportText}>Give a Star</Text>
             </TouchableOpacity>
             <View style={styles.supportDivider} />
@@ -375,7 +374,7 @@ export default function AboutScreen() {
 
       {/* 贡献提示弹窗 */}
       <Modal visible={showContribute} transparent animationType="fade" onRequestClose={() => setShowContribute(false)}>
-        <Pressable style={styles.contributeBackdrop} onPress={() => setShowContribute(false)}>
+        <Pressable style={[styles.contributeBackdrop, { backgroundColor: colors.overlay + "80" }]} onPress={() => setShowContribute(false)}>
           <Pressable style={[styles.contributeCard, { backgroundColor: colors.surface }]} onPress={() => {}}>
             <View style={[styles.contributeIconWrap, { backgroundColor: colors.primary + "15" }]}>
               <Ionicons name={ICONS.like} size={30} color={colors.primary} />

@@ -16,7 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { ICONS } from "../../constants/icons";
 import { getDatabase, subscribeDbReady } from "../../utils/database";
 import { formatNumber } from "../../utils/mappings";
-import { Colors, FontSize, Spacing, BorderRadius } from "../../constants/theme";
+import { Colors, FontSize, Spacing, BorderRadius, Layout } from "../../constants/theme";
 import { Banner, DEFAULT_PINNED, type PinnedBanner } from "../../components/Banner";
 import { NovelRow, type NovelRowData } from "../../components/NovelRow";
 import { TabHeader } from "../../components/TabHeader";
@@ -24,6 +24,7 @@ import { InfoSheet, InfoBody } from "../../components/InfoSheet";
 import { useTheme } from "../../components/ThemeProvider";
 import { type BannerNovel, type Booklist } from "../../types/models";
 import { parseBooklistItem, BOOKLIST_API, BOOKLIST_EXPAND, BOOKLIST_KNOWN_TOTAL } from "../../utils/booklistApi";
+import { SURVEY_URL } from "../../utils/urls";
 import { buildCountQuery, buildRandomCompletedQuery, buildNovelsByIdsQuery } from "../../utils/sql";
 // 猜你喜欢(已注释):推荐机制不科学,见 utils/recommend.ts 说明
 // import { getBookshelf } from "../../utils/bookshelfDb";
@@ -64,9 +65,6 @@ const BANNER_COUNT = 6;
 // 固定 banner 不会被随机替换（如网站公告）
 const PINNED_BANNER_IDS: number[] = [];
 
-// 用户反馈问卷(MS Form)
-const SURVEY_URL = "https://forms.cloud.microsoft/r/JfeiiwEYaA";
-
 /** 第二个固定 banner:用户反馈问卷,点击打开 MS Form */
 const SURVEY_PIN: PinnedBanner = {
   id: -2,
@@ -93,22 +91,22 @@ function SurveyCard({ width, height, bgUri }: { width: number; height: number; b
             width: width * 0.5,
             justifyContent: "center",
             alignItems: "center",
-            backgroundColor: "rgba(0,0,0,0.35)",
+            backgroundColor: colors.overlay + "59",
           }}
         >
           <View
             style={[
               styles.surveyIconWrap,
-              { backgroundColor: "rgba(255,255,255,0.2)", width: 96, height: 96, borderRadius: 48 },
+              { backgroundColor: colors.overlayLight + "33", width: Layout.iconXl, height: Layout.iconXl, borderRadius: Layout.circleMd },
             ]}
           >
             <Ionicons name="clipboard-outline" size={48} color="#fff" />
           </View>
           <Text style={[styles.surveyTitle, { fontSize: 30 }]}>用户反馈问卷</Text>
-          <Text style={[styles.surveyHint, { fontSize: 18 }]}>点此填写,帮助我们做得更好</Text>
+          <Text style={[styles.surveyHint, { fontSize: 18, color: colors.overlayLight + "E6" }]}>点此填写,帮助我们做得更好</Text>
           <View style={styles.surveyProviderRow}>
-            <Ionicons name="shield-checkmark-outline" size={16} color="rgba(255,255,255,0.85)" />
-            <Text style={[styles.surveyProvider, { fontSize: 14 }]}>由 Microsoft Forms 提供</Text>
+            <Ionicons name="shield-checkmark-outline" size={16} color={colors.overlayLight + "D9"} />
+            <Text style={[styles.surveyProvider, { fontSize: 14, color: colors.overlayLight + "D9" }]}>由 Microsoft Forms 提供</Text>
           </View>
         </View>
       </View>
@@ -116,14 +114,14 @@ function SurveyCard({ width, height, bgUri }: { width: number; height: number; b
   }
   return (
     <View style={[styles.surveyCard, { width, height, backgroundColor: colors.primary }]}>
-      <View style={[styles.surveyIconWrap, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
+      <View style={[styles.surveyIconWrap, { backgroundColor: colors.overlayLight + "33" }]}>
         <Ionicons name="clipboard-outline" size={30} color="#fff" />
       </View>
       <Text style={styles.surveyTitle}>用户反馈问卷</Text>
-      <Text style={styles.surveyHint}>点此填写,帮助我们做得更好</Text>
+      <Text style={[styles.surveyHint, { color: colors.overlayLight + "E6" }]}>点此填写,帮助我们做得更好</Text>
       <View style={styles.surveyProviderRow}>
-        <Ionicons name="shield-checkmark-outline" size={13} color="rgba(255,255,255,0.85)" />
-        <Text style={styles.surveyProvider}>由 Microsoft Forms 提供</Text>
+        <Ionicons name="shield-checkmark-outline" size={13} color={colors.overlayLight + "D9"} />
+        <Text style={[styles.surveyProvider, { color: colors.overlayLight + "D9" }]}>由 Microsoft Forms 提供</Text>
       </View>
     </View>
   );
@@ -552,7 +550,6 @@ const styles = StyleSheet.create({
   surveyHint: {
     fontSize: FontSize.sm,
     fontWeight: "600",
-    color: "rgba(255,255,255,0.9)",
     textAlign: "center",
     marginTop: Spacing.xs,
   },
@@ -565,7 +562,6 @@ const styles = StyleSheet.create({
   surveyProvider: {
     fontSize: FontSize.xs,
     fontWeight: "600",
-    color: "rgba(255,255,255,0.85)",
     textAlign: "center",
   },
   settingsBtn: {

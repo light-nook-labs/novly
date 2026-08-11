@@ -17,7 +17,7 @@ import { formatNumber } from "../utils/mappings";
 import { PageHeader } from "../components/Header";
 import { LoadingFooter } from "../components/Loading";
 import { useTheme } from "../components/ThemeProvider";
-import { Spacing } from "../constants/theme";
+import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { PAGE_SIZE } from "../constants/pagination";
 
 export default function SearchScreen() {
@@ -177,49 +177,43 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   searchBar: {
     flexDirection: "row",
-    padding: 8,
+    padding: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
     alignItems: "center",
   },
   input: {
     flex: 1,
     height: 40,
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 14,
+    borderRadius: BorderRadius.sm,
+    paddingHorizontal: Spacing.md,
+    fontSize: FontSize.md,
   },
   resultItem: {
     // web 多列 grid 时均分列宽
     flexDirection: "row",
-    padding: 12,
+    padding: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
     alignItems: "center",
   },
   resultInfo: {
     flex: 1,
   },
   resultTitle: {
-    fontSize: 14,
+    fontSize: FontSize.md,
     fontWeight: "bold",
     lineHeight: 20,
   },
   resultAuthor: {
-    fontSize: 12,
-    color: "#666",
+    fontSize: FontSize.sm,
     marginTop: 2,
   },
   resultClicks: {
-    fontSize: 12,
+    fontSize: FontSize.sm,
     fontWeight: "600",
-    color: "#999",
     paddingHorizontal: 2,
   },
   empty: {
@@ -228,8 +222,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   emptyText: {
-    fontSize: 14,
-    color: "#999",
+    fontSize: FontSize.md,
     alignSelf: "stretch",
     textAlign: "center",
   },

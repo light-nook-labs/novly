@@ -13,6 +13,7 @@ import { parseMonthlyRank, type MonthlyRankItem } from "../../utils/monthlyApi";
 import { FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { ICONS } from "../../constants/icons";
 import { useTheme } from "../../components/ThemeProvider";
+import { monthlyApiUrl } from "../../utils/urls";
 import { BackToTop } from "../../components/BackToTop";
 import { Loading } from "../../components/Loading";
 
@@ -56,9 +57,7 @@ export default function MonthlyRankScreen() {
         }
       }
       if (!items) {
-        const res = await fetch(
-          `https://pages.sfacg.com/ajax/act/MonthlyBoy.ashx?op=getRanks&date=${apiDate}&rank=${tab.rank}`,
-        );
+        const res = await fetch(monthlyApiUrl(apiDate, tab.rank));
         const json = await res.json();
         items = parseMonthlyRank(json);
         await AsyncStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: items }));

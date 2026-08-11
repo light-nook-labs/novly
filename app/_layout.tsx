@@ -22,7 +22,7 @@ import Toast from "react-native-toast-message";
 import * as Clipboard from "expo-clipboard";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemeProvider, useTheme } from "../components/ThemeProvider";
-import { FontSize, Spacing, BorderRadius } from "../constants/theme";
+import { FontSize, Spacing, BorderRadius, Layout } from "../constants/theme";
 
 const WELCOME_SHOWN_KEY = "welcome_shown_v1";
 const QQ_GROUP = "881041631";
@@ -104,7 +104,7 @@ function LoadingScreen() {
         <Text style={[styles.appName, { color: colors.text }]}>{APP_NAME}</Text>
         <Text
           style={{
-            fontSize: 13,
+            fontSize: FontSize.sm,
             color: colors.textSecondary,
             marginBottom: 8,
             alignSelf: "stretch",
@@ -116,9 +116,9 @@ function LoadingScreen() {
         </Text>
         <Text
           style={{
-            fontSize: 12,
+            fontSize: FontSize.sm,
             color: colors.textTertiary,
-            marginBottom: 12,
+            marginBottom: Spacing.md,
             alignSelf: "stretch",
             textAlign: "center",
             fontWeight: "600",
@@ -277,10 +277,10 @@ function AppContent({ ready, error, onRestart }: { ready: boolean; error: string
       <Toast />
 
       <Modal visible={coldMerged} transparent animationType="fade" onRequestClose={() => {}}>
-        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" }}>
-          <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 24, width: "80%", maxWidth: 360 }}>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text, marginBottom: 12 }}>数据已更新</Text>
-            <Text style={{ fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginBottom: 20 }}>
+        <View style={{ flex: 1, backgroundColor: colors.overlay + "80", justifyContent: "center", alignItems: "center" }}>
+          <View style={{ backgroundColor: colors.surface, borderRadius: BorderRadius.lg, padding: Spacing.xl, width: "80%", maxWidth: 360 }}>
+            <Text style={{ fontSize: FontSize.xl, fontWeight: "700", color: colors.text, marginBottom: Spacing.md }}>数据已更新</Text>
+            <Text style={{ fontSize: FontSize.md, color: colors.textSecondary, lineHeight: 20, marginBottom: Spacing.xl }}>
               数据库已加载完整数据,请重启应用以查看最新内容。
             </Text>
             <TouchableOpacity
@@ -373,7 +373,7 @@ function WelcomeModal({ visible, onCopyQQ, onClose }: { visible: boolean; onCopy
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.welcomeBackdrop} onPress={onClose}>
+      <Pressable style={[styles.welcomeBackdrop, { backgroundColor: colors.overlay + "80" }]} onPress={onClose}>
         <Pressable style={[styles.welcomeCard, { backgroundColor: colors.surface }]} onPress={() => {}}>
           <View style={[styles.welcomeIconWrap, { backgroundColor: colors.primary + "15" }]}>
             <Ionicons name="chatbubbles-outline" size={30} color={colors.primary} />
@@ -415,8 +415,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   logo: {
-    width: 96,
-    height: 96,
+    width: Layout.iconXl,
+    height: Layout.iconXl,
     borderRadius: BorderRadius.lg,
     marginBottom: Spacing.lg,
   },
@@ -463,7 +463,6 @@ const styles = StyleSheet.create({
   },
   welcomeBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: Spacing.xl,

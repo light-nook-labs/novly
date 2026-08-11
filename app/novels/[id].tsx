@@ -13,7 +13,7 @@ import { getDatabase } from "../../utils/database";
 import { isInBookshelf as isInBookshelfDb, addToBookshelf, removeFromBookshelf } from "../../utils/bookshelfDb";
 import { formatNumber, statusMapping, genreMapping, ptypeMapping } from "../../utils/mappings";
 import { StatusBadge, Badge, tagColor } from "../../components/Badge";
-import { coverUrl, bannerUrl } from "../../utils/urls";
+import { coverUrl, bannerUrl, novelDetailUrl } from "../../utils/urls";
 import { FontSize, Spacing, BorderRadius } from "../../constants/theme";
 import { PageHeader } from "../../components/Header";
 import { useTheme, type ThemeColors } from "../../components/ThemeProvider";
@@ -73,7 +73,7 @@ export default function NovelDetailScreen() {
       });
     }
 
-    const webUrl = `https://book.sfacg.com/Novel/${id}/`;
+    const webUrl = novelDetailUrl(Number(id));
 
     if (Platform.OS === "web") {
       // Web: directly open
@@ -93,7 +93,7 @@ export default function NovelDetailScreen() {
   };
 
   const handleShare = async () => {
-    const url = `https://book.sfacg.com/Novel/${id}/`;
+    const url = novelDetailUrl(Number(id));
     const title = novel?.title ?? `Novel #${id}`;
 
     if (Platform.OS === "web") {

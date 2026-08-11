@@ -406,7 +406,7 @@ export default function SettingsScreen() {
       </InfoSheet>
       {/* Theme picker modal */}
       <Modal visible={themeVisible} transparent animationType="fade" onRequestClose={() => setThemeVisible(false)}>
-        <Pressable style={styles.themeBackdrop} onPress={() => setThemeVisible(false)}>
+        <Pressable style={[styles.themeBackdrop, { backgroundColor: colors.overlay + "66" }]} onPress={() => setThemeVisible(false)}>
           <Pressable style={[styles.themeSheet, { backgroundColor: colors.surface }]} onPress={() => {}}>
             <Text style={[styles.themeTitle, { color: colors.text }]}>选择主题</Text>
             {THEME_OPTIONS.map((opt, index) => {
@@ -678,7 +678,6 @@ function createSettingsStyles(colors: ThemeColors) {
     // Theme picker
     themeBackdrop: {
       flex: 1,
-      backgroundColor: "rgba(0,0,0,0.4)",
       justifyContent: "center",
       paddingHorizontal: Spacing.xl,
     },

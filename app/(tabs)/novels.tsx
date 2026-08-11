@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   tabCountActive: {
-    color: "rgba(255,255,255,0.8)",
+    color: "#fff",
   },
   footer: {
     paddingVertical: Spacing.xl,

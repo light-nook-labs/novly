@@ -157,7 +157,7 @@ export default function BookshelfScreen() {
                   </TouchableOpacity>
                 </Link>
                 <TouchableOpacity
-                  style={styles.removeBtn}
+                  style={[styles.removeBtn, { backgroundColor: colors.overlay + "99" }]}
                   onPress={() => removeFromBookshelf(item.id)}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
@@ -233,7 +233,6 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "center",
     alignItems: "center",
   },
