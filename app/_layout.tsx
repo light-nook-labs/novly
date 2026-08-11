@@ -104,7 +104,7 @@ function LoadingScreen() {
         <Text style={[styles.appName, { color: colors.text }]}>{APP_NAME}</Text>
         <Text
           style={{
-            fontSize: FontSize.sm,
+            fontSize: 13,
             color: colors.textSecondary,
             marginBottom: 8,
             alignSelf: "stretch",

@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   icon: {
     width: Layout.iconSm,
     height: Layout.iconSm,
-    borderRadius: BorderRadius.sm,
+    borderRadius: 8,
   },
   progressRow: {
     paddingHorizontal: Spacing.lg,

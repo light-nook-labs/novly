@@ -4,10 +4,6 @@ export const BOOKLIST_API = "https://pages.sfacg.com/api/HttpProxy";
 export const SURVEY_URL = "https://forms.cloud.microsoft/r/JfeiiwEYaA";
 export const MONTHLY_API = "https://pages.sfacg.com/ajax/act/MonthlyBoy.ashx";
 
-export function novelUrl(id: number): string {
-  return "https://book.sfacg.com/Novel/" + id + "/";
-}
-
 // NookData 无封面作品 cover 为 null(置空);统一提供默认封面,避免空图
 const DEFAULT_COVER = "https://rs.sfacg.com/web/novel/images/NovelCover/Big/default.jpg";
 

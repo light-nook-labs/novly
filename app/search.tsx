@@ -99,11 +99,11 @@ export default function SearchScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <PageHeader title="Search" />
-      <View style={[styles.searchBar, { backgroundColor: colors.surface, borderBottomColor: colors.surfaceBorder }]}>
+      <View style={[styles.searchBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TextInput
           style={[
             styles.input,
-            { color: colors.text, backgroundColor: colors.surfaceBorder, borderColor: colors.surfaceBorder },
+            { color: colors.text, backgroundColor: colors.surfaceBorder, borderColor: colors.border },
           ]}
           placeholder="搜索标题、作者或小说 ID..."
           placeholderTextColor={colors.textTertiary}
@@ -130,7 +130,7 @@ export default function SearchScreen() {
             <TouchableOpacity
               style={StyleSheet.flatten([
                 styles.resultItem,
-                { borderBottomColor: colors.surfaceBorder },
+                { borderBottomColor: colors.border },
                 {
                   width:
                     numColumns > 1
