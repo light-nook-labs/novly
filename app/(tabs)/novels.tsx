@@ -1,7 +1,7 @@
 import { FilterState } from "../../types/models";
 import { buildCountQuery, buildGroupCountQuery } from "../../utils/sql";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Platform, useWindowDimensions } from "react-native";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { NovelRow } from "../../components/NovelRow";
@@ -56,10 +56,13 @@ export default function NovelsScreen() {
   const { scrollRef, showButton, onScroll, scrollToTop } = useScrollToTop();
   const [listHeight, setListHeight] = useState(0);
   const [contentHeight, setContentHeight] = useState(0);
+  const autoFillRef = useRef(false);
   // 大屏:内容不足视口时自动填充(onEndReached 不触发时持续加载直到铺满)
   useEffect(() => {
-    if (listHeight > 0 && contentHeight > 0 && contentHeight <= listHeight && hasMore && !loading) {
+    if (listHeight > 0 && contentHeight > 0 && contentHeight <= listHeight && hasMore && !loading && !autoFillRef.current) {
+      autoFillRef.current = true;
       loadMore();
+      setTimeout(() => { autoFillRef.current = false; }, 500);
     }
   }, [novels, listHeight, contentHeight, hasMore, loading, loadMore]);
 
@@ -137,12 +140,18 @@ export default function NovelsScreen() {
         onLayout={(e) => {
           const h = e.nativeEvent.layout.height;
           setListHeight(h);
-          if (contentHeight > 0 && contentHeight <= h && hasMore && !loading) loadMore();
+          if (contentHeight > 0 && contentHeight <= h && hasMore && !loading && !autoFillRef.current) {
+            autoFillRef.current = true;
+            loadMore();
+            setTimeout(() => { autoFillRef.current = false; }, 500);
+          }
         }}
         onContentSizeChange={(_, h) => {
           setContentHeight(h);
-          if (listHeight > 0 && h <= listHeight && hasMore && !loading) {
+          if (listHeight > 0 && h <= listHeight && hasMore && !loading && !autoFillRef.current) {
+            autoFillRef.current = true;
             loadMore();
+            setTimeout(() => { autoFillRef.current = false; }, 500);
           }
         }}
         initialNumToRender={10}

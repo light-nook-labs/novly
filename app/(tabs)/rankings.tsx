@@ -140,7 +140,11 @@ export default function RankingsScreen() {
         setNovels(results);
         setPage(1);
       } else {
-        setNovels((prev) => [...prev, ...results]);
+        setNovels((prev) => {
+          const ids = new Set(prev.map((n) => n.id));
+          const fresh = results.filter((r) => !ids.has(r.id));
+          return [...prev, ...fresh];
+        });
         setPage((prev) => prev + 1);
       }
 

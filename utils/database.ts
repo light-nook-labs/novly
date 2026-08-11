@@ -643,7 +643,9 @@ async function mergeColdInBackground(
     await FS.moveAsync({ from: coldPath, to: hotPath });
     await FS.writeAsStringAsync(markerPath, "1");
 
-    currentDb = coldDb!;
+    await coldDb!.closeAsync();
+    const freshDb = await SQLite.openDatabaseAsync("hot_chunk.sqlite");
+    currentDb = freshDb;
     dbLog("Full database ready with cold data.");
     emitDbReady();
     emitColdMerged();

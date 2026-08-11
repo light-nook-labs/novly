@@ -68,7 +68,11 @@ export default function BannersScreen() {
         setAllBanners(results);
         setPage(1);
       } else {
-        setAllBanners((prev) => [...prev, ...results]);
+        setAllBanners((prev) => {
+          const ids = new Set(prev.map((b) => b.id));
+          const fresh = results.filter((r) => !ids.has(r.id));
+          return [...prev, ...fresh];
+        });
         setPage((p) => p + 1);
       }
       setHasMore(results.length === PAGE_SIZE);

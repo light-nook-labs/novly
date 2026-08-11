@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { Tag, CacheEntry } from "../types/models";
-import { getDatabase } from "../utils/database";
+import { getDatabase, subscribeColdMerged } from "../utils/database";
 import { FontSize, Spacing, BorderRadius } from "../constants/theme";
 import { useTheme } from "../components/ThemeProvider";
 import { PageHeader } from "../components/Header";
@@ -99,6 +99,13 @@ export default function TagsScreen() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/immutability -- React Compiler 规则标记既有加载模式,数据更新为有意为之
     loadTags();
+  }, []);
+
+  useEffect(() => {
+    return subscribeColdMerged(() => {
+      AsyncStorage.removeItem(CACHE_KEY).catch(() => {});
+      loadTags();
+    });
   }, []);
 
   async function loadTags() {

@@ -46,6 +46,8 @@ export function useNovels({
   // 分页加载同步锁:FlatList 的 onLayout/onContentSizeChange/onEndReached 会连续触发 loadMore,
   // loading 状态异步生效无法阻止同一页面并发重复追加(导致重复 key),用 ref 同步锁防重
   const loadingRef = useRef(false);
+  // page 的 ref 副本:避免 loadMore 闭包捕获过期 page 值导致同页重复追加
+  const pageRef = useRef(0);
 
   const buildQuery = useCallback(
     (pageNum: number) =>
@@ -77,9 +79,14 @@ export function useNovels({
         if (reset) {
           setNovels(results);
         } else {
-          setNovels((prev) => [...prev, ...results]);
+          setNovels((prev) => {
+            const ids = new Set(prev.map((n) => n.id));
+            const fresh = results.filter((r) => !ids.has(r.id));
+            return [...prev, ...fresh];
+          });
         }
         setPage(pageNum + 1);
+        pageRef.current = pageNum + 1;
         setHasMore(results.length === pageSize);
         setError(null);
       } catch (e) {
@@ -97,9 +104,13 @@ export function useNovels({
     setLoading(true);
     setNovels([]);
     setPage(0);
+    pageRef.current = 0;
+    loadingRef.current = true; // 阻止旧页 loadMore 追加到新列表
     setHasMore(true);
     setError(null);
-    loadPage(0, true);
+    loadPage(0, true).finally(() => {
+      loadingRef.current = false;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖已覆盖(有意的条件变化执行)
   }, [ptype, status, genre, year, minWordNum, maxWordNum, sortBy, descending]);
 
@@ -107,10 +118,10 @@ export function useNovels({
     if (!hasMore || loadingRef.current) return;
     loadingRef.current = true;
     setLoading(true);
-    loadPage(page, false).finally(() => {
+    loadPage(pageRef.current, false).finally(() => {
       loadingRef.current = false;
     });
-  }, [hasMore, page, loadPage]);
+  }, [hasMore, loadPage]);
 
   const refresh = useCallback(() => {
     setLoading(true);

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Text, Image, TouchableOpacity, StyleSheet, View, Platform, Animated, Modal, Pressable } from "react-native";
+import { useState, useEffect, useRef } from "react";
+import { Text, Image, TouchableOpacity, StyleSheet, View, Platform, Animated, Modal, Pressable, Alert } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ID } from "./ID";
@@ -9,6 +9,7 @@ import { ImageShimmer } from "./ImageShimmer";
 import { delayImageLoad } from "../utils/imageDelay";
 import { type BannerNovel } from "../types/models";
 import { BANNER_PREFIX } from "../utils/urls";
+import { ICONS } from "../constants/icons";
 
 export type { BannerNovel };
 
@@ -35,6 +36,7 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
   const [measuredW, setMeasuredW] = useState(0);
   const [pulseAnim] = useState(() => new Animated.Value(0.3));
   const [imgOpacity] = useState(() => new Animated.Value(0));
+  const downloadingRef = useRef(false);
 
   useEffect(() => {
     const anim = Animated.loop(
@@ -76,6 +78,35 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
   function handleLongPress() {
     if (Platform.OS === "web") {
       window.open(uri, "_blank");
+    }
+  }
+
+  async function handleDownload() {
+    if (!uri || downloadingRef.current) return;
+    if (Platform.OS === "web") {
+      const anchor = document.createElement("a");
+      anchor.href = uri;
+      anchor.download = `novly-banner-${id}.jpg`;
+      anchor.click();
+      return;
+    }
+    downloadingRef.current = true;
+    try {
+      const FileSystem = await import("expo-file-system/legacy");
+      const target = `${FileSystem.cacheDirectory ?? ""}novly-banner-${id}.jpg`;
+      const result = await FileSystem.downloadAsync(uri, target);
+      try {
+        const MediaLibrary = require("expo-media-library/legacy");
+        const { status } = await MediaLibrary.requestPermissionsAsync();
+        if (status === "granted") {
+          await MediaLibrary.saveToLibraryAsync(result.uri);
+          Alert.alert("保存成功", "图片已保存到相册");
+        }
+      } catch {}
+    } catch (error) {
+      console.error("[BannerListItem] download failed:", error);
+    } finally {
+      downloadingRef.current = false;
     }
   }
 
@@ -143,6 +174,9 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
           <Image source={{ uri }} style={styles.lightboxImage} resizeMode="contain" />
           <TouchableOpacity style={[styles.lightboxClose, { backgroundColor: colors.overlayLight + "33" }]} onPress={() => setShowLightbox(false)}>
             <Ionicons name="close" size={28} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.lightboxDownload, { backgroundColor: colors.overlayLight + "33" }]} onPress={handleDownload}>
+            <Ionicons name={ICONS.download} size={24} color="#fff" />
           </TouchableOpacity>
         </Pressable>
       </Modal>
@@ -225,6 +259,16 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 50,
     right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  lightboxDownload: {
+    position: "absolute",
+    top: 50,
+    right: 70,
     width: 40,
     height: 40,
     borderRadius: 20,

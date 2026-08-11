@@ -1,7 +1,7 @@
 import { Contest, FilterState } from "../../types/models";
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Platform, useWindowDimensions } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { getDatabase } from "../../utils/database";
 import { FontSize, Spacing } from "../../constants/theme";
@@ -51,10 +51,13 @@ export default function ContestDetailScreen() {
   });
   const [listHeight, setListHeight] = useState(0);
   const [contentHeight, setContentHeight] = useState(0);
+  const autoFillRef = useRef(false);
   // 大屏:内容不足视口时自动填充(onEndReached 不触发时持续加载直到铺满)
   useEffect(() => {
-    if (listHeight > 0 && contentHeight > 0 && contentHeight <= listHeight && hasMore && !loading) {
+    if (listHeight > 0 && contentHeight > 0 && contentHeight <= listHeight && hasMore && !loading && !autoFillRef.current) {
+      autoFillRef.current = true;
       loadMore();
+      setTimeout(() => { autoFillRef.current = false; }, 500);
     }
   }, [novels, listHeight, contentHeight, hasMore, loading, loadMore]);
   const { scrollRef, showButton, onScroll, scrollToTop } = useScrollToTop();
@@ -188,12 +191,18 @@ export default function ContestDetailScreen() {
         onLayout={(e) => {
           const h = e.nativeEvent.layout.height;
           setListHeight(h);
-          if (contentHeight > 0 && contentHeight <= h && hasMore && !loading) loadMore();
+          if (contentHeight > 0 && contentHeight <= h && hasMore && !loading && !autoFillRef.current) {
+            autoFillRef.current = true;
+            loadMore();
+            setTimeout(() => { autoFillRef.current = false; }, 500);
+          }
         }}
         onContentSizeChange={(_, h) => {
           setContentHeight(h);
-          if (listHeight > 0 && h <= listHeight && hasMore && !loading) {
+          if (listHeight > 0 && h <= listHeight && hasMore && !loading && !autoFillRef.current) {
+            autoFillRef.current = true;
             loadMore();
+            setTimeout(() => { autoFillRef.current = false; }, 500);
           }
         }}
         initialNumToRender={10}

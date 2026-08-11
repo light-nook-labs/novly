@@ -43,7 +43,8 @@
           }
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      "expo-media-library"
     ],
     "scheme": "novly"
   }

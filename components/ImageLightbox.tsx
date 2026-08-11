@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Modal, Pressable, Image, TouchableOpacity, StyleSheet, Platform } from "react-native";
+import { useState, useRef } from "react";
+import { Modal, Pressable, Image, TouchableOpacity, StyleSheet, Platform, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { ICONS } from "../constants/icons";
 import { useTheme } from "./ThemeProvider";
@@ -12,10 +12,10 @@ interface ImageLightboxProps {
 export function ImageLightbox({ uri, children }: ImageLightboxProps) {
   const { colors } = useTheme();
   const [visible, setVisible] = useState(false);
+  const downloadingRef = useRef(false);
 
-  // 下载图片:web 直接触发下载链接;原生下载到缓存后调起分享面板(可保存到相册/其他应用)
   const handleDownload = async () => {
-    if (!uri) return;
+    if (!uri || downloadingRef.current) return;
     if (Platform.OS === "web") {
       const anchor = document.createElement("a");
       anchor.href = uri;
@@ -23,16 +23,23 @@ export function ImageLightbox({ uri, children }: ImageLightboxProps) {
       anchor.click();
       return;
     }
+    downloadingRef.current = true;
     try {
       const FileSystem = await import("expo-file-system/legacy");
-      const Sharing = await import("expo-sharing");
       const target = `${FileSystem.cacheDirectory ?? ""}novly-${Date.now()}.jpg`;
       const result = await FileSystem.downloadAsync(uri, target);
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(result.uri);
-      }
+      try {
+        const MediaLibrary = require("expo-media-library/legacy");
+        const { status } = await MediaLibrary.requestPermissionsAsync();
+        if (status === "granted") {
+          await MediaLibrary.saveToLibraryAsync(result.uri);
+          Alert.alert("保存成功", "图片已保存到相册");
+        }
+      } catch {}
     } catch (error) {
-      console.error("Failed to download image:", error);
+      console.error("[ImageLightbox] download failed:", error);
+    } finally {
+      downloadingRef.current = false;
     }
   };
 
