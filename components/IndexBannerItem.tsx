@@ -6,6 +6,7 @@ import { useTheme } from "./ThemeProvider";
 import { ImageShimmer } from "./ImageShimmer";
 import { delayImageLoad } from "../utils/imageDelay";
 import { type BannerNovel } from "../types/models";
+import { BANNER_PREFIX } from "../utils/urls";
 
 export type { BannerNovel };
 
@@ -14,7 +15,6 @@ interface BannerItemProps extends BannerNovel {
   height?: number;
 }
 
-const BANNER_PREFIX = "https://rs.sfacg.com/web/novel/images/images/beitouNew/";
 // 每行最大宽度:9 个汉字(1 个汉字 ≈ 2 个 ascii 字符)
 const LINE_MAX_WIDTH = 18;
 const MAX_LINES = 3;
@@ -178,7 +178,7 @@ export function BannerItem({ id, title, author, width, height }: BannerItemProps
         </View>
       )}
       <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={isWide ? 0 : MAX_LINES}>
+        <Text style={[styles.title, { textShadowColor: colors.overlay + "80" }]} numberOfLines={isWide ? 0 : MAX_LINES}>
           {isWide ? `${title} #${id}` : formatBannerText(title, id)}
         </Text>
         {author && (
@@ -208,7 +208,6 @@ const styles = StyleSheet.create({
     fontSize: FontSize.lg,
     fontWeight: "700",
     color: "#fff",
-    textShadowColor: "rgba(0,0,0,0.5)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },

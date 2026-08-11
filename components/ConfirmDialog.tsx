@@ -1,6 +1,6 @@
 import { Modal, Pressable, View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { FontSize, Spacing, BorderRadius } from "../constants/theme";
+import { FontSize, Spacing, BorderRadius, Layout } from "../constants/theme";
 import { useTheme } from "./ThemeProvider";
 
 interface ConfirmDialogProps {
@@ -26,7 +26,7 @@ export function ConfirmDialog({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      <Pressable style={styles.backdrop} onPress={onCancel}>
+      <Pressable style={[styles.backdrop, { backgroundColor: colors.overlay + "66" }]} onPress={onCancel}>
         <Pressable style={[styles.dialog, { backgroundColor: colors.surface }]} onPress={() => {}}>
           <View style={[styles.iconWrap, { backgroundColor: (danger ? colors.danger : colors.primary) + "15" }]}>
             <Ionicons
@@ -62,7 +62,6 @@ export function ConfirmDialog({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: Spacing.xl,
@@ -75,9 +74,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   iconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: Layout.iconMd,
+    height: Layout.iconMd,
+    borderRadius: Layout.circleSm,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: Spacing.md,

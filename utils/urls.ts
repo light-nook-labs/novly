@@ -1,5 +1,5 @@
 const COVER_PREFIX = "https://rs.sfacg.com/web/novel/images/NovelCover/Big/";
-const BANNER_PREFIX = "https://rs.sfacg.com/web/novel/images/images/beitouNew/";
+export const BANNER_PREFIX = "https://rs.sfacg.com/web/novel/images/images/beitouNew/";
 
 // NookData 无封面作品 cover 为 null(置空);统一提供默认封面,避免空图
 const DEFAULT_COVER = "https://rs.sfacg.com/web/novel/images/NovelCover/Big/default.jpg";

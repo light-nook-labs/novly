@@ -120,7 +120,7 @@ export function NovelFilterSheet({ visible, filters, onApply, onClose }: NovelFi
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
+      <Pressable style={[styles.backdrop, { backgroundColor: colors.overlay + "66" }]} onPress={onClose}>
         <Pressable style={[styles.sheet, { backgroundColor: colors.surface }]} onPress={() => {}}>
           {/* Handle */}
           <View style={[styles.handle, { backgroundColor: colors.textMuted }]} />
@@ -216,7 +216,6 @@ export function NovelFilterSheet({ visible, filters, onApply, onClose }: NovelFi
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "flex-end",
   },
   sheet: {

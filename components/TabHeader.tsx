@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { SearchBar } from "./SearchBar";
-import { FontSize, Spacing } from "../constants/theme";
+import { FontSize, Spacing, Layout, BorderRadius } from "../constants/theme";
 import { useTheme } from "./ThemeProvider";
 import { subscribeInitProgress, initProgress } from "../utils/database";
 
@@ -65,9 +65,9 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   icon: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
+    width: Layout.iconSm,
+    height: Layout.iconSm,
+    borderRadius: BorderRadius.sm,
   },
   progressRow: {
     paddingHorizontal: Spacing.lg,

@@ -340,7 +340,7 @@ function WelcomeCard({ width, height, bgUri }: { width: number; height: number; 
             width: width * 0.5,
             justifyContent: "center",
             alignItems: "center",
-            backgroundColor: "rgba(0,0,0,0.35)",
+            backgroundColor: colors.overlay + "59",
           }}
         >
           <Image

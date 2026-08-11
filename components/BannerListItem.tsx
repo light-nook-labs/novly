@@ -8,8 +8,7 @@ import { useTheme } from "./ThemeProvider";
 import { ImageShimmer } from "./ImageShimmer";
 import { delayImageLoad } from "../utils/imageDelay";
 import { type BannerNovel } from "../types/models";
-
-const BANNER_PREFIX = "https://rs.sfacg.com/web/novel/images/images/beitouNew/";
+import { BANNER_PREFIX } from "../utils/urls";
 
 export type { BannerNovel };
 
@@ -140,9 +139,9 @@ export function BannerListItem({ id, title, author, width, height }: BannerItemP
 
       {/* Lightbox */}
       <Modal visible={showLightbox} transparent animationType="fade" onRequestClose={() => setShowLightbox(false)}>
-        <Pressable style={styles.lightbox} onPress={() => setShowLightbox(false)}>
+        <Pressable style={[styles.lightbox, { backgroundColor: colors.overlay + "FA" }]} onPress={() => setShowLightbox(false)}>
           <Image source={{ uri }} style={styles.lightboxImage} resizeMode="contain" />
-          <TouchableOpacity style={styles.lightboxClose} onPress={() => setShowLightbox(false)}>
+          <TouchableOpacity style={[styles.lightboxClose, { backgroundColor: colors.overlayLight + "33" }]} onPress={() => setShowLightbox(false)}>
             <Ionicons name="close" size={28} color="#fff" />
           </TouchableOpacity>
         </Pressable>
@@ -215,7 +214,6 @@ const styles = StyleSheet.create({
   },
   lightbox: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.98)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -230,7 +228,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.2)",
     justifyContent: "center",
     alignItems: "center",
   },
