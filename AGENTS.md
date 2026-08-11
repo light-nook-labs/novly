@@ -73,7 +73,7 @@ pnpm tauri build  # build Windows desktop installer (NSIS)
 | `components/ThemeProvider.tsx`                                                          | `ThemeProvider`, `useTheme()`, `ThemeMode` / `ThemeColors` types                                     |
 | `utils/database.ts`                                                                     | `initDatabase()` / `getDatabase()` (promise-cached singleton)                                        |
 | `utils/bookshelfDb.ts`                                                                  | bookshelf local db: `getBookshelf/addToBookshelf/removeFromBookshelf/clearBookshelf/isInBookshelf`   |
-| `utils/mappings.ts`                                                                     | `genreMapping`, `statusMapping`, `ptypeMapping`, `statusColors`, `normalizeStatus`, `formatNumber`   |
+| `utils/mappings.ts`                                                                     | `genreMapping`, `statusMapping`, `ptypeMapping`, `normalizeStatus`, `formatNumber`                   |
 | `utils/urls.ts`                                                                         | `coverUrl()`, `bannerUrl()`                                                                          |
 | `components/Header.tsx`                                                                 | `PageHeader`                                                                                         |
 | `components/TabHeader.tsx`                                                              | tab-page header (logo + search + right)                                                              |
