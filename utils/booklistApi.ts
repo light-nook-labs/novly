@@ -1,9 +1,11 @@
 // 书单在线 API 解析(纯函数,可单元测试)
 // 列表项:/bookList/{id};详情元数据:/bookList/{id};详情小说:/bookList/{id}/novel(data.items)
 import type { Booklist, BooklistMeta, BooklistNovel } from "../types/models";
+import { BOOKLIST_API } from "./urls";
+
+export { BOOKLIST_API };
 
 // 书单在线 API 常量(列表页与首页推荐共用)
-export const BOOKLIST_API = "https://pages.sfacg.com/api/HttpProxy";
 export const BOOKLIST_EXPAND = "avatar,verifyType,vipLevel,nickName,growup";
 export const BOOKLIST_KNOWN_TOTAL = 1272; // 已知书单总数(近似)
 export const BOOKLIST_CACHE_TTL = 24 * 60 * 60 * 1000; // 书单数据缓存 24h(命中免重复请求)
