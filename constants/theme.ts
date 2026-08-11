@@ -13,6 +13,13 @@ export const lightColors = {
   success: "#4CAF50",
   info: "#2196F3",
   shadow: "#000000",
+  overlay: "#000000",
+  overlayLight: "#FFFFFF",
+  rankGold: "#FFD700",
+  rankSilver: "#C0C0C0",
+  rankBronze: "#CD7F32",
+  starGold: "#F5A623",
+  badgePtype: "#26A69A",
 };
 
 export const darkColors: typeof lightColors = {
@@ -30,6 +37,13 @@ export const darkColors: typeof lightColors = {
   success: "#66BB6A",
   info: "#4FC3F7",
   shadow: "#000000",
+  overlay: "#000000",
+  overlayLight: "#FFFFFF",
+  rankGold: "#FFD700",
+  rankSilver: "#C0C0C0",
+  rankBronze: "#CD7F32",
+  starGold: "#F5A623",
+  badgePtype: "#26A69A",
 };
 
 // 兼容现有组件：Colors 默认指向浅色方案
@@ -57,4 +71,13 @@ export const BorderRadius = {
   md: 10,
   lg: 14,
   xl: 20,
+};
+
+export const Layout = {
+  iconSm: 34,
+  iconMd: 56,
+  iconLg: 72,
+  iconXl: 96,
+  circleSm: 28,
+  circleMd: 48,
 };
